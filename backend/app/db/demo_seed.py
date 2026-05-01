@@ -219,10 +219,10 @@ def seed_demo_profile(settings: Settings | None = None) -> DemoSeedResult:
         db.flush()
 
         entity_specs = [
-            ("entity.errin", "pc", "Errin", "Oathbound knight", "public_known", None, ["party"]),
-            ("entity.drew", "pc", "Drew", "Exiled glamour bard", "public_known", None, ["party"]),
-            ("entity.datt", "pc", "Datt", "Wandering artificer heir", "public_known", None, ["party"]),
-            ("entity.harold", "pc", "Harold", "Archer with missing memory", "public_known", None, ["party"]),
+            ("entity.errin", "pc", "Errin", "Oathbound knight", "public_known", "asset.fallen_carnival_paladin", ["party"]),
+            ("entity.drew", "pc", "Drew", "Exiled glamour bard", "public_known", "asset.redeemed_shadow_assassin", ["party"]),
+            ("entity.datt", "pc", "Datt", "Wandering artificer heir", "public_known", "asset.goldsmith_cursed_hands", ["party"]),
+            ("entity.harold", "pc", "Harold", "Archer with missing memory", "public_known", "asset.lantern_children_procession", ["party"]),
             ("entity.granny_scrap", "npc", "Granny Scrap", "Child-time thief", "private", None, ["threat"]),
             ("entity.wylan", "npc", "Wylan", "Rebel forest youth", "public_known", None, ["ally"]),
             ("entity.sloan", "npc", "Sloan", "Forest ally", "public_known", None, ["ally"]),
@@ -399,20 +399,60 @@ def seed_demo_profile(settings: Settings | None = None) -> DemoSeedResult:
         )
         create_hidden_mask(resolved, fog.relative_path, fog.width, fog.height)
         mask = load_mask(resolved, fog.relative_path, fog.width, fog.height)
-        apply_rect(mask, FogRect(x=fog.width * 0.12, y=fog.height * 0.18, width=fog.width * 0.42, height=fog.height * 0.38), reveal=True)
+        apply_rect(mask, FogRect(x=fog.width * 0.08, y=fog.height * 0.12, width=fog.width * 0.62, height=fog.height * 0.58), reveal=True)
         save_mask_atomic(resolved, fog.relative_path, mask)
 
         token_specs = [
-            ("token.errin", "entity.errin", "Errin", workshop_map.width * 0.25, workshop_map.height * 0.35, "player_visible", "player_visible", "circle", "#D7F28D"),
-            ("token.harold", "entity.harold", "Harold", workshop_map.width * 0.34, workshop_map.height * 0.45, "player_visible", "hidden", "square", "#8FD3FF"),
-            ("token.granny_scrap", "entity.granny_scrap", "Granny Scrap", workshop_map.width * 0.72, workshop_map.height * 0.42, "hidden_until_revealed", "gm_only", "marker", "#D94841"),
-            ("token.illy", "entity.illy", "Illy", workshop_map.width * 0.55, workshop_map.height * 0.63, "gm_only", "gm_only", "circle", "#F8D477"),
+            (
+                "token.errin",
+                "entity.errin",
+                "Errin",
+                "asset.fallen_carnival_paladin",
+                workshop_map.width * 0.25,
+                workshop_map.height * 0.35,
+                "player_visible",
+                "player_visible",
+                "#F8F3D1",
+            ),
+            (
+                "token.harold",
+                "entity.harold",
+                "Harold",
+                "asset.redeemed_shadow_assassin",
+                workshop_map.width * 0.38,
+                workshop_map.height * 0.46,
+                "player_visible",
+                "player_visible",
+                "#8FD3FF",
+            ),
+            (
+                "token.granny_scrap",
+                "entity.granny_scrap",
+                "Granny Scrap",
+                "asset.gray_figure_swamp",
+                workshop_map.width * 0.84,
+                workshop_map.height * 0.42,
+                "hidden_until_revealed",
+                "gm_only",
+                "#D94841",
+            ),
+            (
+                "token.illy",
+                "entity.illy",
+                "Illy",
+                "asset.lantern_children_procession",
+                workshop_map.width * 0.55,
+                workshop_map.height * 0.63,
+                "gm_only",
+                "gm_only",
+                "#F8D477",
+            ),
         ]
-        for index, (key, entity_key, fallback_name, x, y, visibility, label_visibility, shape, color) in enumerate(token_specs):
+        for index, (key, entity_key, fallback_name, asset_key, x, y, visibility, label_visibility, border_color) in enumerate(token_specs):
             _add_if_missing(
                 db,
                 SceneMapToken,
-                SceneMapToken(id=demo_id(key), campaign_id=campaign_id, scene_id=scene_workshop_id, scene_map_id=workshop_scene_map.id, entity_id=entities[entity_key].id, asset_id=None, name=_name(names, entity_key, fallback_name), x=x, y=y, width=70, height=70, rotation=0, z_index=index * 10, visibility=visibility, label_visibility=label_visibility, shape=shape, color=color, border_color="#FFFFFF", opacity=1, status_json="[]", created_at=now, updated_at=now),
+                SceneMapToken(id=demo_id(key), campaign_id=campaign_id, scene_id=scene_workshop_id, scene_map_id=workshop_scene_map.id, entity_id=entities[entity_key].id, asset_id=assets[asset_key].id, name=_name(names, entity_key, fallback_name), x=x, y=y, width=96, height=96, rotation=0, z_index=index * 10, visibility=visibility, label_visibility=label_visibility, shape="portrait", color="#1F2529", border_color=border_color, opacity=1, status_json="[]", created_at=now, updated_at=now),
             )
 
         encounter = _add_if_missing(
