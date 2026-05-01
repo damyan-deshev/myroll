@@ -1,7 +1,7 @@
 # Third-Party Code Review Follow-Up
 
 Date: 2026-05-01
-Status: implementation follow-up, partially fixed
+Status: fixed; player-display extraction completed as a focused architecture slice
 
 This document captures the parts of the external review that still matter after checking the actual code. It is intentionally not a rewrite of the review's severity order. The useful unit here is "what should we fix next, and why?".
 
@@ -11,12 +11,9 @@ Fixed:
 
 - Slice 1: local API request boundary now has a trusted Host guard, exact local CORS origins, and an unsafe-method Origin / Fetch Metadata guard.
 - Slice 2: public `import-path` endpoints and UI/client controls were removed; uploads remain the supported import path.
+- Spike 3: player-display rendering now lives behind a dedicated frontend module boundary.
 - Slice 4: player-display transport now accepts only the exact notification envelope keys.
 - Slice 5: asset writes use unconditional atomic replace and reject symlink storage directories.
-
-Still open:
-
-- Spike 3: extract the player-display rendering boundary from `frontend/src/App.tsx`. This remains an architecture slice, not a confirmed exploit.
 
 ## Calibration
 
@@ -139,9 +136,9 @@ Primary files:
 
 ### Spike 3: Player-display boundary extraction
 
-Disposition: still open as an architecture spike, not as an immediate exploit.
+Disposition: fixed as a focused architecture slice, not as an immediate exploit.
 
-`frontend/src/App.tsx` is 4,512 lines and contains the GM workspace, asset library, notes, maps/fog/tokens, party tracker, combat tracker, transport handling, and `/player` rendering path. That is not automatically a security bug, but it does make the most important product boundary too easy to weaken accidentally.
+Before this slice, `frontend/src/App.tsx` was over 4,400 lines and contained the GM workspace, asset library, notes, maps/fog/tokens, party tracker, combat tracker, transport handling, and `/player` rendering path. That was not automatically a security bug, but it did make the most important product boundary too easy to weaken accidentally.
 
 The useful concern is narrow: "what the player sees" should have an explicit typed module boundary. It should not rely on a giant shared file and ad hoc inline payload parsing.
 
@@ -159,13 +156,20 @@ Acceptance criteria:
 - Tests assert that the player display fetch path remains `GET /api/player-display` plus active public blobs/masks only.
 - No broad App.tsx rewrite is required in this spike; extract only the player-display boundary first.
 
+Implementation:
+
+- `frontend/src/player-display/PlayerDisplayApp.tsx` now owns `/player` polling, heartbeat, transport refetch handling, mode-specific renderers, and player payload normalization.
+- `frontend/src/map/MapRenderer.tsx` holds the shared map/fog/token renderer used by both GM and player surfaces.
+- `frontend/src/SafeMarkdownRenderer.tsx` holds the shared markdown renderer that strips links down to text.
+- `frontend/src/App.tsx` still owns GM workspace widgets and GM player-display controls, but no longer owns the player-facing render path.
+
 Primary files:
 
 - `frontend/src/App.tsx`
-- `frontend/src/playerDisplayTransport.ts`
-- `frontend/src/types.ts`
+- `frontend/src/player-display/PlayerDisplayApp.tsx`
+- `frontend/src/map/MapRenderer.tsx`
+- `frontend/src/SafeMarkdownRenderer.tsx`
 - `frontend/src/App.test.tsx`
-- `frontend/e2e/gm.spec.ts`
 
 ### Slice 4: Rename and strict-validate display transport envelopes
 
@@ -244,8 +248,8 @@ Primary files:
 - "Transport sanitization prevents content leaks" is not true today because the transport is notification-only. Fix naming/schema to prevent future misuse.
 - "Asset upload race corrupts data" is too strong for current content-addressed blobs. The symlink and atomicity cleanup is still worth doing.
 
-## Remaining Sequence
+## Remaining Watch Points
 
-1. Extract the player-display rendering boundary from `frontend/src/App.tsx`.
-2. Keep the transport channel notification-only; any future content-bearing player display feature should go through the backend public display serializer.
-3. After the extraction, add focused tests around each player-display mode using sanitized public payloads only.
+1. Keep the transport channel notification-only; any future content-bearing player display feature should go through the backend public display serializer.
+2. Keep player-display tests focused on sanitized public payloads only.
+3. Avoid turning this into a whole-app modularization project unless a concrete workflow or boundary needs it.

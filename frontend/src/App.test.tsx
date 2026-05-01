@@ -9,17 +9,16 @@ import {
   BackendStatusWidget,
   CombatTrackerWidget,
   MapDisplayWidget,
-  MapRenderer,
   NotesWidget,
   PartyTrackerWidget,
-  PlayerDisplayApp,
-  PlayerDisplaySurface,
   PlayerDisplayWidget,
-  SafeMarkdownRenderer,
   SceneContextWidget,
   StorageDemoWidget,
   WidgetFrame
 } from "./App";
+import { MapRenderer } from "./map/MapRenderer";
+import { PlayerDisplayApp, PlayerDisplaySurface } from "./player-display/PlayerDisplayApp";
+import { SafeMarkdownRenderer } from "./SafeMarkdownRenderer";
 import type { ReactElement } from "react";
 import type {
   Asset,
