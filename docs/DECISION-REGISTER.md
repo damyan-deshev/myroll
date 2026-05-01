@@ -206,12 +206,13 @@ Decision: imported image bytes are copied into `data/assets/` under content-addr
 
 Rationale:
 - Asset files need to be portable with the local data directory.
-- Server-path import must not leave hidden dependencies on Desktop, Downloads, or external folders.
+- Uploaded files must not leave hidden dependencies on Desktop, Downloads, or external folders.
+- Server-path import was removed after security review; uploads are the supported user-consent boundary.
 - Duplicate image bytes should not waste storage, but repeated imports may still be separate asset records.
 
 Consequences:
-- Browser upload and server-path import both copy bytes into managed storage.
-- Server-path import never stores the original absolute path as the asset location.
+- Browser upload copies bytes into managed storage.
+- The public API does not accept arbitrary local source paths as asset import input.
 - Duplicate checksums may share `relative_path`, while asset IDs remain distinct.
 - Export/backup can later package SQLite plus `data/assets/` without path archaeology.
 

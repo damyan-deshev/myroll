@@ -424,7 +424,8 @@ Current implementation:
 - SQLite stores asset metadata.
 - Filesystem storage under `data/assets/` stores imported blobs.
 - `relativePath` is a managed storage key under `asset_dir`, never an external absolute path.
-- Browser upload and server-path import both copy bytes into managed storage.
+- Browser upload copies bytes into managed storage.
+- Server-path import was removed after security review; uploads are the supported user-consent boundary.
 - Supported Slice 5 formats are PNG, JPEG, and WebP.
 - Import limits are 25 MB and 50 decoded megapixels.
 - Pillow validation derives real MIME type, extension, width, and height.
@@ -1366,7 +1367,6 @@ POST  /api/campaigns/{campaign_id}/notes
 GET   /api/notes/{note_id}
 PATCH /api/notes/{note_id}
 POST  /api/campaigns/{campaign_id}/notes/import-upload
-POST  /api/campaigns/{campaign_id}/notes/import-path
 
 GET   /api/campaigns/{campaign_id}/public-snippets
 POST  /api/campaigns/{campaign_id}/public-snippets

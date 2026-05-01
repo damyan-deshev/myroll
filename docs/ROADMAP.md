@@ -176,7 +176,8 @@ Delivered:
   - image dimensions;
   - checksum and managed relative storage path.
 - Managed filesystem blob storage under `data/assets/`.
-- Browser upload and server-path import for PNG, JPEG, and WebP.
+- Browser upload for PNG, JPEG, and WebP.
+- Server-path import was removed after security review; uploads are the supported user-consent boundary.
 - Defensive backend validation:
   - MIME type, extension, filename, width, and height are not trusted;
   - Pillow derives actual image format and dimensions;
@@ -186,15 +187,13 @@ Delivered:
   - blob writes are temp-file-first and content-addressed.
 - Asset APIs:
   - `GET /api/campaigns/{campaign_id}/assets`;
-  - `POST /api/campaigns/{campaign_id}/assets/upload`;
-  - `POST /api/campaigns/{campaign_id}/assets/import-path`.
+  - `POST /api/campaigns/{campaign_id}/assets/upload`.
 - Player display image APIs:
   - `POST /api/player-display/show-image`;
   - `GET /api/player-display/assets/{asset_id}/blob`.
 - Public blob endpoint only serves the currently active public image in `player_display_runtime`.
 - GM `Asset Library` widget:
   - upload image;
-  - import server path;
   - set kind/visibility/name/tags;
   - list assets;
   - send public-displayable image to `/player`.
@@ -436,7 +435,8 @@ Status: complete as of Slice 9.
 
 Delivered:
 - SQLite-backed private notes with optional campaign/session/scene/asset links;
-- markdown upload and server-path import that copy text into SQLite and keep only a source label, not a live filesystem dependency;
+- markdown upload that copies text into SQLite and keeps only a source label, not a live filesystem dependency;
+- server-path note import was removed after security review; uploads are the supported user-consent boundary;
 - explicit public snippet records created from note text or entered directly;
 - "copy selection to snippet" snapshots selected note text into `public_snippets.body` at that moment;
 - GM Notes widget for browse/create/edit/import, snippet preview, and explicit publish;
@@ -450,7 +450,6 @@ Delivered:
   - `GET /api/notes/{note_id}`;
   - `PATCH /api/notes/{note_id}`;
   - `POST /api/campaigns/{campaign_id}/notes/import-upload`;
-  - `POST /api/campaigns/{campaign_id}/notes/import-path`;
   - `GET /api/campaigns/{campaign_id}/public-snippets`;
   - `POST /api/campaigns/{campaign_id}/public-snippets`;
   - `PATCH /api/public-snippets/{snippet_id}`.
