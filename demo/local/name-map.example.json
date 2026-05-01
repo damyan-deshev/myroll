@@ -1,0 +1,22 @@
+{
+  "campaign.lantern_vale_chronicle": "Chronicle of the Lantern Vale",
+  "scene.last_horn_lake": "Lake of the Last Horn",
+  "scene.blue_forest_road": "The Blue Forest Road",
+  "scene.crooked_loom_house": "The Crooked Loom House",
+  "scene.stolen_time_workshop": "Workshop of Stolen Time",
+  "entity.errin": "Errin",
+  "entity.drew": "Drew",
+  "entity.datt": "Datt",
+  "entity.harold": "Harold",
+  "entity.granny_scrap": "Granny Scrap",
+  "entity.wylan": "Wylan",
+  "entity.sloan": "Sloan",
+  "entity.illy": "Illy",
+  "entity.lamora": "Lamora",
+  "entity.aureon": "Aureon",
+  "entity.isolde": "Isolde",
+  "entity.nastrond": "Nastrond",
+  "entity.lady_glass_hour": "Lady of the Glass Hour",
+  "asset.crooked_loom_house_map": "Crooked Loom House Map",
+  "asset.blue_forest_road_map": "Blue Forest Road Map"
+}

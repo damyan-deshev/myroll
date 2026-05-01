@@ -1,0 +1,102 @@
+{
+  "pack": "lantern_vale_chronicle",
+  "style": "original dark fairytale, painterly, cinematic, VTT-readable",
+  "assets": [
+    {
+      "key": "asset.fallen_carnival_paladin",
+      "filename": "fallen-carnival-paladin.png",
+      "role": "npc_portrait",
+      "default_visibility": "public_displayable",
+      "entity_key": "entity.isolde",
+      "prompt": "A fallen carnival paladin in tarnished silver armor before a ruined shadow carnival gate, solemn and oathbroken, original dark fairytale."
+    },
+    {
+      "key": "asset.redeemed_shadow_assassin",
+      "filename": "redeemed-shadow-assassin.png",
+      "role": "npc_portrait",
+      "default_visibility": "public_displayable",
+      "entity_key": "entity.nastrond",
+      "prompt": "A redeemed shadow assassin standing half in moonlight and half in carnival shadow, conflicted and dangerous, original dark fairytale."
+    },
+    {
+      "key": "asset.goldsmith_cursed_hands",
+      "filename": "goldsmith-cursed-hands.png",
+      "role": "npc_portrait",
+      "default_visibility": "public_displayable",
+      "entity_key": "entity.aureon",
+      "prompt": "A cursed goldsmith at a workbench with living gold hands, forced to keep crafting, original dark fairytale."
+    },
+    {
+      "key": "asset.forgotten_brother",
+      "filename": "forgotten-brother.png",
+      "role": "handout_image",
+      "default_visibility": "private",
+      "entity_key": "entity.forgotten_brother",
+      "prompt": "A half-remembered child in a blue forest holding a wooden toy arrow, tender and eerie, original dark fairytale."
+    },
+    {
+      "key": "asset.lantern_children_procession",
+      "filename": "lantern-children-procession.png",
+      "role": "handout_image",
+      "default_visibility": "public_displayable",
+      "scene_key": "scene.blue_forest_road",
+      "prompt": "Ghostlike children carrying unlit lanterns through a blue forest, haunting storybook horror, original dark fairytale."
+    },
+    {
+      "key": "asset.gray_figure_swamp",
+      "filename": "gray-figure-in-the-swamp.png",
+      "role": "handout_image",
+      "default_visibility": "private",
+      "scene_key": "scene.crooked_loom_house",
+      "prompt": "A tall faceless gray figure in a rotten swamp garden near a witch house, original dark fairytale."
+    },
+    {
+      "key": "asset.theatre_of_doom",
+      "filename": "theatre-of-doom.png",
+      "role": "scene_image",
+      "default_visibility": "private",
+      "scene_key": "scene.future_theatre",
+      "prompt": "A theatre of doom inside a mountain with crooked stage, masks, puppets, and empty seats, original dark fairytale."
+    },
+    {
+      "key": "asset.mourning_unicorn_lake",
+      "filename": "mourning-unicorn-lake.png",
+      "role": "scene_image",
+      "default_visibility": "public_displayable",
+      "scene_key": "scene.last_horn_lake",
+      "prompt": "A mourning unicorn beside a moonlit lake shrine of pale stones and silver flowers, original dark fairytale."
+    },
+    {
+      "key": "asset.crooked_loom_house_map",
+      "filename": "crooked-loom-house-map.png",
+      "role": "map_image",
+      "default_visibility": "public_displayable",
+      "scene_key": "scene.stolen_time_workshop",
+      "prompt": "A top-down-ish VTT-readable crooked loom house workshop map with weaving frames, toys, cages, and cluttered rooms, original dark fairytale."
+    },
+    {
+      "key": "asset.blue_forest_road_map",
+      "filename": "blue-forest-road-map.png",
+      "role": "map_image",
+      "default_visibility": "public_displayable",
+      "scene_key": "scene.blue_forest_road",
+      "prompt": "A VTT-readable blue forest road map winding through twisted trees toward a distant crooked house, original dark fairytale."
+    },
+    {
+      "key": "asset.dark_carnival_gate",
+      "filename": "dark-carnival-gate.png",
+      "role": "scene_image",
+      "default_visibility": "private",
+      "scene_key": "scene.dark_carnival",
+      "prompt": "A dark carnival gate with iron arches, torn banners, dim lanterns, and impossible tents under a stormy moon, original dark fairytale."
+    },
+    {
+      "key": "asset.glass_hour_tyrant",
+      "filename": "glass-hour-tyrant.png",
+      "role": "npc_portrait",
+      "default_visibility": "private",
+      "entity_key": "entity.lady_glass_hour",
+      "prompt": "A sealed clockglass tyrant behind translucent clockglass with a broken smile and hourglass light, original dark fairytale."
+    }
+  ]
+}
