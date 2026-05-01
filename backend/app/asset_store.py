@@ -52,6 +52,30 @@ def _safe_original_filename(value: str | None) -> str | None:
     return name or None
 
 
+def _relative_to_root(root: Path, candidate: Path) -> None:
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        raise AssetImportError(500, "asset_path_invalid", "Asset path is invalid") from None
+
+
+def _prepare_asset_root(settings: Settings) -> Path:
+    root = settings.asset_dir
+    root.mkdir(parents=True, exist_ok=True)
+    if root.is_symlink() or not root.is_dir():
+        raise AssetImportError(500, "asset_root_invalid", "Asset root is invalid")
+    return root.resolve()
+
+
+def _prepare_asset_directory(root: Path, directory: Path) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    if directory.is_symlink() or not directory.is_dir():
+        raise AssetImportError(500, "asset_directory_invalid", "Asset storage directory is invalid")
+    resolved = directory.resolve()
+    _relative_to_root(root, resolved)
+    return resolved
+
+
 def _validate_image(path: Path) -> tuple[str, str, int, int]:
     try:
         with warnings.catch_warnings():
@@ -79,9 +103,8 @@ def _validate_image(path: Path) -> tuple[str, str, int, int]:
 
 
 def store_image_stream(settings: Settings, source: BinaryIO, original_filename: str | None) -> StoredImage:
-    settings.ensure_directories()
-    tmp_dir = settings.asset_dir / ".tmp"
-    tmp_dir.mkdir(parents=True, exist_ok=True)
+    asset_root = _prepare_asset_root(settings)
+    tmp_dir = _prepare_asset_directory(asset_root, asset_root / ".tmp")
 
     hasher = hashlib.sha256()
     byte_size = 0
@@ -106,13 +129,11 @@ def store_image_stream(settings: Settings, source: BinaryIO, original_filename: 
         mime_type, extension, width, height = _validate_image(temp_path)
         checksum = hasher.hexdigest()
         relative_path = Path(checksum[:2]) / f"{checksum}.{extension}"
-        final_path = settings.asset_dir / relative_path
-        final_path.parent.mkdir(parents=True, exist_ok=True)
+        final_parent = _prepare_asset_directory(asset_root, asset_root / checksum[:2])
+        final_path = final_parent / f"{checksum}.{extension}"
+        _relative_to_root(asset_root, final_path.resolve(strict=False))
 
-        if final_path.exists():
-            temp_path.unlink(missing_ok=True)
-        else:
-            os.replace(temp_path, final_path)
+        os.replace(temp_path, final_path)
 
         return StoredImage(
             checksum=checksum,

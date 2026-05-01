@@ -338,7 +338,6 @@ describe("api client", () => {
     await api.note("note-id");
     await api.patchNote("note-id", { private_body: "Changed body" });
     await api.importNoteUpload("campaign-id", { file: new File(["# Note"], "note.md", { type: "text/markdown" }) });
-    await api.importNotePath("campaign-id", { source_path: "/tmp/note.md", title: "Imported" });
     await api.publicSnippets("campaign-id");
     await api.createPublicSnippet("campaign-id", { note_id: "note-id", title: "Public", body: "Safe text" });
     await api.patchPublicSnippet("snippet-id", { body: "Changed public text" });
@@ -360,19 +359,14 @@ describe("api client", () => {
       "/api/campaigns/campaign-id/notes/import-upload",
       expect.objectContaining({ method: "POST", body: expect.any(FormData), headers: undefined })
     );
+    expect(fetchMock).toHaveBeenNthCalledWith(6, "/api/campaigns/campaign-id/public-snippets", expect.any(Object));
     expect(fetchMock).toHaveBeenNthCalledWith(
-      6,
-      "/api/campaigns/campaign-id/notes/import-path",
-      expect.objectContaining({ method: "POST", body: JSON.stringify({ source_path: "/tmp/note.md", title: "Imported" }) })
-    );
-    expect(fetchMock).toHaveBeenNthCalledWith(7, "/api/campaigns/campaign-id/public-snippets", expect.any(Object));
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      8,
+      7,
       "/api/campaigns/campaign-id/public-snippets",
       expect.objectContaining({ method: "POST", body: JSON.stringify({ note_id: "note-id", title: "Public", body: "Safe text" }) })
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
-      9,
+      8,
       "/api/public-snippets/snippet-id",
       expect.objectContaining({ method: "PATCH", body: JSON.stringify({ body: "Changed public text" }) })
     );

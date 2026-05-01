@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import uuid
@@ -35,7 +36,7 @@ from backend.app.workspace_defaults import DEFAULT_WORKSPACE_WIDGETS
 
 
 def _client(settings) -> TestClient:  # noqa: ANN001
-    return TestClient(create_app(settings))
+    return TestClient(create_app(settings), base_url="http://127.0.0.1:8000")
 
 
 def _create_campaign(client: TestClient, name: str = "Night Roads") -> dict:
@@ -127,6 +128,31 @@ def test_health_reports_db_ok_and_z_timestamp(seeded_settings):
     assert body["db_path"].endswith("myroll.test.sqlite3")
     assert not body["db_path"].startswith("/")
     assert body["time"].endswith("Z")
+
+
+def test_local_request_boundary_rejects_bad_host_and_cross_site_unsafe_requests(seeded_settings):
+    client = _client(seeded_settings)
+
+    assert client.get("/health").status_code == 200
+
+    bad_host = client.get("/health", headers={"host": "evil.test"})
+    assert bad_host.status_code == 400
+
+    cross_site = client.post(
+        "/api/player-display/blackout",
+        headers={"origin": "https://evil.test", "sec-fetch-site": "cross-site"},
+    )
+    assert cross_site.status_code == 403
+    assert cross_site.json()["error"]["code"] == "cross_site_request_rejected"
+
+    no_browser_headers = client.post("/api/player-display/blackout")
+    assert no_browser_headers.status_code == 200
+
+    vite_origin = client.post(
+        "/api/player-display/blackout",
+        headers={"origin": "http://127.0.0.1:5173", "sec-fetch-site": "same-site"},
+    )
+    assert vite_origin.status_code == 200
 
 
 def test_meta_reports_seed_and_schema(seeded_settings):
@@ -448,7 +474,49 @@ def test_asset_upload_derives_metadata_from_validated_image(seeded_settings):
     assert webp["width"] == 18
 
 
-def test_asset_import_path_copies_into_managed_storage(seeded_settings, tmp_path):
+def test_asset_upload_duplicate_uses_content_addressed_blob(seeded_settings):
+    client = _client(seeded_settings)
+    content = _image_bytes("PNG", (19, 23))
+
+    first = _upload_image(client, DEMO_CAMPAIGN_ID, filename="first.png", content=content, name="First")
+    second = _upload_image(client, DEMO_CAMPAIGN_ID, filename="second.png", content=content, name="Second")
+
+    assert first["checksum"] == second["checksum"]
+    assert first["relative_path"] == second["relative_path"]
+    assert second["original_filename"] == "second.png"
+    assert (seeded_settings.asset_dir / second["relative_path"]).read_bytes() == content
+
+
+def test_asset_upload_rejects_symlink_shard_directory(seeded_settings, tmp_path):
+    client = _client(seeded_settings)
+    content = b""
+    shard = seeded_settings.asset_dir / "missing"
+    for width in range(21, 40):
+        candidate = _image_bytes("PNG", (width, 17))
+        checksum = hashlib.sha256(candidate).hexdigest()
+        candidate_shard = seeded_settings.asset_dir / checksum[:2]
+        if not candidate_shard.exists():
+            content = candidate
+            shard = candidate_shard
+            break
+    assert content
+
+    escape_dir = tmp_path / "escape"
+    escape_dir.mkdir()
+    shard.symlink_to(escape_dir, target_is_directory=True)
+
+    response = client.post(
+        f"/api/campaigns/{DEMO_CAMPAIGN_ID}/assets/upload",
+        data={"kind": "handout_image", "visibility": "private"},
+        files={"file": ("portrait.png", content, "image/png")},
+    )
+
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "asset_directory_invalid"
+    assert not any(escape_dir.iterdir())
+
+
+def test_asset_import_path_endpoint_is_not_public(seeded_settings, tmp_path):
     source = tmp_path / "source.jpeg"
     source.write_bytes(_image_bytes("JPEG", (32, 24)))
     client = _client(seeded_settings)
@@ -464,13 +532,7 @@ def test_asset_import_path_copies_into_managed_storage(seeded_settings, tmp_path
         },
     )
 
-    assert response.status_code == 201
-    asset = response.json()
-    assert asset["mime_type"] == "image/jpeg"
-    assert asset["relative_path"] != str(source)
-    assert (seeded_settings.asset_dir / asset["relative_path"]).exists()
-    assert asset["visibility"] == "private"
-    assert asset["tags"] == ["scene", "copy"]
+    assert response.status_code == 404
 
 
 def test_asset_import_rejects_unsupported_large_and_decompression_bomb_inputs(seeded_settings, monkeypatch):
@@ -1135,7 +1197,7 @@ def test_notes_and_public_snippets_snapshot_private_note_text(seeded_settings):
     assert display["updated_at"].endswith("Z")
 
 
-def test_markdown_import_copies_content_and_exposes_no_absolute_path(seeded_settings, tmp_path):
+def test_markdown_upload_import_copies_content_and_path_import_is_not_public(seeded_settings, tmp_path):
     client = _client(seeded_settings)
     campaign = _create_campaign(client, "Import Notes Campaign")
     markdown_path = tmp_path / "session-secret.md"
@@ -1151,15 +1213,11 @@ def test_markdown_import_copies_content_and_exposes_no_absolute_path(seeded_sett
         files={"file": ("upload.md", b"# Uploaded\n\nCopied upload body.", "text/markdown")},
     )
     bad_extension = client.post(
-        f"/api/campaigns/{campaign['id']}/notes/import-path",
-        json={"source_path": str(tmp_path / "bad.pdf")},
+        f"/api/campaigns/{campaign['id']}/notes/import-upload",
+        files={"file": ("bad.pdf", b"not markdown", "application/pdf")},
     )
 
-    assert path_response.status_code == 201
-    imported = path_response.json()
-    assert imported["private_body"].startswith("# Imported")
-    assert imported["source_label"] == "session-secret.md"
-    assert str(tmp_path) not in json.dumps(imported)
+    assert path_response.status_code == 404
     assert upload_response.status_code == 201
     assert upload_response.json()["source_label"] == "upload.md"
     assert upload_response.json()["tags"] == ["upload", "note"]
@@ -1750,7 +1808,7 @@ def test_integrity_error_uses_safe_error_envelope(seeded_settings):
     def test_integrity_error():  # noqa: ANN202
         raise IntegrityError("statement", "params", Exception("raw database detail"))
 
-    response = TestClient(app).get("/test-integrity-error")
+    response = TestClient(app, base_url="http://127.0.0.1:8000").get("/test-integrity-error")
     assert response.status_code == 409
     assert response.json() == {
         "error": {

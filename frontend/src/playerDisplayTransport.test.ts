@@ -22,7 +22,7 @@ describe("player display transport", () => {
     });
   });
 
-  it("rejects wrong origin, wrong namespace, and content-bearing messages", () => {
+  it("rejects wrong origin, wrong namespace, and non-envelope keys", () => {
     const message = makeTransportMessage("heartbeat", "display-1", {
       revision: 1,
       identify_revision: 0
@@ -30,6 +30,7 @@ describe("player display transport", () => {
 
     expect(parseWindowMessage({ origin: "https://wrong.local", data: message } as MessageEvent, "http://localhost")).toBeNull();
     expect(parseTransportData({ ...message, namespace: "other" })).toBeNull();
+    expect(parseTransportData({ ...message, debug: true })).toBeNull();
     expect(parseTransportData({ ...message, title: "Private Scene Name" })).toBeNull();
     expect(parseTransportData({ ...message, payload: { title: "Nope" } })).toBeNull();
     expect(parseTransportData({ ...message, asset_url: "/api/player-display/assets/asset/blob" })).toBeNull();

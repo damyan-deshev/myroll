@@ -1,9 +1,22 @@
 # Third-Party Code Review Follow-Up
 
 Date: 2026-05-01
-Status: actionable follow-up plan
+Status: implementation follow-up, partially fixed
 
 This document captures the parts of the external review that still matter after checking the actual code. It is intentionally not a rewrite of the review's severity order. The useful unit here is "what should we fix next, and why?".
+
+## Current Status
+
+Fixed:
+
+- Slice 1: local API request boundary now has a trusted Host guard, exact local CORS origins, and an unsafe-method Origin / Fetch Metadata guard.
+- Slice 2: public `import-path` endpoints and UI/client controls were removed; uploads remain the supported import path.
+- Slice 4: player-display transport now accepts only the exact notification envelope keys.
+- Slice 5: asset writes use unconditional atomic replace and reject symlink storage directories.
+
+Still open:
+
+- Spike 3: extract the player-display rendering boundary from `frontend/src/App.tsx`. This remains an architecture slice, not a confirmed exploit.
 
 ## Calibration
 
@@ -27,7 +40,7 @@ I used this validation rubric:
 
 ### Slice 1: Local API request boundary
 
-Disposition: carry forward, high priority, but with corrected exploit shape.
+Disposition: fixed, with corrected exploit shape.
 
 The review is right that the FastAPI app has no Host, Origin, or CORS middleware. `backend/app/factory.py` constructs the app directly and includes routes without request-boundary middleware. The local backend also defaults to `127.0.0.1:8000`.
 
@@ -58,6 +71,12 @@ Acceptance criteria:
 - Same-origin/proxy development flow still works at `/gm` and `/player`.
 - Backend tests cover allowed local host, rejected host, rejected cross-site origin, and no-regression for local TestClient calls.
 
+Implementation:
+
+- `backend/app/factory.py` adds `TrustedHostMiddleware`, exact local CORS origins, and an unsafe-method browser-origin guard.
+- `backend/app/settings.py` exposes `MYROLL_ALLOWED_HOSTS` and `MYROLL_ALLOWED_ORIGINS` overrides while keeping local defaults.
+- `backend/tests/test_api.py` covers allowed local requests, bad Host rejection, cross-site POST rejection, and no-browser-header local calls.
+
 Primary files:
 
 - `backend/app/factory.py`
@@ -66,7 +85,7 @@ Primary files:
 
 ### Slice 2: Remove or hard-bound `import-path`
 
-Disposition: carry forward, high priority, but not as "arbitrary file content" in the broad form stated.
+Disposition: fixed by removing public path import, not by allowlisting.
 
 The API currently accepts local filesystem paths from HTTP payloads:
 
@@ -101,6 +120,13 @@ Acceptance criteria:
 - Upload import behavior remains intact for images and notes.
 - Tests are updated to prove path import is gone or guarded, and upload import still works.
 
+Implementation:
+
+- Removed public `assets/import-path` and `notes/import-path` route handlers and request models.
+- Removed frontend API client methods and `/gm` controls for path import.
+- Kept multipart upload imports for assets and notes.
+- Tests assert the former path endpoints return 404 and upload imports still work.
+
 Primary files:
 
 - `backend/app/api/routes.py`
@@ -113,7 +139,7 @@ Primary files:
 
 ### Spike 3: Player-display boundary extraction
 
-Disposition: carry forward as an architecture spike, not as an immediate exploit.
+Disposition: still open as an architecture spike, not as an immediate exploit.
 
 `frontend/src/App.tsx` is 4,512 lines and contains the GM workspace, asset library, notes, maps/fog/tokens, party tracker, combat tracker, transport handling, and `/player` rendering path. That is not automatically a security bug, but it does make the most important product boundary too easy to weaken accidentally.
 
@@ -143,7 +169,7 @@ Primary files:
 
 ### Slice 4: Rename and strict-validate display transport envelopes
 
-Disposition: carry forward as defense-in-depth, medium priority, paired with Spike 3.
+Disposition: fixed as defense-in-depth.
 
 The review is correct that `FORBIDDEN_CONTENT_KEYS` is misleading. The transport currently carries heartbeat and "display state changed" notifications. Actual display content is fetched by `/player` through `GET /api/player-display`.
 
@@ -161,6 +187,12 @@ Acceptance criteria:
 - The code no longer uses "content sanitization" naming for transport messages.
 - Existing heartbeat and display-state-changed behavior remains unchanged.
 
+Implementation:
+
+- `frontend/src/playerDisplayTransport.ts` now validates an exact six-key envelope.
+- Unknown keys, including content-shaped keys such as `payload`, `asset_url`, and `mask_url`, are rejected because they are outside the envelope schema.
+- Tests were renamed around envelope validation rather than content sanitization.
+
 Primary files:
 
 - `frontend/src/playerDisplayTransport.ts`
@@ -168,7 +200,7 @@ Primary files:
 
 ### Slice 5: Asset-store atomic write and symlink hardening
 
-Disposition: carry forward as low-cost hardening, medium/low priority.
+Disposition: fixed as low-cost hardening.
 
 The external review's data-corruption argument is overstated. Asset filenames are content-addressed by checksum, and if two uploads have the same checksum they are the same bytes. The app also does not appear to depend on blob mtime/permissions for asset identity.
 
@@ -193,6 +225,13 @@ Acceptance criteria:
 - A symlink shard directory under `asset_dir` is rejected.
 - Asset writes cannot escape `settings.asset_dir`.
 
+Implementation:
+
+- `backend/app/asset_store.py` prepares and validates the asset root, temp directory, and checksum shard directory before writing.
+- Symlink storage directories are rejected.
+- The pre-write `exists()` branch was removed; validated uploads use unconditional `os.replace`.
+- Backend tests cover duplicate content-addressed uploads and symlink shard rejection.
+
 Primary files:
 
 - `backend/app/asset_store.py`
@@ -205,9 +244,8 @@ Primary files:
 - "Transport sanitization prevents content leaks" is not true today because the transport is notification-only. Fix naming/schema to prevent future misuse.
 - "Asset upload race corrupts data" is too strong for current content-addressed blobs. The symlink and atomicity cleanup is still worth doing.
 
-## Suggested Sequence
+## Remaining Sequence
 
-1. Implement Slice 1 first. It reduces the blast radius of every localhost API issue.
-2. Implement Slice 2 next. It removes the riskiest path-reading API shape.
-3. Do Spike 3 and Slice 4 together or back-to-back. They protect the player-display boundary from future feature drift.
-4. Do Slice 5 when touching asset import next; it is small and testable but less urgent than the API boundary.
+1. Extract the player-display rendering boundary from `frontend/src/App.tsx`.
+2. Keep the transport channel notification-only; any future content-bearing player display feature should go through the backend public display serializer.
+3. After the extraction, add focused tests around each player-display mode using sanitized public payloads only.

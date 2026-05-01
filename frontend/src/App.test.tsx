@@ -706,16 +706,13 @@ describe("GM shell widgets", () => {
     });
   });
 
-  it("imports assets and sends public images from the asset widget", async () => {
+  it("uploads assets and sends public images from the asset widget", async () => {
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.endsWith("/api/campaigns/c1/assets/upload")) {
         expect(init?.body).toBeInstanceOf(FormData);
         expect(init?.headers).toBeUndefined();
         return jsonResponse(asset, true, 201);
-      }
-      if (url.endsWith("/api/campaigns/c1/assets/import-path")) {
-        return jsonResponse({ ...asset, id: "44444444-4444-4444-8444-444444444444", name: "Path Asset" }, true, 201);
       }
       if (url.endsWith("/api/campaigns/c1/assets")) return jsonResponse([asset]);
       if (url.endsWith("/api/player-display/show-image")) {
@@ -758,15 +755,6 @@ describe("GM shell widgets", () => {
     fireEvent.click(screen.getByRole("button", { name: /Upload/ }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/campaigns/c1/assets/upload", expect.any(Object)));
 
-    fireEvent.change(screen.getByPlaceholderText("/path/to/image.png"), { target: { value: "/tmp/storm.png" } });
-    fireEvent.click(screen.getByRole("button", { name: "Import path" }));
-    await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/campaigns/c1/assets/import-path",
-        expect.objectContaining({ method: "POST" })
-      )
-    );
-
     fireEvent.click(screen.getByRole("button", { name: /Send to player/ }));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
@@ -790,7 +778,6 @@ describe("GM shell widgets", () => {
         return jsonResponse(note);
       }
       if (url.endsWith("/api/campaigns/c1/notes/import-upload")) return jsonResponse(note, true, 201);
-      if (url.endsWith("/api/campaigns/c1/notes/import-path")) return jsonResponse(note, true, 201);
       if (url.endsWith("/api/campaigns/c1/public-snippets")) {
         if (init?.method === "POST") {
           snippetCreated = true;

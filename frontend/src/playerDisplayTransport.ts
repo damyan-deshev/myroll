@@ -14,30 +14,13 @@ export type PlayerDisplayTransportMessage = {
   sentAt: string;
 };
 
-const FORBIDDEN_CONTENT_KEYS = new Set([
-  "title",
-  "subtitle",
-  "payload",
-  "asset_id",
-  "asset_url",
-  "scene_map_id",
-  "map_id",
-  "grid",
-  "fog",
-  "mask_id",
-  "mask_url",
-  "mime_type",
-  "width",
-  "height",
-  "caption",
-  "fit_mode",
-  "active_campaign_name",
-  "active_session_name",
-  "active_session_title",
-  "active_scene_name",
-  "active_scene_title",
-  "campaign_name",
-  "scene_name"
+const TRANSPORT_ENVELOPE_KEYS = new Set([
+  "namespace",
+  "type",
+  "displayWindowId",
+  "revision",
+  "identify_revision",
+  "sentAt"
 ]);
 
 function nowIso(): string {
@@ -67,12 +50,12 @@ export function makeTransportMessage(
 export function parseTransportData(data: unknown): PlayerDisplayTransportMessage | null {
   if (!data || typeof data !== "object") return null;
   const record = data as Record<string, unknown>;
+  if (Object.keys(record).some((key) => !TRANSPORT_ENVELOPE_KEYS.has(key))) return null;
   if (record.namespace !== PLAYER_DISPLAY_NAMESPACE) return null;
   if (record.type !== "heartbeat" && record.type !== "display-state-changed") return null;
   if (typeof record.displayWindowId !== "string" || !record.displayWindowId) return null;
-  if (typeof record.revision !== "number" || typeof record.identify_revision !== "number") return null;
+  if (!Number.isSafeInteger(record.revision) || !Number.isSafeInteger(record.identify_revision)) return null;
   if (typeof record.sentAt !== "string") return null;
-  if ([...FORBIDDEN_CONTENT_KEYS].some((key) => key in record)) return null;
   return record as PlayerDisplayTransportMessage;
 }
 

@@ -12,6 +12,12 @@ APP_NAME = "myroll"
 APP_VERSION = "dev"
 
 
+def _csv_setting(value: str | None) -> tuple[str, ...]:
+    if not value:
+        return ()
+    return tuple(item.strip() for item in value.split(",") if item.strip())
+
+
 def project_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -28,6 +34,8 @@ class Settings:
     demo_name_map_path: Path | None = None
     host: str = "127.0.0.1"
     port: int = 8000
+    allowed_hosts: tuple[str, ...] = ("127.0.0.1", "localhost")
+    allowed_origins: tuple[str, ...] = ("http://127.0.0.1:5173", "http://localhost:5173")
     app_name: str = APP_NAME
     app_version: str = APP_VERSION
 
@@ -45,6 +53,10 @@ class Settings:
         demo_name_map_path = Path(demo_name_map_raw).expanduser() if demo_name_map_raw else root / "demo" / "local" / "name-map.private.json"
         host = source.get("MYROLL_HOST", "127.0.0.1")
         port = int(source.get("MYROLL_PORT", "8000"))
+        configured_hosts = _csv_setting(source.get("MYROLL_ALLOWED_HOSTS"))
+        allowed_hosts = configured_hosts or tuple(dict.fromkeys(("127.0.0.1", "localhost", host)))
+        configured_origins = _csv_setting(source.get("MYROLL_ALLOWED_ORIGINS"))
+        allowed_origins = configured_origins or ("http://127.0.0.1:5173", "http://localhost:5173")
         return cls(
             project_root=root,
             data_dir=data_dir.resolve(),
@@ -56,6 +68,8 @@ class Settings:
             demo_name_map_path=demo_name_map_path.resolve(),
             host=host,
             port=port,
+            allowed_hosts=allowed_hosts,
+            allowed_origins=allowed_origins,
         )
 
     @property

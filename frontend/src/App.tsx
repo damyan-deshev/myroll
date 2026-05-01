@@ -1172,7 +1172,6 @@ function broadcastDisplayChange(state: PlayerDisplayState, targetWindow?: Window
 export function AssetLibraryWidget(props: SharedWidgetProps) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
-  const [sourcePath, setSourcePath] = useState("");
   const [kind, setKind] = useState<AssetKind>("handout_image");
   const [visibility, setVisibility] = useState<AssetVisibility>("private");
   const [name, setName] = useState("");
@@ -1214,24 +1213,6 @@ export function AssetLibraryWidget(props: SharedWidgetProps) {
     }
   });
 
-  const importPath = useMutation({
-    mutationFn: () =>
-      api.importAssetPath(props.selectedCampaignId!, {
-        source_path: sourcePath,
-        kind,
-        visibility,
-        name,
-        tags: splitTags(tags)
-      }),
-    onSuccess: (asset) => {
-      setSourcePath("");
-      setName("");
-      setTags("");
-      setSelectedAssetId(asset.id);
-      void queryClient.invalidateQueries({ queryKey: ["assets", props.selectedCampaignId] });
-    }
-  });
-
   const sendImage = useMutation({
     mutationFn: () =>
       api.playerDisplayShowImage({
@@ -1248,7 +1229,7 @@ export function AssetLibraryWidget(props: SharedWidgetProps) {
   });
 
   if (!props.selectedCampaignId) return <EmptyText text="Select a campaign to manage assets." />;
-  const error = upload.error ?? importPath.error ?? sendImage.error ?? assetsQuery.error;
+  const error = upload.error ?? sendImage.error ?? assetsQuery.error;
 
   return (
     <div className="stack">
@@ -1288,19 +1269,6 @@ export function AssetLibraryWidget(props: SharedWidgetProps) {
             <Upload size={14} /> Upload
           </button>
         </div>
-      </form>
-
-      <form
-        className="inline-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (sourcePath.trim()) importPath.mutate();
-        }}
-      >
-        <input value={sourcePath} onChange={(event) => setSourcePath(event.target.value)} placeholder="/path/to/image.png" />
-        <button type="submit" disabled={!sourcePath.trim() || importPath.isPending}>
-          Import path
-        </button>
       </form>
 
       <div className="asset-list">
@@ -1374,7 +1342,6 @@ export function NotesWidget(props: SharedWidgetProps) {
   const [snippetBody, setSnippetBody] = useState("");
   const [selectedNoteText, setSelectedNoteText] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importPath, setImportPath] = useState("");
   const [sceneOnly, setSceneOnly] = useState(true);
 
   const notesQuery = useQuery({
@@ -1490,21 +1457,6 @@ export function NotesWidget(props: SharedWidgetProps) {
       refreshNotes(note);
     }
   });
-  const importNote = useMutation({
-    mutationFn: () =>
-      api.importNotePath(props.selectedCampaignId!, {
-        source_path: importPath,
-        title: noteTitle || null,
-        tags: splitTags(noteTags),
-        session_id: noteSessionId,
-        scene_id: noteSceneId ?? (sceneOnly ? props.selectedSceneId : null),
-        asset_id: noteAssetId
-      }),
-    onSuccess: (note) => {
-      setImportPath("");
-      refreshNotes(note);
-    }
-  });
   const createSnippet = useMutation({
     mutationFn: (body?: string) =>
       api.createPublicSnippet(props.selectedCampaignId!, {
@@ -1551,7 +1503,6 @@ export function NotesWidget(props: SharedWidgetProps) {
     createNote.error ??
     saveNote.error ??
     uploadNote.error ??
-    importNote.error ??
     createSnippet.error ??
     saveSnippet.error ??
     publishSnippet.error;
@@ -1656,18 +1607,6 @@ export function NotesWidget(props: SharedWidgetProps) {
             <Upload size={14} /> Import file
           </button>
         </div>
-        <form
-          className="inline-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (importPath.trim()) importNote.mutate();
-          }}
-        >
-          <input value={importPath} onChange={(event) => setImportPath(event.target.value)} placeholder="/path/to/note.md" />
-          <button type="submit" disabled={!importPath.trim() || importNote.isPending}>
-            Import path
-          </button>
-        </form>
       </div>
 
       <div className="snippet-editor">

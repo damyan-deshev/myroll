@@ -140,14 +140,6 @@ export const api = {
     if (payload.asset_id) body.append("asset_id", payload.asset_id);
     return request<Note>(`/api/campaigns/${campaignId}/notes/import-upload`, { method: "POST", body });
   },
-  importNotePath: (
-    campaignId: string,
-    payload: { source_path: string; title?: string | null; tags?: string[]; session_id?: string | null; scene_id?: string | null; asset_id?: string | null }
-  ) =>
-    request<Note>(`/api/campaigns/${campaignId}/notes/import-path`, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    }),
   publicSnippets: (campaignId: string) => request<PublicSnippetsResponse>(`/api/campaigns/${campaignId}/public-snippets`),
   createPublicSnippet: (campaignId: string, payload: { note_id?: string | null; title?: string | null; body: string; format?: "markdown" }) =>
     request<PublicSnippet>(`/api/campaigns/${campaignId}/public-snippets`, {
@@ -285,20 +277,6 @@ export const api = {
     if (payload.tags) body.append("tags", payload.tags);
     return request<Asset>(`/api/campaigns/${campaignId}/assets/upload`, { method: "POST", body });
   },
-  importAssetPath: (
-    campaignId: string,
-    payload: {
-      source_path: string;
-      kind: AssetKind;
-      visibility: AssetVisibility;
-      name?: string;
-      tags?: string[];
-    }
-  ) =>
-    request<Asset>(`/api/campaigns/${campaignId}/assets/import-path`, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    }),
   maps: (campaignId: string) => request<MapRecord[]>(`/api/campaigns/${campaignId}/maps`),
   createMap: (campaignId: string, payload: { asset_id: string; name?: string | null }) =>
     request<MapRecord>(`/api/campaigns/${campaignId}/maps`, {

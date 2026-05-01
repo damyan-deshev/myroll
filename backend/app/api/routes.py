@@ -16,7 +16,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from backend.app.api.errors import api_error
-from backend.app.asset_store import AssetImportError, resolve_asset_path, store_image_path, store_image_stream
+from backend.app.asset_store import AssetImportError, resolve_asset_path, store_image_stream
 from backend.app.db.engine import assert_database_ok, session_for_settings
 from backend.app.db.meta import get_app_meta, get_schema_version
 from backend.app.db.models import (
@@ -302,24 +302,6 @@ class AssetOut(BaseModel):
     tags: list[str]
     created_at: str
     updated_at: str
-
-
-class AssetImportPathIn(BaseModel):
-    source_path: str = Field(min_length=1, max_length=4000)
-    kind: str = "handout_image"
-    visibility: str = "private"
-    name: str | None = Field(default=None, max_length=160)
-    tags: list[str] = Field(default_factory=list)
-
-    @field_validator("source_path", "kind", "visibility", mode="before")
-    @classmethod
-    def trim_required_fields(cls, value: object) -> object:
-        return _trim_required(value)
-
-    @field_validator("name", mode="before")
-    @classmethod
-    def trim_name(cls, value: object) -> object:
-        return _trim_optional(value)
 
 
 class ShowImageIn(BaseModel):
@@ -904,25 +886,6 @@ class NotePatch(BaseModel):
     session_id: UUID | None = None
     scene_id: UUID | None = None
     asset_id: UUID | None = None
-
-    @field_validator("title", mode="before")
-    @classmethod
-    def trim_title(cls, value: object) -> object:
-        return _trim_optional(value)
-
-
-class NoteImportPathIn(BaseModel):
-    source_path: str = Field(min_length=1, max_length=4000)
-    title: str | None = Field(default=None, max_length=160)
-    tags: list[str] = Field(default_factory=list)
-    session_id: UUID | None = None
-    scene_id: UUID | None = None
-    asset_id: UUID | None = None
-
-    @field_validator("source_path", mode="before")
-    @classmethod
-    def trim_source_path(cls, value: object) -> object:
-        return _trim_required(value)
 
     @field_validator("title", mode="before")
     @classmethod
@@ -3423,39 +3386,6 @@ def upload_asset(
     return _asset_out(asset)
 
 
-@router.post(
-    "/api/campaigns/{campaign_id}/assets/import-path",
-    response_model=AssetOut,
-    status_code=status.HTTP_201_CREATED,
-)
-def import_asset_path(
-    campaign_id: UUID,
-    payload: AssetImportPathIn,
-    request: Request,
-    db: DbSession,
-) -> AssetOut:
-    kind = _require_image_asset_kind(payload.kind)
-    visibility = _require_asset_visibility(payload.visibility)
-    with db.begin():
-        _require_campaign(db, campaign_id)
-    try:
-        stored = store_image_path(request.app.state.settings, Path(payload.source_path))
-    except AssetImportError as error:
-        raise api_error(error.status_code, error.code, error.message) from error
-    with db.begin():
-        _require_campaign(db, campaign_id)
-        asset = _create_asset_record(
-            db,
-            campaign_id,
-            kind=kind,
-            visibility=visibility,
-            name=payload.name,
-            tags=payload.tags,
-            stored=stored,
-        )
-    return _asset_out(asset)
-
-
 @router.get("/api/campaigns/{campaign_id}/entities", response_model=EntitiesOut)
 def list_entities(campaign_id: UUID, db: DbSession) -> EntitiesOut:
     _require_campaign(db, campaign_id)
@@ -3972,39 +3902,6 @@ def import_note_upload(
             session_id=session_id,
             scene_id=scene_id,
             asset_id=asset_id,
-            source_kind="imported_markdown",
-            source_name=f"Imported: {source_label}",
-            source_label=source_label,
-        )
-    return _note_out(note)
-
-
-@router.post(
-    "/api/campaigns/{campaign_id}/notes/import-path",
-    response_model=NoteOut,
-    status_code=status.HTTP_201_CREATED,
-)
-def import_note_path(campaign_id: UUID, payload: NoteImportPathIn, db: DbSession) -> NoteOut:
-    source_path = Path(payload.source_path).expanduser()
-    _validate_markdown_suffix(source_path.name)
-    if not source_path.exists() or not source_path.is_file():
-        raise api_error(404, "markdown_file_not_found", "Markdown file not found")
-    if source_path.stat().st_size > MAX_MARKDOWN_IMPORT_BYTES:
-        raise api_error(413, "markdown_file_too_large", "Markdown import is too large")
-    body = _decode_markdown_bytes(source_path.read_bytes())
-    source_label = source_path.name
-    note_title = _clean_asset_name(payload.title, source_label)
-    with db.begin():
-        _require_campaign(db, campaign_id)
-        note = _create_note_record(
-            db,
-            campaign_id=str(campaign_id),
-            title=note_title,
-            private_body=body,
-            tags=payload.tags,
-            session_id=payload.session_id,
-            scene_id=payload.scene_id,
-            asset_id=payload.asset_id,
             source_kind="imported_markdown",
             source_name=f"Imported: {source_label}",
             source_label=source_label,
