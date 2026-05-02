@@ -64,3 +64,9 @@ curation/contact_sheets/
 ## Import Rule
 
 Import `manifest.json` into Myroll, copy each `asset.file` into managed asset storage, and create map-image records with `asset.grid`. Do not infer scale from pixels at runtime; the category/asset grid contract is authoritative.
+
+## License
+
+This bundled battle map pack is covered by the repository [ASSET-LICENSE.md](../../../ASSET-LICENSE.md) summary and the full [LICENSE.md](../../../LICENSE.md) terms.
+
+In plain English: free use, modification, redistribution, live play, paid GMing, actual-play use, tutorials, reviews, and community sharing are allowed. Resale as an asset pack, map pack, VTT marketplace module, paid download, paid database, or substantially similar product requires separate written permission from Damyan Deshev.

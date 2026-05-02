@@ -282,6 +282,18 @@ It does not include local databases, private campaign data, exports, backups, ge
 
 If a file is needed to run the product, it belongs here. If a file only explains how the sausage was made, it probably does not.
 
+## License
+
+Myroll uses the [Myroll Community No-Resale License 1.0](LICENSE.md).
+
+The intent is simple: the project should be inspectable, reproducible, forkable, modifiable, and useful to the tabletop RPG community, while preventing resale of Myroll or its bundled/static assets as someone else's product.
+
+You may use, fork, modify, and redistribute Myroll for free. You may also use Myroll and its bundled assets in paid GM sessions, actual-play streams, recorded games, tutorials, reviews, Patreon/Ko-fi/community posts, support work, installation work, customization work, and campaign preparation work.
+
+You may not resell Myroll, a Myroll fork, a packaged Myroll build, a paid hosted Myroll access product, or the bundled/static assets as a map pack, token pack, portrait pack, stock-art pack, VTT marketplace module, paid bundle, paid database, or substantially similar product without separate written permission from Damyan Deshev.
+
+Static assets have an additional plain-English summary in [ASSET-LICENSE.md](ASSET-LICENSE.md). The full license terms remain in [LICENSE.md](LICENSE.md).
+
 ## Design bias
 
 Myroll favors:
