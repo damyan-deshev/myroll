@@ -1,6 +1,6 @@
 # Myroll Documentation
 
-Date: 2026-04-27
+Date: 2026-05-02
 
 Start here:
 
@@ -19,6 +19,8 @@ Implementation planning:
 - `BACKLOG.md`
 - `DECISION-REGISTER.md`
 - `SECURITY-REVIEW-FOLLOWUP.md`
+- `BATTLE-MAP-ASSET-HANDOFF.md`
+  - Current curated battle-map production pack location, bundled asset-pack requirement, manifest contract, importer starting point, and gridless-map calibration requirements.
 
 Current implementation pivot:
 

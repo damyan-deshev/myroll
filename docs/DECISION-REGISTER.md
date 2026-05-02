@@ -1,6 +1,6 @@
 # Myroll Decision Register
 
-Date: 2026-04-27
+Date: 2026-05-02
 
 ## DR-001: Use A Local Backend For MVP Persistence
 
@@ -677,3 +677,57 @@ Consequences:
 - `/gm/map`, `/gm/library`, `/gm/actors`, `/gm/combat`, and `/gm/scene` are focused surfaces.
 - `/gm/floating` preserves persistent `workspace_widgets` drag/resize behavior and continues to be covered by regression tests.
 - Future UI work should prefer focused surfaces for dense workflows and reserve floating panels for contextual overlays or advanced custom layouts.
+
+## DR-048: Generated Battle Map Packs Use Manifest And Category Grid Contracts
+
+Decision: generated battle-map packs define tactical scale through manifest/category metadata, and Myroll will later import the curated production pack as normal validated `map_image` assets rather than inferring scale from prompts or image content.
+
+Rationale:
+- Diffusion output can drift in perceived scale even when the prompt asks for tactical maps.
+- A deterministic category key plus grid contract gives the UI a stable way to overlay a live grid.
+- Baked grids in generated images are brittle and make player-facing rendering harder to control.
+- Generated files should still enter Myroll through the existing image validation and managed-storage boundary.
+
+Consequences:
+- Raw ComfyUI output packs stay external provenance artifacts; `myroll_battle_maps_production_v1/manifest.json` is the app-facing import source.
+- Each generated category directory owns `grid.cols`, `grid.rows`, `grid.pxPerCell`, `grid.offsetX`, and `grid.offsetY`.
+- Each accepted production asset also carries the same authoritative `asset.grid` contract in the pack manifest.
+- Importers must validate actual image dimensions against the category grid contract before creating maps.
+- Myroll should set map grid size from the contract and render the grid live.
+- Large generated asset packs remain external artifacts until an explicit import/storage workflow is built.
+
+## DR-049: Pack Import Is Separate From User-Facing Asset Import
+
+Decision: bundled static asset-pack registration and curated production pack import are separate from user-facing asset import. Bundled packs ship with the app and auto-register; local admin/development import may read an explicitly configured manifest path; user-facing asset import must keep an explicit user-selected file boundary.
+
+Rationale:
+- Myroll previously removed public `source_path` import after security review.
+- A trusted local manifest importer is useful for curated internal packs, but exposing arbitrary filesystem paths through HTTP would re-open the wrong product boundary.
+- Users still need practical bulk import for downloaded maps, local drawings, token art, and handouts.
+- Built-in maps should be available after installation without asking the user to import the same static pack manually.
+
+Consequences:
+- Bundled pack registration reads `manifest.json`, validates relative paths, checksums, dimensions, and category metadata, then exposes read-only catalog entries.
+- The first production pack may be committed as an immutable bundled asset version to avoid separate artifact-storage infrastructure.
+- Keep a small representative fixture pack for tests even if the full pack is committed.
+- If repository size or update frequency becomes painful, move pack blobs to Git LFS, release assets, or another artifact store without changing the manifest/catalog contract.
+- User-facing import uses browser upload now and may later use a directory picker only after explicit user selection.
+- Every imported file, including generated maps and future token packs, goes through backend image validation before becoming an asset.
+- External pack directories are never served directly by player-display blob endpoints.
+- Campaign use may initially copy bundled blobs into managed storage, but a later read-only bundled blob source is acceptable if player-display blob scoping and export semantics stay explicit.
+
+## DR-050: Gridless Map Calibration Uses Live Grid Size And Offsets
+
+Decision: gridless battle maps are calibrated by adjusting live grid size and offset settings, exposed through fast GM resize/nudge controls, rather than by editing the image or moving fog/token coordinate space.
+
+Rationale:
+- The production maps are intentionally gridless.
+- Fog masks and token coordinates already use intrinsic map pixels and should remain stable.
+- Size stepper controls plus a four-direction nudge UI are faster for the GM than numeric-only fields, but the persistence primitive should stay simple.
+
+Consequences:
+- GM map-workbench resize controls update `grid_size_px`.
+- GM map-workbench nudge controls update `grid_offset_x` and `grid_offset_y`.
+- Fine/coarse resize, nudge, and numeric controls can share the existing `PATCH /api/maps/{map_id}/grid` behavior.
+- Player grid visibility remains a scene-map setting and does not expose the GM calibration grid unless explicitly enabled.
+- Future pan/framing features must stay separate from tactical grid calibration.

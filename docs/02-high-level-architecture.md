@@ -1,6 +1,6 @@
 # Myroll High-Level Architecture
 
-Date: 2026-04-27
+Date: 2026-05-02
 Status: Draft 1
 
 ## 1. Architectural Thesis
@@ -157,6 +157,11 @@ Current asset implementation:
 - SQLite stores asset metadata, checksums, visibility, dimensions, and relative storage keys;
 - client MIME type, extension, filename, width, and height are not trusted;
 - image metadata comes from backend validation.
+- externally generated battle-map packs are fixture/input artifacts, not runtime blobs; the app-facing artifact is the curated production `manifest.json` plus category-local `category.json` files, and a future importer should validate every accepted WebP through the same backend image path before copying it into managed storage.
+- curated static asset packs may be shipped with packaged builds as read-only bundled resources and auto-registered on startup, so installed users do not manually import the built-in map library.
+- the first production pack may live in git as an immutable bundled asset version to avoid introducing separate artifact-storage infrastructure; move to Git LFS/release artifacts only if size or update frequency justifies it.
+- user-facing bulk asset import should build on explicit browser upload or a future user-selected directory picker, not on arbitrary public HTTP filesystem paths.
+- generated monster/NPC token art should enter as ordinary image assets and become selectable by scene-map portrait tokens through the existing public/private asset gates.
 
 ### 4.2 Scene Runtime Context
 
@@ -263,6 +268,8 @@ Current implementation:
 - fog operations use intrinsic map pixel coordinates and commit on pointer-up/action, not during every drag frame;
 - public fog mask bytes are served only when referenced by the current active player display payload;
 - scene-map tokens use intrinsic map pixel coordinates with `x/y` as center point, `width/height` as rendered size, and rotation around center;
+- generated battle-map category keys may provide default square grid calibration, but the renderer still overlays the grid live rather than relying on baked-in grid pixels;
+- gridless generated maps should be calibrated in the GM map workbench by changing live grid size and offsets, not by rewriting the source image or changing token/fog coordinate space;
 - token visibility is sanitized before public display:
   - `gm_only` never appears in player payloads;
   - `player_visible` appears even under fog;
@@ -946,6 +953,10 @@ The authoritative implementation order is maintained in `ROADMAP.md`. Current hi
 10. Entities, custom fields, party tracker, and public party projection: complete.
 11. Combat tracker basics and public initiative projection: complete.
 12. Scene orchestration and GM context staging: complete.
+13. Backup, export, restore, and public demo hardening: complete.
+14. Multi-surface GM shell rework: complete.
+15. Asset import, battle-map pack import, and grid calibration: proposed.
+16. LLM session memory and GM generation harness: queued unless asset import takes precedence.
 
 ## 14. Architectural Anti-Goals
 

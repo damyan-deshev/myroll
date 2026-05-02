@@ -1,6 +1,6 @@
 # Myroll Backlog
 
-Date: 2026-04-27
+Date: 2026-05-02
 
 ## Completed
 
@@ -21,6 +21,12 @@ Date: 2026-04-27
 
 ## Near Term
 
+- Plan the asset import/battle-map integration slice:
+  - bundled static asset-pack registration so built-in maps ship with the app;
+  - curated production battle-map pack importer;
+  - multi-file user asset import for maps, handouts, portraits, and token art;
+  - GM grid size and nudge controls for gridless maps;
+  - category/search browser for imported map assets.
 - Slice 14 LLM/session-memory work after backup/export hardening.
 - Improve per-surface ergonomics incrementally: panel density, shortcuts, and focused map workbench controls.
 
@@ -57,6 +63,12 @@ Date: 2026-04-27
 - Do not expose API keys, absolute paths, or raw prompt payloads through public endpoints, logs, screenshots, `/health`, or `/api/meta`.
 - Do not publish generated snippets/images/maps/party data to `/player` automatically from an LLM response.
 - Do not bypass the existing asset validation pipeline for diffusion/image outputs.
+- Do not reintroduce public arbitrary `source_path` imports while adding bulk asset import; user-facing import must keep an explicit user-selected file boundary.
+- Do not require installed users to manually import the built-in static map pack after setup.
+- Do not let bundled production packs become frequently rewritten binary churn in git; treat committed packs as immutable versions and move to LFS/release artifacts only when size/update frequency forces it.
+- Do not let battle-map pack import serve images directly from the external pack directory; imported assets must be copied into managed storage.
+- Do not treat generated map prompts, filenames, or contact sheets as tactical scale; use manifest/category grid contracts only.
+- Do not calibrate gridless maps by rewriting the source image or changing fog/token coordinate space; use live grid size and offsets.
 - Do not commit local demo display-name overrides or private local asset manifests; public demo data stays English and original.
 - Do not restore exports in-place over live user data; restore remains offline/script-only into a new data dir.
 - Do not treat export archives as encrypted vaults; they are local convenience packages.

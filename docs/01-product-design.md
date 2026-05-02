@@ -1,6 +1,6 @@
 # Myroll Product Design Document
 
-Date: 2026-04-27
+Date: 2026-05-02
 Status: Draft 1
 
 ## 1. Product Thesis
@@ -136,6 +136,10 @@ Critical actions must be one-click or hotkey-driven:
 - show NPC portrait;
 - show text reveal;
 - exit reveal/edit mode.
+
+Asset-heavy prep needs the same standard. A GM with hundreds of maps or token images should be able to batch import, categorize, search, attach, and align assets without turning session prep into file management.
+
+Gridless battle maps are a deliberate asset style. Myroll should treat the source image as stable art and give the GM fast live-grid calibration controls, including grid size changes and four-direction nudges, instead of requiring image edits or baked grid pixels.
 
 ### 4.5 Safe Reveal Rule
 

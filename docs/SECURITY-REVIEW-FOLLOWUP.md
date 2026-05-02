@@ -1,6 +1,6 @@
 # Third-Party Code Review Follow-Up
 
-Date: 2026-05-01
+Date: 2026-05-02
 Status: fixed; player-display extraction completed as a focused architecture slice
 
 This document captures the parts of the external review that still matter after checking the actual code. It is intentionally not a rewrite of the review's severity order. The useful unit here is "what should we fix next, and why?".
@@ -14,6 +14,12 @@ Fixed:
 - Spike 3: player-display rendering now lives behind a dedicated frontend module boundary.
 - Slice 4: player-display transport now accepts only the exact notification envelope keys.
 - Slice 5: asset writes use unconditional atomic replace and reject symlink storage directories.
+
+Forward note for the battle-map/asset import slice:
+
+- A curated pack importer may read a configured local `manifest.json` as a backend/admin workflow.
+- User-facing bulk import must not restore public arbitrary `source_path` HTTP endpoints.
+- Any directory-picker-style import must use explicit user selection and still validate every file through the backend image pipeline before managed storage.
 
 ## Calibration
 

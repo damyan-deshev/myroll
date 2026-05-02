@@ -1,6 +1,6 @@
 # Myroll Low-Level Architecture
 
-Date: 2026-04-27
+Date: 2026-05-02
 Status: Draft 1
 
 This document defines concrete data shapes, modules, events, operations, and implementation rules for the MVP architecture.
@@ -418,6 +418,8 @@ type Asset = VersionedRecord & {
 };
 ```
 
+Current implementation does not require a dedicated `token_image` path yet; portrait tokens can reference existing image assets. A future reusable monster/token pack importer may add or use `token_image` to separate round/square token art from NPC portraits and handouts.
+
 ### 3.2 Asset Storage
 
 Current implementation:
@@ -445,6 +447,190 @@ interface AssetStore {
 ```
 
 Public display image payloads reference asset IDs and relative public blob URLs. They must not store object URLs, absolute filesystem paths, or private asset metadata.
+
+### 3.3 Generated Battle Map Pack Contract
+
+Generated battle-map packs are external input artifacts, not runtime storage. The production-facing pack is the curated export, not the raw ComfyUI generation tree:
+
+```text
+manifest.json
+taxonomy.json
+README.md
+HANDOFF.md
+assets/battle-maps/fantasy/<collection>/<group>/<category>/
+  category.json
+  images/*.webp
+curation/
+  curation_decisions.json
+  rejections.json
+  source_inventory.json
+  contact_sheets/
+```
+
+`manifest.json` lists accepted app-facing assets. Each accepted asset carries its own grid contract, and each category directory also has a `category.json` summary for tactical scale and browsing:
+
+```ts
+type GeneratedBattleMapPackManifest = {
+  schemaVersion: 1;
+  packId: "myroll_battle_maps_production_v1";
+  title: string;
+  sourcePacks: string[];
+  sourceAssetCount: number;
+  assetCount: number;
+  rejectedCount: number;
+  categories: GeneratedMapCategorySummary[];
+  assets: GeneratedMapAssetManifestEntry[];
+};
+
+type GeneratedMapCategorySummary = {
+  categoryKey: string;
+  label: string;
+  collection: "core" | "diverse" | "weird";
+  group: string;
+  slug: string;
+  categoryPath: string;
+  sourceCount: number;
+  acceptedCount: number;
+  rejectedCount: number;
+};
+
+type GeneratedMapCategoryManifest = {
+  schemaVersion: 1;
+  categoryKey: string;
+  label: string;
+  theme: "fantasy";
+  collection: "core" | "diverse" | "weird";
+  group: string;
+  slug: string;
+  grid: GeneratedMapGrid;
+  assets: GeneratedMapCategoryAssetEntry[];
+  sourcePacks: string[];
+  assetCount: number;
+};
+
+type GeneratedMapCategoryAssetEntry = {
+  id: string;
+  title: string;
+  file: string; // relative to the category directory, usually images/*.webp
+  sourceDecisionKey: string;
+};
+
+type GeneratedMapAssetManifestEntry = {
+  id: string;
+  title: string;
+  file: string;
+  role: "battle_map";
+  format: "webp";
+  theme: "fantasy";
+  collection: "core" | "diverse" | "weird";
+  categoryKey: string;
+  categoryLabel: string;
+  categoryPath: string;
+  grid: GeneratedMapGrid;
+  image: {
+    width: number;
+    height: number;
+    gridless: true;
+  };
+  checksum: {
+    sha256: string;
+  };
+  tags: string[];
+  curation: {
+    status: "accepted";
+    decisionKey: string;
+    reviewedBy: string;
+    reviewedAt: string;
+  };
+  provenance: {
+    sourcePackId: string;
+    sourceAssetKey: string;
+    sourceSlot: number;
+    sourceName: string;
+    sourceWebp?: string;
+    sourcePng?: string;
+    seed?: number;
+    prompt?: string;
+  };
+};
+
+type GeneratedMapGrid = {
+  type: "square";
+  cols: number;
+  rows: number;
+  feetPerCell: number;
+  pxPerCell: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+type GeneratedMapTaxonomy = {
+  schemaVersion: 1;
+  theme: "fantasy";
+  collections: Record<
+    "core" | "diverse" | "weird",
+    {
+      groups: Record<
+        string,
+        {
+          categories: Array<{
+            categoryKey: string;
+            label: string;
+            slug: string;
+            assetCount: number;
+            path: string;
+          }>;
+        }
+      >;
+    }
+  >;
+};
+```
+
+Future import rules:
+- import only curated production `manifest.json`, not raw source `pack.json` files;
+- bundled static packs should be auto-registered from a configured app resource directory at startup, not manually imported by installed users;
+- the first production pack may be committed as an immutable bundled asset version to avoid separate artifact-storage infrastructure;
+- if pack size or update frequency becomes painful, move bundled packs to Git LFS, GitHub release assets, or another artifact store without changing the manifest/catalog contract;
+- resolve every `asset.file` relative to the production pack root and reject absolute paths or path traversal;
+- resolve category-local `category.json` asset files relative to their category directory;
+- use `taxonomy.json` or derived manifest data for browsing, not as the validation source of truth;
+- import generated maps through the existing asset validation and managed-storage pipeline;
+- reject unsupported MIME types and files whose decoded dimensions do not match `grid.cols * grid.pxPerCell` by `grid.rows * grid.pxPerCell`;
+- create `map_image` assets first, then create campaign map records with square grid calibration from the category contract;
+- preserve `categoryKey`, `collection`, generated asset ID, prompt/provenance metadata, and curation status in map/asset metadata for filtering and later regeneration;
+- do not trust the diffusion prompt, filename, or contact sheet for scale;
+- keep generated images gridless and render the tactical grid live from `GridSettings`.
+
+### 3.4 User-Facing Asset Import Contract
+
+The bundled catalog, curated battle-map pack importer, and the user's general asset import flow must stay separate.
+
+Bundled catalog:
+- read-only static asset packs shipped with the app or supplied to development through a configured bundle directory;
+- auto-registered on startup so installed users do not perform a manual import step;
+- validates manifest/category/checksum/dimension metadata before exposing entries in the GM browser;
+- does not treat external pack files as generic public assets.
+
+Pack importer:
+- local development/admin workflow;
+- reads an explicitly configured manifest path;
+- validates checksums, relative paths, category metadata, and decoded image dimensions;
+- creates or refreshes bundled catalog entries after validation;
+- never serves files directly from the external pack directory.
+
+User-facing import:
+- browser upload remains the current supported consent boundary;
+- multi-file upload can batch maps, handouts, portraits, and token art;
+- a future directory picker is acceptable only if the user explicitly selects it and every discovered file still goes through backend validation;
+- arbitrary `source_path` strings must not be accepted by public HTTP APIs;
+- batch defaults may set `kind`, `visibility`, and tags, but backend validation remains authoritative for MIME type, extension, dimensions, checksum, and storage path.
+
+Campaign use of bundled entries:
+- when a GM adds a bundled map to a campaign, Myroll creates a campaign-scoped map record using the bundled entry's title, tags, provenance, and grid contract;
+- the first implementation may either copy the referenced blob into managed content-addressed storage on add, or add an explicit read-only bundled-blob source to asset metadata;
+- whichever storage path is chosen, `/api/player-display/assets/{asset_id}/blob` must remain active-display scoped and must not become a generic bundled asset server;
+- export behavior must be explicit: either include copied managed blobs, or include bundled-pack references plus pack ID/version/checksum requirements.
 
 ## 4. Player Display Domain
 
@@ -776,6 +962,8 @@ type GridSettings = {
 };
 ```
 
+For generated gridless maps, calibration should be expressed by `sizePx`, `offsetX`, and `offsetY`. The GM UI may describe this as resizing and nudging the map/grid, but persistence should not move or rewrite the underlying image. Fog masks and tokens continue to use the original intrinsic map pixel coordinate space.
+
 Current Slice 6 persistence shape:
 
 ```ts
@@ -818,6 +1006,30 @@ WHERE is_active = 1;
 ```
 
 Activation must clear the old active row and set the selected active row inside one transaction.
+
+### 6.1a Grid Calibration Controls
+
+The current numeric grid fields are sufficient for storage, but the GM map workbench needs faster controls for live use:
+
+```ts
+type GridNudgeMode = "fine" | "cell_fraction" | "cell";
+
+type GridCalibrationCommand =
+  | { type: "resize_grid"; deltaPx: number; mode: GridNudgeMode }
+  | { type: "set_grid_size"; sizePx: number }
+  | { type: "nudge_grid"; dx: number; dy: number; mode: GridNudgeMode }
+  | { type: "set_grid_offset"; offsetX: number; offsetY: number }
+  | { type: "reset_grid_size" }
+  | { type: "reset_grid_offset" };
+```
+
+Rules:
+- grid-size controls update `gridSizePx` within the existing valid bounds;
+- four-direction nudge buttons and keyboard shortcuts update `gridOffsetX` and `gridOffsetY`;
+- fine nudges should be small pixel deltas, while coarse nudges may use fractions of `gridSizePx`;
+- grid size and offset changes must be previewed immediately and persisted through the existing map grid update path;
+- player grid visibility remains a scene-map setting and does not imply that the GM calibration grid is public;
+- if a later feature adds image framing/pan, keep it separate from tactical grid calibration and from fog/token coordinates.
 
 ### 6.2 Map Scene State
 

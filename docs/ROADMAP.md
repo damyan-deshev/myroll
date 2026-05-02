@@ -1,6 +1,6 @@
 # Myroll Roadmap
 
-Date: 2026-04-27
+Date: 2026-05-02
 
 ## Current Direction
 
@@ -14,6 +14,158 @@ Browser = UI/runtime/cache
 ```
 
 The original browser-only IndexedDB model is no longer the durable persistence foundation for campaign data.
+
+## Generated Battle Map Asset Pack V1
+
+Status: produced externally on 2026-05-01; Myroll application integration is deferred. This pack is the foundational core fantasy layer, not the whole intended map library.
+
+Delivered:
+- 10 fantasy battle-map categories with 40 accepted images per category, 400 maps total.
+- PNG source files plus WebP delivery copies.
+- Pack-level `pack.json`, category-local `category.json`, per-category contact sheets, a pack sample review sheet, and a manual review HTML index.
+- Category-local grid contracts:
+  - `interior.house_floor`: 16x12, 80 px/cell;
+  - `interior.small_chamber`: 10x10, 128 px/cell;
+  - `dungeon.stone_complex`: 24x18, 64 px/cell;
+  - `dungeon.cave_complex`: 24x18, 64 px/cell;
+  - `outdoor.forest_road`: 24x18, 64 px/cell;
+  - `outdoor.river_bridge`: 24x18, 64 px/cell;
+  - `outdoor.swamp_marsh`: 24x18, 64 px/cell;
+  - `settlement.street_square`: 24x18, 64 px/cell;
+  - `ruins.temple_shrine`: 24x18, 64 px/cell;
+  - `large.arena_lair`: 32x24, 48 px/cell.
+
+Integration rule:
+- generated map scale is a category contract, not a model guess at runtime;
+- each category directory owns its grid metadata through `category.json`;
+- future Myroll import should validate image dimensions against the category grid contract and create normal `map_image` assets plus square grid settings through the existing Slice 5/Slice 6 asset and map pipeline;
+- generated images remain gridless, and Myroll overlays the tactical grid live in the renderer.
+
+Explicit deferrals:
+- no automatic import into Myroll in this asset-generation pass;
+- no Myroll UI category browser changes yet;
+- no committed large binary pack in the app repository;
+- no fully automated visual QA over all 400 images.
+
+## Generated Battle Map Asset Pack V2: Diverse Spacious Set
+
+Status: produced externally on 2026-05-01; Myroll application integration is deferred. This pack extends V1 with stronger material/color/category variety and wider playable movement space.
+
+Delivered:
+- 10 diverse fantasy battle-map categories with 20 accepted images per category, 200 maps total.
+- PNG source files plus WebP delivery copies.
+- Pack-level `pack.json`, category-local `category.json`, per-category contact sheets, and a pack overview contact sheet.
+- Agent visual spot-check of every category contact sheet; manual product scrub is still expected for mixed categories.
+
+Output root:
+
+```text
+myroll_battle_maps_v2_diverse_spacious/
+  city.rooftops_fog/
+  hazard.lava_bridges/
+  coast.shipwreck_beach/
+  underground.toxic_sewer_canals/
+  cavern.crystal_blackrock/
+  interior.tavern_night/
+  ruins.clean_arena/
+  nature.waterfall_cliff_crossing/
+  arcane.prismatic_laboratory/
+  forest.fey_clearing/
+```
+
+Generation notes:
+- V1 remains useful as a `core beige fantasy survival pack`.
+- V2 should optimize for category/material variety first, not just more fantasy rooms.
+- Prompt-only category forcing works reasonably for lava, beach, toxic sewer, blackrock crystal cavern, waterfall, and prismatic laboratory experiments.
+- V2 must also optimize for playable movement space. A 2026-05-01 spaciousness experiment generated 20 samples at `/Volumes/External/projects/comfyui/outputs/battlemap_spaciousness_experiment_20260501_01`.
+- Prompt-only spaciousness language is not enough for bulk generation: the model still tends to fill maps with small islands, rooms, props, and cover.
+- Production categories should carry a spatial composition contract in addition to grid metadata: target at least 60% walkable/playable area, one clearly readable central movement zone or broad connected lanes, 3-5 square wide routes, sparse cover islands, and obstacles biased toward edges.
+- Layout-guided img2img with simple open-area blockouts is currently the best direction for spacious maps. It helped `coast.shipwreck_beach`, `cavern.crystal_blackrock`, `ruins.clean_arena`, `nature.waterfall_cliff_crossing`, and `forest.fey_clearing` preserve playable space.
+- A follow-up refinement probe at `/Volumes/External/projects/comfyui/outputs/battlemap_spaciousness_refine_20260501_01` showed that low denoise (`0.80`) often produces broken blockout-like images, while flexible layout-guided denoise around `0.90` gives an acceptable ratio for bulk generation plus visual/manual reject cleanup.
+- Bulk V2 generation intentionally accepts a usable ratio rather than trying to force a 100% generation success rate; the product workflow should support later manual rejects.
+- The 200-image V2 pass is strongest for `underground.toxic_sewer_canals`, `cavern.crystal_blackrock`, `interior.tavern_night`, `ruins.clean_arena`, and `forest.fey_clearing`.
+- `city.rooftops_fog` and `arcane.prismatic_laboratory` are mixed but usable; expect more manual rejects or a future tighter workflow before expanding them to 40+ images.
+- `nature.waterfall_cliff_crossing` produced highly playable green river/crossing maps, but reads less waterfall-heavy than the category name suggests.
+- Geometry-heavy categories need layout-guided generation or stronger structural control:
+  - `ruins.clean_arena` benefits from layout-guided img2img;
+  - `city.rooftops_fog` benefits from layout-guided img2img, but still needs dark-city prompt tightening;
+  - `water.ship_open_sea` is not reliable with the current SDXL battlemap workflow: low denoise preserves the ship silhouette but stays too flat, while higher denoise turns the ship into an island/platform.
+- Do not bulk-generate `water.ship_open_sea` until a ship-specific workflow is available, such as a stronger ship layout mask, a ship/deck LoRA, or a different model better trained on top-down vehicles.
+
+## Generated Battle Map Asset Pack V3: Weird Fantasy Set
+
+Status: produced externally on 2026-05-01; Myroll application integration is deferred. This pack extends V1/V2 with darker, celestial, planar, and high-fantasy material extremes.
+
+Delivered:
+- 5 weird fantasy battle-map categories with 20 accepted images per category, 100 maps total.
+- PNG source files plus WebP delivery copies.
+- Pack-level `pack.json`, category-local `category.json`, per-category contact sheets, and a pack overview contact sheet.
+- Agent visual spot-check of every category contact sheet; manual product scrub is still expected for mixed categories.
+
+Output root:
+
+```text
+myroll_battle_maps_v3_weird_fantasy/
+  abyss.bone_cathedral/
+  celestial.starforge_sanctum/
+  void.astral_orrery/
+  elemental.storm_glass_citadel/
+  fey.giant_flower_court/
+```
+
+Generation notes:
+- V3 intentionally covers the more extreme fantasy range that V1 and V2 do not: necrotic/dark, celestial, astral, elemental, and fey spaces.
+- `elemental.storm_glass_citadel` and `fey.giant_flower_court` were fixed forward after weak canary output; the final category prompts and layout masks avoid the earlier water/island and flat flower-icon failures.
+- The strongest categories are `celestial.starforge_sanctum` and `elemental.storm_glass_citadel`.
+- `abyss.bone_cathedral`, `void.astral_orrery`, and `fey.giant_flower_court` are usable but mixed; expect some manual rejects before product import.
+- The same import rule from V1/V2 applies: generated maps remain external artifacts for now, and future Myroll import should use category metadata plus the existing map/image asset pipeline.
+
+## Curated Battle Map Production Pack V1
+
+Status: ready as an external integration input as of 2026-05-02. Myroll application import/UI work is still deferred.
+
+Production root:
+
+```text
+/Volumes/External/projects/comfyui/asset_packs/myroll_battle_maps_production_v1
+```
+
+Delivered:
+- curated production-shaped tree under `assets/battle-maps/fantasy/<collection>/<group>/<category>/`;
+- 608 accepted gridless WebP battle maps from 700 generated source images;
+- 92 rejected source images logged in `curation/rejections.json`;
+- stable descriptive filenames derived from category plus generated source names;
+- pack-level `manifest.json` and `taxonomy.json`;
+- category-local `category.json` files with the authoritative square grid contract;
+- accepted and rejected contact sheets for manual review;
+- handoff document at `HANDOFF.md` for the next integration chat/slice.
+
+Current collections:
+- `core`: 365 accepted maps from the original generic fantasy survival layer;
+- `diverse`: 163 accepted maps across lava, coast, sewer, crystal cavern, tavern, arena, waterfall, rooftop, fey, and arcane categories;
+- `weird`: 80 accepted maps across abyssal, celestial, elemental, fey, and astral categories.
+
+Integration rule:
+- raw generated packs remain preserved and are not the app-facing artifact;
+- Myroll should register/import only the curated production `manifest.json`;
+- the curated static pack should ship with the app so end users do not have to import it manually after install;
+- for the first integration slice, committing the full production pack as a versioned immutable bundled asset pack is acceptable to avoid adding separate artifact-storage infrastructure;
+- revisit Git LFS, release assets, or another artifact store only if repository size or asset update frequency becomes a real problem;
+- every accepted `asset.file` must pass the existing backend image validation and be copied into managed `data/assets/` storage;
+- image scale comes from `asset.grid` and/or the category-local `category.json`, never from prompt text or visual guessing;
+- the renderer continues to draw the tactical grid live over gridless images.
+
+Importer slice starting point:
+- implement a local development import command or backend-only admin endpoint first;
+- validate manifest schema, category paths, asset paths, checksums, image dimensions, and grid dimensions;
+- create normal `map_image` asset records, then campaign map records with square grid settings;
+- preserve `categoryKey`, `collection`, `categoryLabel`, source provenance, and curation status as searchable metadata;
+- add a GM asset browser/category UI only after importer validation and storage behavior are stable.
+
+Roadmap placement:
+- this work is large enough to be its own product slice, not a side task inside the LLM slice;
+- it should probably run before or instead of the currently queued LLM Slice 14 if imported maps/tokens are the next table-facing priority;
+- final slice numbering should be decided during implementation planning.
 
 ## Slice 1: Local Backend Foundation
 
@@ -824,6 +976,67 @@ Explicit deferrals:
 - no split-pane docking customization;
 - no saved per-surface panel presets;
 - no pan/zoom/minimap in the GM shell itself.
+
+## Proposed Next Slice: Asset Import, Battle Map Pack Import, And Grid Calibration
+
+Status: proposed; implementation not started.
+
+Goal: make the new battle-map library and future token/monster asset packs usable inside Myroll without weakening the existing asset safety model.
+
+Build:
+- bundled static asset-pack distribution:
+  - ship the curated production pack with packaged builds/installers;
+  - allow the first production pack to live in git as an immutable bundled asset version;
+  - keep a tiny fixture pack for importer tests even if the full pack is committed;
+  - keep an escape hatch to move packs to Git LFS/release artifacts later if size becomes a problem;
+  - allow development builds to discover packs from a configured local bundle directory;
+  - register bundled packs automatically on startup so installed users see them without manual import.
+- backend-first curated battle-map pack importer:
+  - accepts a configured local production `manifest.json`;
+  - validates manifest schema, relative paths, category-local `category.json`, SHA-256 checksums, decoded image dimensions, and grid dimensions;
+  - rejects absolute paths, path traversal, unsupported formats, checksum mismatches, and images whose decoded dimensions do not match the grid contract;
+  - registers accepted WebP files as read-only catalog entries;
+  - creates campaign `map_image` assets/references and campaign map records with square grid settings from `asset.grid` when a GM adds a bundled map to a campaign;
+  - stores pack/category/provenance/curation metadata and bundled pack version for filtering and regeneration traceability.
+- user-facing asset import improvements:
+  - multi-file image upload for user maps, handouts, portraits, and token art;
+  - kind/visibility/tag defaults per batch;
+  - no public HTTP `source_path` import;
+  - future directory-picker support only if it preserves explicit user consent and validates every file through the same backend image path.
+- GM map-workbench grid calibration:
+  - keep the source map gridless;
+  - expose fast controls to grow/shrink grid cell size;
+  - expose fast four-direction nudge controls for live grid alignment;
+  - persist calibration as `grid_size_px`, `grid_offset_x`, and `grid_offset_y`, not as destructive image edits;
+  - support fine/coarse nudges and numeric fallback controls;
+  - keep player grid visibility separate from GM calibration.
+- GM asset/category browser after the importer is stable:
+  - browse by collection/group/category using `taxonomy.json` or derived manifest data;
+  - search by title/tags/category;
+  - create or attach imported maps to scenes;
+  - support token portrait selection from imported monster/NPC token assets.
+
+Acceptance checkpoint:
+
+```text
+run curated pack import
+  -> importer validates manifest/category/checksum/dimensions
+  -> bundled maps appear in the GM category browser without manual post-install import
+  -> adding a bundled map to a campaign creates a campaign map with live square grid calibration
+  -> GM can browse imported categories
+  -> GM can assign a map to a scene, resize grid cells, and nudge the grid in four directions
+  -> /player shows the gridless image plus the live grid only when player grid is enabled
+  -> public blob endpoints still serve only active player-display-referenced assets
+```
+
+Explicit deferrals:
+- no external artifact-storage setup required in the first integration slice;
+- no final decision yet between copy-on-add into managed storage and read-only bundled blob references;
+- no marketplace/plugin asset distribution;
+- no automatic visual QA over every imported image in the app;
+- no dynamic lighting, walls, doors, token vision, measuring, or snap-to-grid in this slice;
+- no generic server-path import exposed through the browser API;
+- no automatic token/stat sync from monster art.
 
 ## Slice 14: LLM Session Memory And GM Generation Harness
 
