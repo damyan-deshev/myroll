@@ -62,9 +62,6 @@ Available bundled categories:
 - `diverse`: Prismatic Laboratory, Crystal Blackrock Cavern, Shipwreck Beach, Fey Clearing, Lava Bridges, Night Tavern, Clean Arena, Toxic Sewer Canals, Foggy Rooftops, Waterfall Cliff Crossing.
 - `weird`: Bone Cathedral, Starforge Sanctum, Storm Glass Citadel, Giant Flower Court, Astral Orrery.
 
-<details>
-<summary>Bundled map category gallery</summary>
-
 | Collection | Category | Maps | Grid contract | Overview | Representative map |
 |---|---|---:|---|---|---|
 | core / dungeon | Cave Complex | 38 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/core__dungeon-cave-complex-overview.jpg" width="180" alt="Cave Complex bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__dungeon-cave-complex-sample.jpg" width="180" alt="Goblin Cave Main Cavern Stalagmites representative bundled map"><br>Goblin Cave Main Cavern Stalagmites |
@@ -92,8 +89,6 @@ Available bundled categories:
 | weird / elemental | Storm Glass Citadel | 20 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/weird__elemental-storm-glass-citadel-overview.jpg" width="180" alt="Storm Glass Citadel bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/weird__elemental-storm-glass-citadel-sample.jpg" width="180" alt="Storm Glass Plaza Broad Glass Central Floor Cyan Lightning representative bundled map"><br>Storm Glass Plaza Broad Glass Central Floor Cyan Lightning |
 | weird / fey | Giant Flower Court | 20 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/weird__fey-giant-flower-court-overview.jpg" width="180" alt="Giant Flower Court bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/weird__fey-giant-flower-court-sample.jpg" width="180" alt="Giant Flower Court Large Central Petal Meadow Pink Petals representative bundled map"><br>Giant Flower Court Large Central Petal Meadow Pink Petals |
 | weird / void | Astral Orrery | 9 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/weird__void-astral-orrery-overview.jpg" width="180" alt="Astral Orrery bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/weird__void-astral-orrery-sample.jpg" width="180" alt="Astral Orrery Bridge Large Central Round Platform Violet Nebula Glow representative bundled map"><br>Astral Orrery Bridge Large Central Round Platform Violet Nebula Glow |
-
-</details>
 
 ## How it works
 
