@@ -46,9 +46,11 @@ At the same moment, the players see this:
 
 That separation is the product. The UI is allowed to be practical. The boundary is not allowed to be vague.
 
-## Bundled battle map library
+## Bundled Content Is A First-Class Feature
 
-Myroll now ships with a first-party battle map catalog, not an empty asset shelf.
+**Need identified:** a GM tool should not start from an empty asset shelf or force every table to import basic encounter content before the product feels useful.
+
+**Need satisfied:** Myroll ships with a first-party battle map catalog that is immediately available in the GM workspace.
 
 ![GM bundled battle map browser showing the shipped map catalog, collection filters, category search, and add-to-campaign action](docs/screenshots/bundled-map-library/gm-bundled-map-browser.png)
 
