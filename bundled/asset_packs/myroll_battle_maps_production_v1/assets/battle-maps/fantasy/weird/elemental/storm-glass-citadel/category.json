@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "elemental.storm_glass_citadel",
+  "label": "Storm Glass Citadel",
+  "theme": "fantasy",
+  "collection": "weird",
+  "group": "elemental",
+  "slug": "storm-glass-citadel",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.001",
+      "title": "Storm Glass Plaza Broad Glass Central Floor Cyan Lightning",
+      "file": "images/storm-glass-citadel__storm-glass-plaza-broad-glass-central-floor-cyan-lightning__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.002",
+      "title": "Lightning Citadel Crossing Broad Glass Central Floor Silver Rain Marks",
+      "file": "images/storm-glass-citadel__lightning-citadel-crossing-broad-glass-central-floor-silver-rain-marks__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.003",
+      "title": "Tempest Crystal Hall Broad Glass Central Floor Violet Storm Glow",
+      "file": "images/storm-glass-citadel__tempest-crystal-hall-broad-glass-central-floor-violet-storm-glow__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.004",
+      "title": "Thunder Pylon Court Broad Glass Central Floor Crystal Cover",
+      "file": "images/storm-glass-citadel__thunder-pylon-court-broad-glass-central-floor-crystal-cover__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.005",
+      "title": "Storm Glass Plaza Forked Lightning Channel Silver Rain Marks",
+      "file": "images/storm-glass-citadel__storm-glass-plaza-forked-lightning-channel-silver-rain-marks__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.006",
+      "title": "Lightning Citadel Crossing Forked Lightning Channel Violet Storm Glow",
+      "file": "images/storm-glass-citadel__lightning-citadel-crossing-forked-lightning-channel-violet-storm-glow__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.007",
+      "title": "Tempest Crystal Hall Forked Lightning Channel Crystal Cover",
+      "file": "images/storm-glass-citadel__tempest-crystal-hall-forked-lightning-channel-crystal-cover__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.008",
+      "title": "Thunder Pylon Court Forked Lightning Channel Glass Reflections",
+      "file": "images/storm-glass-citadel__thunder-pylon-court-forked-lightning-channel-glass-reflections__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.009",
+      "title": "Storm Glass Plaza Crystal Wall Edge Cyan Lightning",
+      "file": "images/storm-glass-citadel__storm-glass-plaza-crystal-wall-edge-cyan-lightning__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.010",
+      "title": "Lightning Citadel Crossing Crystal Wall Edge Crystal Cover",
+      "file": "images/storm-glass-citadel__lightning-citadel-crossing-crystal-wall-edge-crystal-cover__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.011",
+      "title": "Tempest Crystal Hall Crystal Wall Edge Glass Reflections",
+      "file": "images/storm-glass-citadel__tempest-crystal-hall-crystal-wall-edge-glass-reflections__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.012",
+      "title": "Thunder Pylon Court Crystal Wall Edge Cyan Lightning",
+      "file": "images/storm-glass-citadel__thunder-pylon-court-crystal-wall-edge-cyan-lightning__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.013",
+      "title": "Storm Glass Plaza Storm Pylon Corner Silver Rain Marks",
+      "file": "images/storm-glass-citadel__storm-glass-plaza-storm-pylon-corner-silver-rain-marks__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.014",
+      "title": "Lightning Citadel Crossing Storm Pylon Corner Violet Storm Glow",
+      "file": "images/storm-glass-citadel__lightning-citadel-crossing-storm-pylon-corner-violet-storm-glow__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.015",
+      "title": "Tempest Crystal Hall Storm Pylon Corner Cyan Lightning",
+      "file": "images/storm-glass-citadel__tempest-crystal-hall-storm-pylon-corner-cyan-lightning__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.016",
+      "title": "Thunder Pylon Court Storm Pylon Corner Silver Rain Marks",
+      "file": "images/storm-glass-citadel__thunder-pylon-court-storm-pylon-corner-silver-rain-marks__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.017",
+      "title": "Storm Glass Plaza Raised Rain-slick Dais Violet Storm Glow",
+      "file": "images/storm-glass-citadel__storm-glass-plaza-raised-rain-slick-dais-violet-storm-glow__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.018",
+      "title": "Lightning Citadel Crossing Raised Rain-slick Dais Crystal Cover",
+      "file": "images/storm-glass-citadel__lightning-citadel-crossing-raised-rain-slick-dais-crystal-cover__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.019",
+      "title": "Tempest Crystal Hall Raised Rain-slick Dais Glass Reflections",
+      "file": "images/storm-glass-citadel__tempest-crystal-hall-raised-rain-slick-dais-glass-reflections__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.elemental.storm_glass_citadel.020",
+      "title": "Thunder Pylon Court Raised Rain-slick Dais Violet Storm Glow",
+      "file": "images/storm-glass-citadel__thunder-pylon-court-raised-rain-slick-dais-violet-storm-glow__020.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v3_weird_fantasy"
+  ],
+  "assetCount": 20
+}

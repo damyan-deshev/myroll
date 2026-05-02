@@ -983,6 +983,14 @@ Status: proposed; implementation not started.
 
 Goal: make the new battle-map library and future token/monster asset packs usable inside Myroll without weakening the existing asset safety model.
 
+Status update, 2026-05-02:
+- first bundled battle-map integration slice implemented;
+- production pack committed at `bundled/asset_packs/myroll_battle_maps_production_v1/`;
+- bundled registry validates manifest, taxonomy, category metadata, relative paths, checksums, WebP dimensions, and grid contracts;
+- catalog/add APIs added: `GET /api/bundled-asset-packs`, `GET /api/bundled-asset-packs/{pack_id}/maps`, `POST /api/campaigns/{campaign_id}/bundled-maps`;
+- storage decision for v1 is copy-on-add into managed `data/assets/`, with deterministic campaign asset/map IDs for idempotent adds;
+- user-facing batch upload, `token_image`, bundled map browser, and grid size/nudge controls are included in this slice.
+
 Build:
 - bundled static asset-pack distribution:
   - ship the curated production pack with packaged builds/installers;
@@ -1031,7 +1039,7 @@ run curated pack import
 
 Explicit deferrals:
 - no external artifact-storage setup required in the first integration slice;
-- no final decision yet between copy-on-add into managed storage and read-only bundled blob references;
+- no read-only bundled blob reference path in this slice; copy-on-add is the chosen v1 behavior;
 - no marketplace/plugin asset distribution;
 - no automatic visual QA over every imported image in the app;
 - no dynamic lighting, walls, doors, token vision, measuring, or snap-to-grid in this slice;

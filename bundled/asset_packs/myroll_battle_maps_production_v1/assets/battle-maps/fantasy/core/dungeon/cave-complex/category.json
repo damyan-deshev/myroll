@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "dungeon.cave_complex",
+  "label": "Cave Complex",
+  "theme": "fantasy",
+  "collection": "core",
+  "group": "dungeon",
+  "slug": "cave-complex",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.001",
+      "title": "Goblin Cave Main Cavern Stalagmites",
+      "file": "images/cave-complex__goblin-cave-main-cavern-stalagmites__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.002",
+      "title": "Crystal Cavern Main Cavern Wooden Barricades",
+      "file": "images/cave-complex__crystal-cavern-main-cavern-wooden-barricades__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.003",
+      "title": "Spider Lair Main Cavern Webbing",
+      "file": "images/cave-complex__spider-lair-main-cavern-webbing__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.004",
+      "title": "Underground River Cave Main Cavern Mushrooms",
+      "file": "images/cave-complex__underground-river-cave-main-cavern-mushrooms__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.005",
+      "title": "Fungal Grotto Main Cavern Mine Carts",
+      "file": "images/cave-complex__fungal-grotto-main-cavern-mine-carts__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.006",
+      "title": "Goblin Cave Narrow Tunnel Loose Rocks",
+      "file": "images/cave-complex__goblin-cave-narrow-tunnel-loose-rocks__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.007",
+      "title": "Crystal Cavern Narrow Tunnel Wooden Barricades",
+      "file": "images/cave-complex__crystal-cavern-narrow-tunnel-wooden-barricades__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.008",
+      "title": "Spider Lair Narrow Tunnel Webbing",
+      "file": "images/cave-complex__spider-lair-narrow-tunnel-webbing__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.009",
+      "title": "Underground River Cave Narrow Tunnel Mushrooms",
+      "file": "images/cave-complex__underground-river-cave-narrow-tunnel-mushrooms__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.010",
+      "title": "Fungal Grotto Narrow Tunnel Mine Carts",
+      "file": "images/cave-complex__fungal-grotto-narrow-tunnel-mine-carts__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.011",
+      "title": "Goblin Cave Side Nest Loose Rocks",
+      "file": "images/cave-complex__goblin-cave-side-nest-loose-rocks__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.012",
+      "title": "Spider Lair Side Nest Shallow Water",
+      "file": "images/cave-complex__spider-lair-side-nest-shallow-water__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.013",
+      "title": "Underground River Cave Side Nest Mushrooms",
+      "file": "images/cave-complex__underground-river-cave-side-nest-mushrooms__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.014",
+      "title": "Fungal Grotto Side Nest Mine Carts",
+      "file": "images/cave-complex__fungal-grotto-side-nest-mine-carts__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.015",
+      "title": "Goblin Cave Rock Bridge Loose Rocks",
+      "file": "images/cave-complex__goblin-cave-rock-bridge-loose-rocks__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.016",
+      "title": "Crystal Cavern Rock Bridge Bones",
+      "file": "images/cave-complex__crystal-cavern-rock-bridge-bones__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.017",
+      "title": "Spider Lair Rock Bridge Shallow Water",
+      "file": "images/cave-complex__spider-lair-rock-bridge-shallow-water__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.018",
+      "title": "Underground River Cave Rock Bridge Stalagmites",
+      "file": "images/cave-complex__underground-river-cave-rock-bridge-stalagmites__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.019",
+      "title": "Fungal Grotto Rock Bridge Wooden Barricades",
+      "file": "images/cave-complex__fungal-grotto-rock-bridge-wooden-barricades__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0020"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.020",
+      "title": "Goblin Cave Deep Pool Loose Rocks",
+      "file": "images/cave-complex__goblin-cave-deep-pool-loose-rocks__020.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0021"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.021",
+      "title": "Crystal Cavern Deep Pool Bones",
+      "file": "images/cave-complex__crystal-cavern-deep-pool-bones__021.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0022"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.022",
+      "title": "Spider Lair Deep Pool Shallow Water",
+      "file": "images/cave-complex__spider-lair-deep-pool-shallow-water__022.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0023"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.023",
+      "title": "Underground River Cave Deep Pool Stalagmites",
+      "file": "images/cave-complex__underground-river-cave-deep-pool-stalagmites__023.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0024"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.024",
+      "title": "Fungal Grotto Deep Pool Wooden Barricades",
+      "file": "images/cave-complex__fungal-grotto-deep-pool-wooden-barricades__024.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0025"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.025",
+      "title": "Goblin Cave Mining Shaft Webbing",
+      "file": "images/cave-complex__goblin-cave-mining-shaft-webbing__025.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0026"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.026",
+      "title": "Crystal Cavern Mining Shaft Mushrooms",
+      "file": "images/cave-complex__crystal-cavern-mining-shaft-mushrooms__026.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0027"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.027",
+      "title": "Spider Lair Mining Shaft Shallow Water",
+      "file": "images/cave-complex__spider-lair-mining-shaft-shallow-water__027.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0028"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.028",
+      "title": "Underground River Cave Mining Shaft Stalagmites",
+      "file": "images/cave-complex__underground-river-cave-mining-shaft-stalagmites__028.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0029"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.029",
+      "title": "Fungal Grotto Mining Shaft Wooden Barricades",
+      "file": "images/cave-complex__fungal-grotto-mining-shaft-wooden-barricades__029.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0030"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.030",
+      "title": "Crystal Cavern Hidden Ledge Mushrooms",
+      "file": "images/cave-complex__crystal-cavern-hidden-ledge-mushrooms__030.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0032"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.031",
+      "title": "Spider Lair Hidden Ledge Mine Carts",
+      "file": "images/cave-complex__spider-lair-hidden-ledge-mine-carts__031.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0033"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.032",
+      "title": "Underground River Cave Hidden Ledge Loose Rocks",
+      "file": "images/cave-complex__underground-river-cave-hidden-ledge-loose-rocks__032.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0034"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.033",
+      "title": "Fungal Grotto Hidden Ledge Wooden Barricades",
+      "file": "images/cave-complex__fungal-grotto-hidden-ledge-wooden-barricades__033.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0035"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.034",
+      "title": "Goblin Cave Campfire Nook Webbing",
+      "file": "images/cave-complex__goblin-cave-campfire-nook-webbing__034.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0036"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.035",
+      "title": "Crystal Cavern Campfire Nook Mushrooms",
+      "file": "images/cave-complex__crystal-cavern-campfire-nook-mushrooms__035.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0037"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.036",
+      "title": "Spider Lair Campfire Nook Mine Carts",
+      "file": "images/cave-complex__spider-lair-campfire-nook-mine-carts__036.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0038"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.037",
+      "title": "Underground River Cave Campfire Nook Loose Rocks",
+      "file": "images/cave-complex__underground-river-cave-campfire-nook-loose-rocks__037.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0039"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.cave_complex.038",
+      "title": "Fungal Grotto Campfire Nook Bones",
+      "file": "images/cave-complex__fungal-grotto-campfire-nook-bones__038.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.cave_complex:0040"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v1"
+  ],
+  "assetCount": 38
+}

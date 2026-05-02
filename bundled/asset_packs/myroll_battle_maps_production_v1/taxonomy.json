@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "theme": "fantasy",
+  "collections": {
+    "weird": {
+      "groups": {
+        "abyss": {
+          "categories": [
+            {
+              "categoryKey": "abyss.bone_cathedral",
+              "label": "Bone Cathedral",
+              "slug": "bone-cathedral",
+              "assetCount": 12,
+              "path": "assets/battle-maps/fantasy/weird/abyss/bone-cathedral"
+            }
+          ]
+        },
+        "celestial": {
+          "categories": [
+            {
+              "categoryKey": "celestial.starforge_sanctum",
+              "label": "Starforge Sanctum",
+              "slug": "starforge-sanctum",
+              "assetCount": 19,
+              "path": "assets/battle-maps/fantasy/weird/celestial/starforge-sanctum"
+            }
+          ]
+        },
+        "elemental": {
+          "categories": [
+            {
+              "categoryKey": "elemental.storm_glass_citadel",
+              "label": "Storm Glass Citadel",
+              "slug": "storm-glass-citadel",
+              "assetCount": 20,
+              "path": "assets/battle-maps/fantasy/weird/elemental/storm-glass-citadel"
+            }
+          ]
+        },
+        "fey": {
+          "categories": [
+            {
+              "categoryKey": "fey.giant_flower_court",
+              "label": "Giant Flower Court",
+              "slug": "giant-flower-court",
+              "assetCount": 20,
+              "path": "assets/battle-maps/fantasy/weird/fey/giant-flower-court"
+            }
+          ]
+        },
+        "void": {
+          "categories": [
+            {
+              "categoryKey": "void.astral_orrery",
+              "label": "Astral Orrery",
+              "slug": "astral-orrery",
+              "assetCount": 9,
+              "path": "assets/battle-maps/fantasy/weird/void/astral-orrery"
+            }
+          ]
+        }
+      }
+    },
+    "diverse": {
+      "groups": {
+        "arcane": {
+          "categories": [
+            {
+              "categoryKey": "arcane.prismatic_laboratory",
+              "label": "Prismatic Laboratory",
+              "slug": "prismatic-laboratory",
+              "assetCount": 14,
+              "path": "assets/battle-maps/fantasy/diverse/arcane/prismatic-laboratory"
+            }
+          ]
+        },
+        "cavern": {
+          "categories": [
+            {
+              "categoryKey": "cavern.crystal_blackrock",
+              "label": "Crystal Blackrock Cavern",
+              "slug": "crystal-blackrock",
+              "assetCount": 19,
+              "path": "assets/battle-maps/fantasy/diverse/cavern/crystal-blackrock"
+            }
+          ]
+        },
+        "urban": {
+          "categories": [
+            {
+              "categoryKey": "city.rooftops_fog",
+              "label": "Foggy Rooftops",
+              "slug": "rooftops-fog",
+              "assetCount": 10,
+              "path": "assets/battle-maps/fantasy/diverse/urban/rooftops-fog"
+            }
+          ]
+        },
+        "coast": {
+          "categories": [
+            {
+              "categoryKey": "coast.shipwreck_beach",
+              "label": "Shipwreck Beach",
+              "slug": "shipwreck-beach",
+              "assetCount": 18,
+              "path": "assets/battle-maps/fantasy/diverse/coast/shipwreck-beach"
+            }
+          ]
+        },
+        "fey": {
+          "categories": [
+            {
+              "categoryKey": "forest.fey_clearing",
+              "label": "Fey Clearing",
+              "slug": "fey-clearing",
+              "assetCount": 14,
+              "path": "assets/battle-maps/fantasy/diverse/fey/fey-clearing"
+            }
+          ]
+        },
+        "hazards": {
+          "categories": [
+            {
+              "categoryKey": "hazard.lava_bridges",
+              "label": "Lava Bridges",
+              "slug": "lava-bridges",
+              "assetCount": 20,
+              "path": "assets/battle-maps/fantasy/diverse/hazards/lava-bridges"
+            }
+          ]
+        },
+        "interior": {
+          "categories": [
+            {
+              "categoryKey": "interior.tavern_night",
+              "label": "Night Tavern",
+              "slug": "tavern-night",
+              "assetCount": 15,
+              "path": "assets/battle-maps/fantasy/diverse/interior/tavern-night"
+            }
+          ]
+        },
+        "wilderness": {
+          "categories": [
+            {
+              "categoryKey": "nature.waterfall_cliff_crossing",
+              "label": "Waterfall Cliff Crossing",
+              "slug": "waterfall-cliff-crossing",
+              "assetCount": 19,
+              "path": "assets/battle-maps/fantasy/diverse/wilderness/waterfall-cliff-crossing"
+            }
+          ]
+        },
+        "ruins": {
+          "categories": [
+            {
+              "categoryKey": "ruins.clean_arena",
+              "label": "Clean Arena",
+              "slug": "clean-arena",
+              "assetCount": 17,
+              "path": "assets/battle-maps/fantasy/diverse/ruins/clean-arena"
+            }
+          ]
+        },
+        "underground": {
+          "categories": [
+            {
+              "categoryKey": "underground.toxic_sewer_canals",
+              "label": "Toxic Sewer Canals",
+              "slug": "toxic-sewer-canals",
+              "assetCount": 17,
+              "path": "assets/battle-maps/fantasy/diverse/underground/toxic-sewer-canals"
+            }
+          ]
+        }
+      }
+    },
+    "core": {
+      "groups": {
+        "dungeon": {
+          "categories": [
+            {
+              "categoryKey": "dungeon.cave_complex",
+              "label": "Cave Complex",
+              "slug": "cave-complex",
+              "assetCount": 38,
+              "path": "assets/battle-maps/fantasy/core/dungeon/cave-complex"
+            },
+            {
+              "categoryKey": "dungeon.stone_complex",
+              "label": "Stone Dungeon Complex",
+              "slug": "stone-complex",
+              "assetCount": 38,
+              "path": "assets/battle-maps/fantasy/core/dungeon/stone-complex"
+            }
+          ]
+        },
+        "interior": {
+          "categories": [
+            {
+              "categoryKey": "interior.house_floor",
+              "label": "House Floor",
+              "slug": "house-floor",
+              "assetCount": 38,
+              "path": "assets/battle-maps/fantasy/core/interior/house-floor"
+            },
+            {
+              "categoryKey": "interior.small_chamber",
+              "label": "Small Chamber",
+              "slug": "small-chamber",
+              "assetCount": 40,
+              "path": "assets/battle-maps/fantasy/core/interior/small-chamber"
+            }
+          ]
+        },
+        "large-sites": {
+          "categories": [
+            {
+              "categoryKey": "large.arena_lair",
+              "label": "Arena Lair",
+              "slug": "arena-lair",
+              "assetCount": 31,
+              "path": "assets/battle-maps/fantasy/core/large-sites/arena-lair"
+            }
+          ]
+        },
+        "wilderness": {
+          "categories": [
+            {
+              "categoryKey": "outdoor.forest_road",
+              "label": "Forest Road",
+              "slug": "forest-road",
+              "assetCount": 35,
+              "path": "assets/battle-maps/fantasy/core/wilderness/forest-road"
+            },
+            {
+              "categoryKey": "outdoor.river_bridge",
+              "label": "River Crossings",
+              "slug": "river-crossings",
+              "assetCount": 35,
+              "path": "assets/battle-maps/fantasy/core/wilderness/river-crossings"
+            },
+            {
+              "categoryKey": "outdoor.swamp_marsh",
+              "label": "Swamp Marsh",
+              "slug": "swamp-marsh",
+              "assetCount": 39,
+              "path": "assets/battle-maps/fantasy/core/wilderness/swamp-marsh"
+            }
+          ]
+        },
+        "ruins": {
+          "categories": [
+            {
+              "categoryKey": "ruins.temple_shrine",
+              "label": "Temple Shrine",
+              "slug": "temple-shrine",
+              "assetCount": 38,
+              "path": "assets/battle-maps/fantasy/core/ruins/temple-shrine"
+            }
+          ]
+        },
+        "settlement": {
+          "categories": [
+            {
+              "categoryKey": "settlement.street_square",
+              "label": "Settlement Streets And Squares",
+              "slug": "streets-squares",
+              "assetCount": 33,
+              "path": "assets/battle-maps/fantasy/core/settlement/streets-squares"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "void.astral_orrery",
+  "label": "Astral Orrery",
+  "theme": "fantasy",
+  "collection": "weird",
+  "group": "void",
+  "slug": "astral-orrery",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.weird.void.astral_orrery.001",
+      "title": "Astral Orrery Bridge Large Central Round Platform Violet Nebula Glow",
+      "file": "images/astral-orrery__astral-orrery-bridge-large-central-round-platform-violet-nebula-glow__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.void.astral_orrery.002",
+      "title": "Astral Orrery Bridge Wide Star Bridge Floating Runes",
+      "file": "images/astral-orrery__astral-orrery-bridge-wide-star-bridge-floating-runes__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.void.astral_orrery.003",
+      "title": "Starlit Brass Causeway Wide Star Bridge Blue Starlight",
+      "file": "images/astral-orrery__starlit-brass-causeway-wide-star-bridge-blue-starlight__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.void.astral_orrery.004",
+      "title": "Astral Orrery Bridge Outer Moon Platform Violet Nebula Glow",
+      "file": "images/astral-orrery__astral-orrery-bridge-outer-moon-platform-violet-nebula-glow__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.void.astral_orrery.005",
+      "title": "Astral Orrery Bridge Clockwork Ring Edge Floating Runes",
+      "file": "images/astral-orrery__astral-orrery-bridge-clockwork-ring-edge-floating-runes__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.void.astral_orrery.006",
+      "title": "Void Observatory Platforms Clockwork Ring Edge Gold Brass Gears",
+      "file": "images/astral-orrery__void-observatory-platforms-clockwork-ring-edge-gold-brass-gears__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.void.astral_orrery.007",
+      "title": "Planar Clockwork Crossing Clockwork Ring Edge Violet Nebula Glow",
+      "file": "images/astral-orrery__planar-clockwork-crossing-clockwork-ring-edge-violet-nebula-glow__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.void.astral_orrery.008",
+      "title": "Void Observatory Platforms Void Gap Boundary Planetary Shadows",
+      "file": "images/astral-orrery__void-observatory-platforms-void-gap-boundary-planetary-shadows__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.void.astral_orrery.009",
+      "title": "Starlit Brass Causeway Void Gap Boundary Gold Brass Gears",
+      "file": "images/astral-orrery__starlit-brass-causeway-void-gap-boundary-gold-brass-gears__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v3_weird_fantasy"
+  ],
+  "assetCount": 9
+}

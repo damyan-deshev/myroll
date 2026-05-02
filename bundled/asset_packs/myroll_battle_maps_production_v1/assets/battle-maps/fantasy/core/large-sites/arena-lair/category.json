@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "large.arena_lair",
+  "label": "Arena Lair",
+  "theme": "fantasy",
+  "collection": "core",
+  "group": "large-sites",
+  "slug": "arena-lair",
+  "grid": {
+    "type": "square",
+    "cols": 32,
+    "rows": 24,
+    "feetPerCell": 5,
+    "pxPerCell": 48,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.001",
+      "title": "Ruined Arena Central Boss Area Cover Clusters",
+      "file": "images/arena-lair__ruined-arena-central-boss-area-cover-clusters__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.002",
+      "title": "Orc War Camp Central Boss Area Barricades",
+      "file": "images/arena-lair__orc-war-camp-central-boss-area-barricades__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.003",
+      "title": "Fortress Courtyard Central Boss Area Hazard Zones",
+      "file": "images/arena-lair__fortress-courtyard-central-boss-area-hazard-zones__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.004",
+      "title": "Giant Cavern Lair Central Boss Area Large Obstacles",
+      "file": "images/arena-lair__giant-cavern-lair-central-boss-area-large-obstacles__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.005",
+      "title": "Ruined Arena Four Entrances Ritual Braziers",
+      "file": "images/arena-lair__ruined-arena-four-entrances-ritual-braziers__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.006",
+      "title": "Dragon Lair Exterior Four Entrances Rubble Piles",
+      "file": "images/arena-lair__dragon-lair-exterior-four-entrances-rubble-piles__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.007",
+      "title": "Fortress Courtyard Four Entrances Hazard Zones",
+      "file": "images/arena-lair__fortress-courtyard-four-entrances-hazard-zones__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.008",
+      "title": "Giant Cavern Lair Four Entrances Large Obstacles",
+      "file": "images/arena-lair__giant-cavern-lair-four-entrances-large-obstacles__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.009",
+      "title": "Ruined Arena Raised Platform Ritual Braziers",
+      "file": "images/arena-lair__ruined-arena-raised-platform-ritual-braziers__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.010",
+      "title": "Dragon Lair Exterior Raised Platform Open Fighting Lanes",
+      "file": "images/arena-lair__dragon-lair-exterior-raised-platform-open-fighting-lanes__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.011",
+      "title": "Fortress Courtyard Raised Platform Hazard Zones",
+      "file": "images/arena-lair__fortress-courtyard-raised-platform-hazard-zones__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.012",
+      "title": "Giant Cavern Lair Raised Platform Large Obstacles",
+      "file": "images/arena-lair__giant-cavern-lair-raised-platform-large-obstacles__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.013",
+      "title": "Ruined Arena Broken Columns Ritual Braziers",
+      "file": "images/arena-lair__ruined-arena-broken-columns-ritual-braziers__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.014",
+      "title": "Dragon Lair Exterior Broken Columns Open Fighting Lanes",
+      "file": "images/arena-lair__dragon-lair-exterior-broken-columns-open-fighting-lanes__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.015",
+      "title": "Orc War Camp Broken Columns Side Platforms",
+      "file": "images/arena-lair__orc-war-camp-broken-columns-side-platforms__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.016",
+      "title": "Fortress Courtyard Broken Columns Cover Clusters",
+      "file": "images/arena-lair__fortress-courtyard-broken-columns-cover-clusters__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.017",
+      "title": "Dragon Lair Exterior Command Tent Open Fighting Lanes",
+      "file": "images/arena-lair__dragon-lair-exterior-command-tent-open-fighting-lanes__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0022"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.018",
+      "title": "Orc War Camp Command Tent Side Platforms",
+      "file": "images/arena-lair__orc-war-camp-command-tent-side-platforms__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0023"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.019",
+      "title": "Fortress Courtyard Command Tent Cover Clusters",
+      "file": "images/arena-lair__fortress-courtyard-command-tent-cover-clusters__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0024"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.020",
+      "title": "Ruined Arena Treasure Mound Barricades",
+      "file": "images/arena-lair__ruined-arena-treasure-mound-barricades__020.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0026"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.021",
+      "title": "Dragon Lair Exterior Treasure Mound Hazard Zones",
+      "file": "images/arena-lair__dragon-lair-exterior-treasure-mound-hazard-zones__021.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0027"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.022",
+      "title": "Fortress Courtyard Treasure Mound Cover Clusters",
+      "file": "images/arena-lair__fortress-courtyard-treasure-mound-cover-clusters__022.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0029"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.023",
+      "title": "Ruined Arena Lava Cracks Barricades",
+      "file": "images/arena-lair__ruined-arena-lava-cracks-barricades__023.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0031"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.024",
+      "title": "Dragon Lair Exterior Lava Cracks Hazard Zones",
+      "file": "images/arena-lair__dragon-lair-exterior-lava-cracks-hazard-zones__024.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0032"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.025",
+      "title": "Orc War Camp Lava Cracks Large Obstacles",
+      "file": "images/arena-lair__orc-war-camp-lava-cracks-large-obstacles__025.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0033"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.026",
+      "title": "Fortress Courtyard Lava Cracks Ritual Braziers",
+      "file": "images/arena-lair__fortress-courtyard-lava-cracks-ritual-braziers__026.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0034"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.027",
+      "title": "Ruined Arena Palisade Gate Barricades",
+      "file": "images/arena-lair__ruined-arena-palisade-gate-barricades__027.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0036"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.028",
+      "title": "Dragon Lair Exterior Palisade Gate Hazard Zones",
+      "file": "images/arena-lair__dragon-lair-exterior-palisade-gate-hazard-zones__028.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0037"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.029",
+      "title": "Orc War Camp Palisade Gate Large Obstacles",
+      "file": "images/arena-lair__orc-war-camp-palisade-gate-large-obstacles__029.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0038"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.030",
+      "title": "Fortress Courtyard Palisade Gate Ritual Braziers",
+      "file": "images/arena-lair__fortress-courtyard-palisade-gate-ritual-braziers__030.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0039"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.large-sites.arena_lair.031",
+      "title": "Giant Cavern Lair Palisade Gate Open Fighting Lanes",
+      "file": "images/arena-lair__giant-cavern-lair-palisade-gate-open-fighting-lanes__031.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:large.arena_lair:0040"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v1"
+  ],
+  "assetCount": 31
+}

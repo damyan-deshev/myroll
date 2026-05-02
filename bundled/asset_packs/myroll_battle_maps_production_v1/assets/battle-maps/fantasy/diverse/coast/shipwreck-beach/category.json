@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "coast.shipwreck_beach",
+  "label": "Shipwreck Beach",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "coast",
+  "slug": "shipwreck-beach",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.001",
+      "title": "Tropical Wreck Beach Broken Hull Edge Driftwood Cover",
+      "file": "images/shipwreck-beach__tropical-wreck-beach-broken-hull-edge-driftwood-cover__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.002",
+      "title": "Storm Wreck Cove Broken Hull Edge Cargo Crates",
+      "file": "images/shipwreck-beach__storm-wreck-cove-broken-hull-edge-cargo-crates__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.003",
+      "title": "Pirate Landing Beach Broken Hull Edge Shallow Water",
+      "file": "images/shipwreck-beach__pirate-landing-beach-broken-hull-edge-shallow-water__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.004",
+      "title": "Tropical Wreck Beach Open Sand Field Cargo Crates",
+      "file": "images/shipwreck-beach__tropical-wreck-beach-open-sand-field-cargo-crates__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.005",
+      "title": "Storm Wreck Cove Open Sand Field Shallow Water",
+      "file": "images/shipwreck-beach__storm-wreck-cove-open-sand-field-shallow-water__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.006",
+      "title": "Pirate Landing Beach Open Sand Field Coral Rocks",
+      "file": "images/shipwreck-beach__pirate-landing-beach-open-sand-field-coral-rocks__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.007",
+      "title": "Reef-side Sandbar Open Sand Field Palm Shadows",
+      "file": "images/shipwreck-beach__reef-side-sandbar-open-sand-field-palm-shadows__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.008",
+      "title": "Tropical Wreck Beach Clear Shoreline Driftwood Cover",
+      "file": "images/shipwreck-beach__tropical-wreck-beach-clear-shoreline-driftwood-cover__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.009",
+      "title": "Storm Wreck Cove Clear Shoreline Coral Rocks",
+      "file": "images/shipwreck-beach__storm-wreck-cove-clear-shoreline-coral-rocks__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.010",
+      "title": "Pirate Landing Beach Clear Shoreline Palm Shadows",
+      "file": "images/shipwreck-beach__pirate-landing-beach-clear-shoreline-palm-shadows__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.011",
+      "title": "Reef-side Sandbar Clear Shoreline Driftwood Cover",
+      "file": "images/shipwreck-beach__reef-side-sandbar-clear-shoreline-driftwood-cover__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.012",
+      "title": "Storm Wreck Cove Palm Grove Edge Shallow Water",
+      "file": "images/shipwreck-beach__storm-wreck-cove-palm-grove-edge-shallow-water__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.013",
+      "title": "Pirate Landing Beach Palm Grove Edge Driftwood Cover",
+      "file": "images/shipwreck-beach__pirate-landing-beach-palm-grove-edge-driftwood-cover__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.014",
+      "title": "Reef-side Sandbar Palm Grove Edge Cargo Crates",
+      "file": "images/shipwreck-beach__reef-side-sandbar-palm-grove-edge-cargo-crates__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.015",
+      "title": "Tropical Wreck Beach Scattered Cargo Shallow Water",
+      "file": "images/shipwreck-beach__tropical-wreck-beach-scattered-cargo-shallow-water__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.016",
+      "title": "Storm Wreck Cove Scattered Cargo Coral Rocks",
+      "file": "images/shipwreck-beach__storm-wreck-cove-scattered-cargo-coral-rocks__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.017",
+      "title": "Pirate Landing Beach Scattered Cargo Palm Shadows",
+      "file": "images/shipwreck-beach__pirate-landing-beach-scattered-cargo-palm-shadows__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.coast.shipwreck_beach.018",
+      "title": "Reef-side Sandbar Scattered Cargo Shallow Water",
+      "file": "images/shipwreck-beach__reef-side-sandbar-scattered-cargo-shallow-water__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 18
+}

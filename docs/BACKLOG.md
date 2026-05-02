@@ -21,12 +21,11 @@ Date: 2026-05-02
 
 ## Near Term
 
-- Plan the asset import/battle-map integration slice:
-  - bundled static asset-pack registration so built-in maps ship with the app;
-  - curated production battle-map pack importer;
-  - multi-file user asset import for maps, handouts, portraits, and token art;
-  - GM grid size and nudge controls for gridless maps;
-  - category/search browser for imported map assets.
+- Follow up the implemented bundled battle-map integration slice:
+  - decide later whether immutable packs should move from git to LFS/release artifacts;
+  - add richer provenance/curation metadata filters after the core catalog is exercised;
+  - consider a user-selected directory picker only if it preserves explicit consent and backend validation;
+  - keep improving map workbench density and calibration ergonomics.
 - Slice 14 LLM/session-memory work after backup/export hardening.
 - Improve per-surface ergonomics incrementally: panel density, shortcuts, and focused map workbench controls.
 

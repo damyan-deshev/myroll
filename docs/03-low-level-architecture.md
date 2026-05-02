@@ -393,6 +393,7 @@ type AssetKind =
   | "npc_portrait"
   | "item_image"
   | "scene_image"
+  | "token_image"
   | "audio"
   | "markdown"
   | "pdf"
@@ -418,7 +419,7 @@ type Asset = VersionedRecord & {
 };
 ```
 
-Current implementation does not require a dedicated `token_image` path yet; portrait tokens can reference existing image assets. A future reusable monster/token pack importer may add or use `token_image` to separate round/square token art from NPC portraits and handouts.
+Current implementation includes `token_image` for reusable monster/NPC token art. Scene-map portrait tokens can reference `token_image` and other validated image assets, but public serving still requires the asset to be referenced by the active public display payload.
 
 ### 3.2 Asset Storage
 
@@ -587,7 +588,7 @@ type GeneratedMapTaxonomy = {
 };
 ```
 
-Future import rules:
+Current bundled-pack import rules:
 - import only curated production `manifest.json`, not raw source `pack.json` files;
 - bundled static packs should be auto-registered from a configured app resource directory at startup, not manually imported by installed users;
 - the first production pack may be committed as an immutable bundled asset version to avoid separate artifact-storage infrastructure;
@@ -628,9 +629,10 @@ User-facing import:
 
 Campaign use of bundled entries:
 - when a GM adds a bundled map to a campaign, Myroll creates a campaign-scoped map record using the bundled entry's title, tags, provenance, and grid contract;
-- the first implementation may either copy the referenced blob into managed content-addressed storage on add, or add an explicit read-only bundled-blob source to asset metadata;
-- whichever storage path is chosen, `/api/player-display/assets/{asset_id}/blob` must remain active-display scoped and must not become a generic bundled asset server;
-- export behavior must be explicit: either include copied managed blobs, or include bundled-pack references plus pack ID/version/checksum requirements.
+- the current implementation copies the referenced WebP into managed content-addressed storage on add;
+- deterministic IDs from `campaign_id + pack_id + bundled_asset_id` make repeated adds idempotent for the same campaign;
+- `/api/player-display/assets/{asset_id}/blob` remains active-display scoped and does not become a generic bundled asset server;
+- export behavior remains simple for v1 because copied managed blobs are ordinary campaign assets.
 
 ## 4. Player Display Domain
 

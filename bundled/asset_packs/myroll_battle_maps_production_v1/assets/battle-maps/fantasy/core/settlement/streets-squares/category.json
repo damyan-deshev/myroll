@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "settlement.street_square",
+  "label": "Settlement Streets And Squares",
+  "theme": "fantasy",
+  "collection": "core",
+  "group": "settlement",
+  "slug": "streets-squares",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.001",
+      "title": "Village Market Central Fountain Barrels And Crates",
+      "file": "images/streets-squares__village-market-central-fountain-barrels-and-crates__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.002",
+      "title": "Town Alley Central Fountain Benches",
+      "file": "images/streets-squares__town-alley-central-fountain-benches__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.003",
+      "title": "Fortified Gate Square Central Fountain Awnings",
+      "file": "images/streets-squares__fortified-gate-square-central-fountain-awnings__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.004",
+      "title": "Burned Street Central Fountain Stone Walls",
+      "file": "images/streets-squares__burned-street-central-fountain-stone-walls__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.005",
+      "title": "Village Market Market Stalls Muddy Ruts",
+      "file": "images/streets-squares__village-market-market-stalls-muddy-ruts__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.006",
+      "title": "Town Alley Market Stalls Benches",
+      "file": "images/streets-squares__town-alley-market-stalls-benches__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.007",
+      "title": "Harbor Street Market Stalls Small Stairs",
+      "file": "images/streets-squares__harbor-street-market-stalls-small-stairs__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.008",
+      "title": "Fortified Gate Square Market Stalls Awnings",
+      "file": "images/streets-squares__fortified-gate-square-market-stalls-awnings__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.009",
+      "title": "Village Market Wagon Blockade Muddy Ruts",
+      "file": "images/streets-squares__village-market-wagon-blockade-muddy-ruts__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.010",
+      "title": "Town Alley Wagon Blockade Carts",
+      "file": "images/streets-squares__town-alley-wagon-blockade-carts__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.011",
+      "title": "Harbor Street Wagon Blockade Wooden Fences",
+      "file": "images/streets-squares__harbor-street-wagon-blockade-wooden-fences__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.012",
+      "title": "Fortified Gate Square Wagon Blockade Awnings",
+      "file": "images/streets-squares__fortified-gate-square-wagon-blockade-awnings__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.013",
+      "title": "Burned Street Wagon Blockade Stone Walls",
+      "file": "images/streets-squares__burned-street-wagon-blockade-stone-walls__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.014",
+      "title": "Village Market Tavern Frontage Muddy Ruts",
+      "file": "images/streets-squares__village-market-tavern-frontage-muddy-ruts__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.015",
+      "title": "Town Alley Tavern Frontage Carts",
+      "file": "images/streets-squares__town-alley-tavern-frontage-carts__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.016",
+      "title": "Harbor Street Tavern Frontage Wooden Fences",
+      "file": "images/streets-squares__harbor-street-tavern-frontage-wooden-fences__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.017",
+      "title": "Fortified Gate Square Tavern Frontage Barrels And Crates",
+      "file": "images/streets-squares__fortified-gate-square-tavern-frontage-barrels-and-crates__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.018",
+      "title": "Village Market Guard Post Muddy Ruts",
+      "file": "images/streets-squares__village-market-guard-post-muddy-ruts__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0021"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.019",
+      "title": "Town Alley Guard Post Carts",
+      "file": "images/streets-squares__town-alley-guard-post-carts__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0022"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.020",
+      "title": "Harbor Street Guard Post Wooden Fences",
+      "file": "images/streets-squares__harbor-street-guard-post-wooden-fences__020.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0023"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.021",
+      "title": "Burned Street Guard Post Benches",
+      "file": "images/streets-squares__burned-street-guard-post-benches__021.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0025"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.022",
+      "title": "Village Market Narrow Alley Small Stairs",
+      "file": "images/streets-squares__village-market-narrow-alley-small-stairs__022.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0026"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.023",
+      "title": "Town Alley Narrow Alley Awnings",
+      "file": "images/streets-squares__town-alley-narrow-alley-awnings__023.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0027"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.024",
+      "title": "Fortified Gate Square Narrow Alley Barrels And Crates",
+      "file": "images/streets-squares__fortified-gate-square-narrow-alley-barrels-and-crates__024.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0029"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.025",
+      "title": "Village Market Well Plaza Small Stairs",
+      "file": "images/streets-squares__village-market-well-plaza-small-stairs__025.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0031"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.026",
+      "title": "Town Alley Well Plaza Awnings",
+      "file": "images/streets-squares__town-alley-well-plaza-awnings__026.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0032"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.027",
+      "title": "Harbor Street Well Plaza Stone Walls",
+      "file": "images/streets-squares__harbor-street-well-plaza-stone-walls__027.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0033"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.028",
+      "title": "Fortified Gate Square Well Plaza Muddy Ruts",
+      "file": "images/streets-squares__fortified-gate-square-well-plaza-muddy-ruts__028.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0034"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.029",
+      "title": "Burned Street Well Plaza Benches",
+      "file": "images/streets-squares__burned-street-well-plaza-benches__029.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0035"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.030",
+      "title": "Town Alley Smithy Yard Awnings",
+      "file": "images/streets-squares__town-alley-smithy-yard-awnings__030.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0037"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.031",
+      "title": "Harbor Street Smithy Yard Stone Walls",
+      "file": "images/streets-squares__harbor-street-smithy-yard-stone-walls__031.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0038"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.032",
+      "title": "Fortified Gate Square Smithy Yard Muddy Ruts",
+      "file": "images/streets-squares__fortified-gate-square-smithy-yard-muddy-ruts__032.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0039"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.settlement.streets_squares.033",
+      "title": "Burned Street Smithy Yard Carts",
+      "file": "images/streets-squares__burned-street-smithy-yard-carts__033.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:settlement.street_square:0040"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v1"
+  ],
+  "assetCount": 33
+}

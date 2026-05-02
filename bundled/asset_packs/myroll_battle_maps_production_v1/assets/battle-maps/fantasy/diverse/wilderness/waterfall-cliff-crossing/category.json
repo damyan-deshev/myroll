@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "nature.waterfall_cliff_crossing",
+  "label": "Waterfall Cliff Crossing",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "wilderness",
+  "slug": "waterfall-cliff-crossing",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.001",
+      "title": "Cliff Waterfall Trail Waterfall Edge Mist Spray",
+      "file": "images/waterfall-cliff-crossing__cliff-waterfall-trail-waterfall-edge-mist-spray__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.002",
+      "title": "Misty River Crossing Waterfall Edge Wildflowers",
+      "file": "images/waterfall-cliff-crossing__misty-river-crossing-waterfall-edge-wildflowers__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.003",
+      "title": "Green Plateau Ford Waterfall Edge Boulders At Edges",
+      "file": "images/waterfall-cliff-crossing__green-plateau-ford-waterfall-edge-boulders-at-edges__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.004",
+      "title": "Mountain Stream Path Waterfall Edge Tree Clusters",
+      "file": "images/waterfall-cliff-crossing__mountain-stream-path-waterfall-edge-tree-clusters__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.005",
+      "title": "Cliff Waterfall Trail Broad Grassy Clearing Wildflowers",
+      "file": "images/waterfall-cliff-crossing__cliff-waterfall-trail-broad-grassy-clearing-wildflowers__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.006",
+      "title": "Misty River Crossing Broad Grassy Clearing Boulders At Edges",
+      "file": "images/waterfall-cliff-crossing__misty-river-crossing-broad-grassy-clearing-boulders-at-edges__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.007",
+      "title": "Green Plateau Ford Broad Grassy Clearing Tree Clusters",
+      "file": "images/waterfall-cliff-crossing__green-plateau-ford-broad-grassy-clearing-tree-clusters__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.008",
+      "title": "Mountain Stream Path Broad Grassy Clearing Small Bridge",
+      "file": "images/waterfall-cliff-crossing__mountain-stream-path-broad-grassy-clearing-small-bridge__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.009",
+      "title": "Cliff Waterfall Trail Wide Dirt Path Mist Spray",
+      "file": "images/waterfall-cliff-crossing__cliff-waterfall-trail-wide-dirt-path-mist-spray__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.010",
+      "title": "Misty River Crossing Wide Dirt Path Tree Clusters",
+      "file": "images/waterfall-cliff-crossing__misty-river-crossing-wide-dirt-path-tree-clusters__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.011",
+      "title": "Green Plateau Ford Wide Dirt Path Small Bridge",
+      "file": "images/waterfall-cliff-crossing__green-plateau-ford-wide-dirt-path-small-bridge__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.012",
+      "title": "Mountain Stream Path Wide Dirt Path Mist Spray",
+      "file": "images/waterfall-cliff-crossing__mountain-stream-path-wide-dirt-path-mist-spray__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.013",
+      "title": "Cliff Waterfall Trail Shallow Stream Wildflowers",
+      "file": "images/waterfall-cliff-crossing__cliff-waterfall-trail-shallow-stream-wildflowers__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.014",
+      "title": "Misty River Crossing Shallow Stream Boulders At Edges",
+      "file": "images/waterfall-cliff-crossing__misty-river-crossing-shallow-stream-boulders-at-edges__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.015",
+      "title": "Green Plateau Ford Shallow Stream Mist Spray",
+      "file": "images/waterfall-cliff-crossing__green-plateau-ford-shallow-stream-mist-spray__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.016",
+      "title": "Mountain Stream Path Shallow Stream Wildflowers",
+      "file": "images/waterfall-cliff-crossing__mountain-stream-path-shallow-stream-wildflowers__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.017",
+      "title": "Misty River Crossing Rocky Overlook Tree Clusters",
+      "file": "images/waterfall-cliff-crossing__misty-river-crossing-rocky-overlook-tree-clusters__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.018",
+      "title": "Green Plateau Ford Rocky Overlook Small Bridge",
+      "file": "images/waterfall-cliff-crossing__green-plateau-ford-rocky-overlook-small-bridge__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.wilderness.waterfall_cliff_crossing.019",
+      "title": "Mountain Stream Path Rocky Overlook Boulders At Edges",
+      "file": "images/waterfall-cliff-crossing__mountain-stream-path-rocky-overlook-boulders-at-edges__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 19
+}

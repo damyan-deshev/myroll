@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "interior.house_floor",
+  "label": "House Floor",
+  "theme": "fantasy",
+  "collection": "core",
+  "group": "interior",
+  "slug": "house-floor",
+  "grid": {
+    "type": "square",
+    "cols": 16,
+    "rows": 12,
+    "feetPerCell": 5,
+    "pxPerCell": 80,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.001",
+      "title": "Abandoned Manor Wing Central Hallway Broken Furniture",
+      "file": "images/house-floor__abandoned-manor-wing-central-hallway-broken-furniture__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.002",
+      "title": "Village Tavern Floor Central Hallway Fireplace Cover",
+      "file": "images/house-floor__village-tavern-floor-central-hallway-fireplace-cover__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.003",
+      "title": "Merchant House Central Hallway Stairwell",
+      "file": "images/house-floor__merchant-house-central-hallway-stairwell__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.004",
+      "title": "Alchemist Workshop Central Hallway Scattered Crates",
+      "file": "images/house-floor__alchemist-workshop-central-hallway-scattered-crates__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.005",
+      "title": "Guard Barracks Central Hallway Overturned Table",
+      "file": "images/house-floor__guard-barracks-central-hallway-overturned-table__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.006",
+      "title": "Abandoned Manor Wing Kitchen Hearth Blood Trail",
+      "file": "images/house-floor__abandoned-manor-wing-kitchen-hearth-blood-trail__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.007",
+      "title": "Village Tavern Floor Kitchen Hearth Fireplace Cover",
+      "file": "images/house-floor__village-tavern-floor-kitchen-hearth-fireplace-cover__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.008",
+      "title": "Merchant House Kitchen Hearth Stairwell",
+      "file": "images/house-floor__merchant-house-kitchen-hearth-stairwell__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.009",
+      "title": "Alchemist Workshop Kitchen Hearth Scattered Crates",
+      "file": "images/house-floor__alchemist-workshop-kitchen-hearth-scattered-crates__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.010",
+      "title": "Guard Barracks Kitchen Hearth Overturned Table",
+      "file": "images/house-floor__guard-barracks-kitchen-hearth-overturned-table__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.011",
+      "title": "Abandoned Manor Wing Study Library Blood Trail",
+      "file": "images/house-floor__abandoned-manor-wing-study-library-blood-trail__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.012",
+      "title": "Village Tavern Floor Study Library Locked Side Room",
+      "file": "images/house-floor__village-tavern-floor-study-library-locked-side-room__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.013",
+      "title": "Merchant House Study Library Secret Alcove",
+      "file": "images/house-floor__merchant-house-study-library-secret-alcove__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.014",
+      "title": "Guard Barracks Study Library Overturned Table",
+      "file": "images/house-floor__guard-barracks-study-library-overturned-table__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.015",
+      "title": "Abandoned Manor Wing Storage Room Blood Trail",
+      "file": "images/house-floor__abandoned-manor-wing-storage-room-blood-trail__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.016",
+      "title": "Village Tavern Floor Storage Room Locked Side Room",
+      "file": "images/house-floor__village-tavern-floor-storage-room-locked-side-room__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.017",
+      "title": "Merchant House Storage Room Secret Alcove",
+      "file": "images/house-floor__merchant-house-storage-room-secret-alcove__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.018",
+      "title": "Alchemist Workshop Storage Room Broken Furniture",
+      "file": "images/house-floor__alchemist-workshop-storage-room-broken-furniture__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.019",
+      "title": "Abandoned Manor Wing Small Bedrooms Blood Trail",
+      "file": "images/house-floor__abandoned-manor-wing-small-bedrooms-blood-trail__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0021"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.020",
+      "title": "Village Tavern Floor Small Bedrooms Locked Side Room",
+      "file": "images/house-floor__village-tavern-floor-small-bedrooms-locked-side-room__020.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0022"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.021",
+      "title": "Merchant House Small Bedrooms Secret Alcove",
+      "file": "images/house-floor__merchant-house-small-bedrooms-secret-alcove__021.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0023"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.022",
+      "title": "Alchemist Workshop Small Bedrooms Broken Furniture",
+      "file": "images/house-floor__alchemist-workshop-small-bedrooms-broken-furniture__022.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0024"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.023",
+      "title": "Guard Barracks Small Bedrooms Fireplace Cover",
+      "file": "images/house-floor__guard-barracks-small-bedrooms-fireplace-cover__023.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0025"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.024",
+      "title": "Abandoned Manor Wing Servants Corridor Stairwell",
+      "file": "images/house-floor__abandoned-manor-wing-servants-corridor-stairwell__024.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0026"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.025",
+      "title": "Village Tavern Floor Servants Corridor Scattered Crates",
+      "file": "images/house-floor__village-tavern-floor-servants-corridor-scattered-crates__025.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0027"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.026",
+      "title": "Merchant House Servants Corridor Secret Alcove",
+      "file": "images/house-floor__merchant-house-servants-corridor-secret-alcove__026.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0028"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.027",
+      "title": "Alchemist Workshop Servants Corridor Broken Furniture",
+      "file": "images/house-floor__alchemist-workshop-servants-corridor-broken-furniture__027.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0029"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.028",
+      "title": "Guard Barracks Servants Corridor Fireplace Cover",
+      "file": "images/house-floor__guard-barracks-servants-corridor-fireplace-cover__028.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0030"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.029",
+      "title": "Abandoned Manor Wing Dining Hall Stairwell",
+      "file": "images/house-floor__abandoned-manor-wing-dining-hall-stairwell__029.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0031"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.030",
+      "title": "Village Tavern Floor Dining Hall Scattered Crates",
+      "file": "images/house-floor__village-tavern-floor-dining-hall-scattered-crates__030.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0032"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.031",
+      "title": "Merchant House Dining Hall Overturned Table",
+      "file": "images/house-floor__merchant-house-dining-hall-overturned-table__031.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0033"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.032",
+      "title": "Alchemist Workshop Dining Hall Blood Trail",
+      "file": "images/house-floor__alchemist-workshop-dining-hall-blood-trail__032.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0034"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.033",
+      "title": "Guard Barracks Dining Hall Fireplace Cover",
+      "file": "images/house-floor__guard-barracks-dining-hall-fireplace-cover__033.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0035"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.034",
+      "title": "Abandoned Manor Wing Entry Foyer Stairwell",
+      "file": "images/house-floor__abandoned-manor-wing-entry-foyer-stairwell__034.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0036"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.035",
+      "title": "Village Tavern Floor Entry Foyer Scattered Crates",
+      "file": "images/house-floor__village-tavern-floor-entry-foyer-scattered-crates__035.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0037"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.036",
+      "title": "Merchant House Entry Foyer Overturned Table",
+      "file": "images/house-floor__merchant-house-entry-foyer-overturned-table__036.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0038"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.037",
+      "title": "Alchemist Workshop Entry Foyer Blood Trail",
+      "file": "images/house-floor__alchemist-workshop-entry-foyer-blood-trail__037.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0039"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.interior.house_floor.038",
+      "title": "Guard Barracks Entry Foyer Locked Side Room",
+      "file": "images/house-floor__guard-barracks-entry-foyer-locked-side-room__038.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:interior.house_floor:0040"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v1"
+  ],
+  "assetCount": 38
+}

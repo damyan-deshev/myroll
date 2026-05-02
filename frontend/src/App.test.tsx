@@ -369,7 +369,7 @@ describe("GM shell widgets", () => {
           return jsonResponse({
             status: "ok",
             db: "ok",
-            schema_version: "20260427_0012",
+            schema_version: "20260502_0013",
             db_path: "data/myroll.dev.sqlite3",
             time: "2026-04-27T00:00:00Z"
           });
@@ -378,7 +378,7 @@ describe("GM shell widgets", () => {
           app: "myroll",
           version: "dev",
           db_path: "data/myroll.dev.sqlite3",
-          schema_version: "20260427_0012",
+          schema_version: "20260502_0013",
           seed_version: "2026-04-27-v12",
           expected_seed_version: "2026-04-27-v12"
         });
@@ -388,7 +388,7 @@ describe("GM shell widgets", () => {
     renderWithClient(<BackendStatusWidget />);
 
     expect(await screen.findByText("myroll")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("20260427_0012")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("20260502_0013")).toBeInTheDocument());
   });
 
   it("renders backend unavailable state", async () => {
@@ -431,7 +431,7 @@ describe("GM shell widgets", () => {
         asset_size_bytes: 2048,
         latest_backup: null,
         latest_export: null,
-        schema_version: "20260427_0012",
+        schema_version: "20260502_0013",
         seed_version: "2026-04-27-v12",
         expected_seed_version: "2026-04-27-v12",
         private_demo_name_map_active: true
@@ -498,13 +498,13 @@ describe("GM shell widgets", () => {
           });
         }
         if (url.endsWith("/health")) {
-          return jsonResponse({ status: "ok", db: "ok", schema_version: "20260427_0012", db_path: "data/db", time: "z" });
+          return jsonResponse({ status: "ok", db: "ok", schema_version: "20260502_0013", db_path: "data/db", time: "z" });
         }
         return jsonResponse({
           app: "myroll",
           version: "dev",
           db_path: "data/db",
-          schema_version: "20260427_0012",
+          schema_version: "20260502_0013",
           seed_version: "2026-04-27-v12",
           expected_seed_version: "2026-04-27-v12"
         });
@@ -708,10 +708,10 @@ describe("GM shell widgets", () => {
   it("uploads assets and sends public images from the asset widget", async () => {
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
-      if (url.endsWith("/api/campaigns/c1/assets/upload")) {
+      if (url.endsWith("/api/campaigns/c1/assets/upload-batch")) {
         expect(init?.body).toBeInstanceOf(FormData);
         expect(init?.headers).toBeUndefined();
-        return jsonResponse(asset, true, 201);
+        return jsonResponse({ results: [{ filename: "storm.png", asset, map: null, error: null }] }, true, 201);
       }
       if (url.endsWith("/api/campaigns/c1/assets")) return jsonResponse([asset]);
       if (url.endsWith("/api/player-display/show-image")) {
@@ -748,11 +748,20 @@ describe("GM shell widgets", () => {
     );
 
     expect(await screen.findByText("Storm Gate")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Asset file"), {
+    expect(screen.queryByLabelText("Auto-create maps")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Asset kind"), { target: { value: "map_image" } });
+    const autoCreateMaps = screen.getByLabelText("Auto-create maps") as HTMLInputElement;
+    expect(autoCreateMaps.checked).toBe(false);
+    fireEvent.click(autoCreateMaps);
+    fireEvent.change(screen.getByLabelText("Asset files"), {
       target: { files: [new File(["fake"], "storm.png", { type: "image/png" })] }
     });
     fireEvent.click(screen.getByRole("button", { name: /Upload/ }));
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/campaigns/c1/assets/upload", expect.any(Object)));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/campaigns/c1/assets/upload-batch", expect.any(Object)));
+    expect(await screen.findByText("storm.png")).toBeInTheDocument();
+    const uploadBody = fetchMock.mock.calls.find(([url]) => String(url).endsWith("/api/campaigns/c1/assets/upload-batch"))?.[1]?.body as FormData;
+    expect(uploadBody.get("kind")).toBe("map_image");
+    expect(uploadBody.get("auto_create_maps")).toBe("true");
 
     fireEvent.click(screen.getByRole("button", { name: /Send to player/ }));
     await waitFor(() =>
@@ -1086,12 +1095,60 @@ describe("GM shell widgets", () => {
   });
 
   it("uses map endpoints from the map display widget", async () => {
+    const bundledMapRecord: MapRecord = {
+      ...mapRecord,
+      id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      asset_id: "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
+      asset_name: "Crystal Cave",
+      name: "Crystal Cave",
+      grid_size_px: 32,
+      grid_offset_x: 3,
+      grid_offset_y: 4
+    };
+    const bundledAsset: Asset = {
+      ...mapAsset,
+      id: bundledMapRecord.asset_id,
+      name: "Crystal Cave"
+    };
+    let bundledAdded = false;
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (url.endsWith("/api/bundled-asset-packs")) {
+        return jsonResponse([
+          {
+            id: "fixture-pack",
+            title: "Fixture Battle Maps",
+            asset_count: 1,
+            category_count: 1,
+            collections: ["Caves"]
+          }
+        ]);
+      }
+      if (url.endsWith("/api/bundled-asset-packs/fixture-pack/maps")) {
+        return jsonResponse([
+          {
+            id: "crystal-cave",
+            pack_id: "fixture-pack",
+            title: "Crystal Cave",
+            collection: "Caves",
+            group: "ruins",
+            category_key: "ruins_entry",
+            category_label: "Ruins Entry",
+            width: 320,
+            height: 180,
+            tags: ["cave", "crystal"],
+            grid: { cols: 10, rows: 6, feet_per_cell: 5, px_per_cell: 32, offset_x: 3, offset_y: 4 }
+          }
+        ]);
+      }
+      if (url.endsWith("/api/campaigns/c1/bundled-maps")) {
+        bundledAdded = true;
+        return jsonResponse({ asset: bundledAsset, map: bundledMapRecord, created_asset: true, created_map: true }, true, 201);
+      }
       if (url.endsWith("/api/campaigns/c1/assets")) return jsonResponse([mapAsset, asset]);
       if (url.endsWith("/api/campaigns/c1/maps")) {
         if (init?.method === "POST") return jsonResponse(mapRecord, true, 201);
-        return jsonResponse([mapRecord]);
+        return jsonResponse(bundledAdded ? [bundledMapRecord, mapRecord] : [mapRecord]);
       }
       if (url.endsWith("/api/campaigns/c1/scenes/sc1/maps")) {
         if (init?.method === "POST") return jsonResponse({ ...sceneMap, is_active: true }, true, 201);
@@ -1119,6 +1176,9 @@ describe("GM shell widgets", () => {
       }
       if (url.endsWith(`/api/maps/${mapRecord.id}/grid`)) {
         return jsonResponse({ ...mapRecord, grid_color: "#AABBCC" });
+      }
+      if (url.endsWith(`/api/maps/${bundledMapRecord.id}/grid`)) {
+        return jsonResponse({ ...bundledMapRecord, grid_size_px: 37, grid_offset_x: 13, grid_offset_y: 5, grid_color: "#AABBCC" });
       }
       if (url.endsWith(`/api/scene-maps/${sceneMap.id}`)) {
         return jsonResponse({ ...sceneMap, player_fit_mode: "fill", player_grid_visible: false });
@@ -1173,11 +1233,30 @@ describe("GM shell widgets", () => {
     );
 
     expect(await screen.findAllByText("Harbor Map")).not.toHaveLength(0);
+    expect(await screen.findByText("Fixture Battle Maps")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Bundled map search"), { target: { value: "crystal" } });
+    fireEvent.click(screen.getByRole("button", { name: /Add to campaign/ }));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/campaigns/c1/bundled-maps",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ pack_id: "fixture-pack", asset_id: "crystal-cave" })
+        })
+      )
+    );
+    await waitFor(() => expect((screen.getByLabelText("Grid size") as HTMLInputElement).value).toBe("32"));
+    fireEvent.click(screen.getByRole("button", { name: "Increase grid size by 5" }));
+    fireEvent.click(screen.getByRole("button", { name: "Nudge grid right 10px" }));
+    fireEvent.click(screen.getByRole("button", { name: "Nudge grid down 1px" }));
+    expect((screen.getByLabelText("Grid size") as HTMLInputElement).value).toBe("37");
+    expect((screen.getByLabelText("Grid offset X") as HTMLInputElement).value).toBe("13");
+    expect((screen.getByLabelText("Grid offset Y") as HTMLInputElement).value).toBe("5");
+    fireEvent.change(screen.getByLabelText("Grid color"), { target: { value: "#abc" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save grid" }));
     fireEvent.click(screen.getByRole("button", { name: "Create map" }));
     fireEvent.click(screen.getByRole("button", { name: "Assign active" }));
     fireEvent.click(screen.getByRole("button", { name: "Activate scene map" }));
-    fireEvent.change(screen.getByLabelText("Grid color"), { target: { value: "#abc" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save grid" }));
     fireEvent.change(screen.getByLabelText("Map fit mode"), { target: { value: "fill" } });
     fireEvent.click(screen.getByRole("button", { name: "Save player" }));
     fireEvent.click(screen.getByRole("button", { name: /Enable hidden fog/ }));
@@ -1194,9 +1273,15 @@ describe("GM shell widgets", () => {
       )
     );
     expect(fetchMock).toHaveBeenCalledWith(
-      `/api/maps/${mapRecord.id}/grid`,
-      expect.objectContaining({ method: "PATCH" })
+      `/api/maps/${bundledMapRecord.id}/grid`,
+      expect.objectContaining({
+        method: "PATCH",
+        body: expect.stringContaining("\"grid_size_px\":37")
+      })
     );
+    const gridBody = fetchMock.mock.calls.find(([url]) => String(url).endsWith(`/api/maps/${bundledMapRecord.id}/grid`))?.[1]?.body as string;
+    expect(gridBody).toContain("\"grid_offset_x\":13");
+    expect(gridBody).toContain("\"grid_offset_y\":5");
     expect(fetchMock).toHaveBeenCalledWith(
       `/api/scene-maps/${sceneMap.id}/fog/operations`,
       expect.objectContaining({ method: "POST", body: JSON.stringify({ operations: [{ type: "reveal_all" }] }) })

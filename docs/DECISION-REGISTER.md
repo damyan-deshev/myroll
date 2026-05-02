@@ -680,7 +680,7 @@ Consequences:
 
 ## DR-048: Generated Battle Map Packs Use Manifest And Category Grid Contracts
 
-Decision: generated battle-map packs define tactical scale through manifest/category metadata, and Myroll will later import the curated production pack as normal validated `map_image` assets rather than inferring scale from prompts or image content.
+Decision: generated battle-map packs define tactical scale through manifest/category metadata, and Myroll imports bundled curated maps as normal validated `map_image` assets rather than inferring scale from prompts or image content.
 
 Rationale:
 - Diffusion output can drift in perceived scale even when the prompt asks for tactical maps.
@@ -694,7 +694,7 @@ Consequences:
 - Each accepted production asset also carries the same authoritative `asset.grid` contract in the pack manifest.
 - Importers must validate actual image dimensions against the category grid contract before creating maps.
 - Myroll should set map grid size from the contract and render the grid live.
-- Large generated asset packs remain external artifacts until an explicit import/storage workflow is built.
+- The first production pack is committed as an immutable bundled asset-pack version and copied into managed storage when added to a campaign.
 
 ## DR-049: Pack Import Is Separate From User-Facing Asset Import
 
@@ -714,7 +714,7 @@ Consequences:
 - User-facing import uses browser upload now and may later use a directory picker only after explicit user selection.
 - Every imported file, including generated maps and future token packs, goes through backend image validation before becoming an asset.
 - External pack directories are never served directly by player-display blob endpoints.
-- Campaign use may initially copy bundled blobs into managed storage, but a later read-only bundled blob source is acceptable if player-display blob scoping and export semantics stay explicit.
+- Campaign use in v1 copies bundled blobs into managed storage. A later read-only bundled blob source is acceptable only if player-display blob scoping and export semantics stay explicit.
 
 ## DR-050: Gridless Map Calibration Uses Live Grid Size And Offsets
 

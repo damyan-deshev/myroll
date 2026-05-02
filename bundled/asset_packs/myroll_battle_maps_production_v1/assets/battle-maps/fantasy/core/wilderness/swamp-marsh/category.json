@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "outdoor.swamp_marsh",
+  "label": "Swamp Marsh",
+  "theme": "fantasy",
+  "collection": "core",
+  "group": "wilderness",
+  "slug": "swamp-marsh",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.001",
+      "title": "Witch Marsh Wooden Boardwalk Murky Water",
+      "file": "images/swamp-marsh__witch-marsh-wooden-boardwalk-murky-water__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.002",
+      "title": "Bog Crossing Wooden Boardwalk Bubbling Pools",
+      "file": "images/swamp-marsh__bog-crossing-wooden-boardwalk-bubbling-pools__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.003",
+      "title": "Sunken Ruins Wooden Boardwalk Foggy Edges",
+      "file": "images/swamp-marsh__sunken-ruins-wooden-boardwalk-foggy-edges__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.004",
+      "title": "Mangrove Trail Wooden Boardwalk Dead Trees",
+      "file": "images/swamp-marsh__mangrove-trail-wooden-boardwalk-dead-trees__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.005",
+      "title": "Fen Campsite Wooden Boardwalk Mossy Logs",
+      "file": "images/swamp-marsh__fen-campsite-wooden-boardwalk-mossy-logs__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.006",
+      "title": "Witch Marsh Half-sunken Hut Hidden Sinkholes",
+      "file": "images/swamp-marsh__witch-marsh-half-sunken-hut-hidden-sinkholes__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.007",
+      "title": "Bog Crossing Half-sunken Hut Bubbling Pools",
+      "file": "images/swamp-marsh__bog-crossing-half-sunken-hut-bubbling-pools__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.008",
+      "title": "Sunken Ruins Half-sunken Hut Foggy Edges",
+      "file": "images/swamp-marsh__sunken-ruins-half-sunken-hut-foggy-edges__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.009",
+      "title": "Mangrove Trail Half-sunken Hut Dead Trees",
+      "file": "images/swamp-marsh__mangrove-trail-half-sunken-hut-dead-trees__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.010",
+      "title": "Fen Campsite Half-sunken Hut Mossy Logs",
+      "file": "images/swamp-marsh__fen-campsite-half-sunken-hut-mossy-logs__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.011",
+      "title": "Witch Marsh Ritual Stones Hidden Sinkholes",
+      "file": "images/swamp-marsh__witch-marsh-ritual-stones-hidden-sinkholes__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.012",
+      "title": "Bog Crossing Ritual Stones Reeds",
+      "file": "images/swamp-marsh__bog-crossing-ritual-stones-reeds__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.013",
+      "title": "Sunken Ruins Ritual Stones Broken Planks",
+      "file": "images/swamp-marsh__sunken-ruins-ritual-stones-broken-planks__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.014",
+      "title": "Mangrove Trail Ritual Stones Dead Trees",
+      "file": "images/swamp-marsh__mangrove-trail-ritual-stones-dead-trees__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.015",
+      "title": "Fen Campsite Ritual Stones Mossy Logs",
+      "file": "images/swamp-marsh__fen-campsite-ritual-stones-mossy-logs__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.016",
+      "title": "Witch Marsh Mud Island Hidden Sinkholes",
+      "file": "images/swamp-marsh__witch-marsh-mud-island-hidden-sinkholes__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.017",
+      "title": "Bog Crossing Mud Island Reeds",
+      "file": "images/swamp-marsh__bog-crossing-mud-island-reeds__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.018",
+      "title": "Sunken Ruins Mud Island Broken Planks",
+      "file": "images/swamp-marsh__sunken-ruins-mud-island-broken-planks__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.019",
+      "title": "Mangrove Trail Mud Island Murky Water",
+      "file": "images/swamp-marsh__mangrove-trail-mud-island-murky-water__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.020",
+      "title": "Fen Campsite Mud Island Bubbling Pools",
+      "file": "images/swamp-marsh__fen-campsite-mud-island-bubbling-pools__020.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0020"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.021",
+      "title": "Witch Marsh Rotting Dock Hidden Sinkholes",
+      "file": "images/swamp-marsh__witch-marsh-rotting-dock-hidden-sinkholes__021.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0021"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.022",
+      "title": "Bog Crossing Rotting Dock Reeds",
+      "file": "images/swamp-marsh__bog-crossing-rotting-dock-reeds__022.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0022"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.023",
+      "title": "Sunken Ruins Rotting Dock Broken Planks",
+      "file": "images/swamp-marsh__sunken-ruins-rotting-dock-broken-planks__023.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0023"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.024",
+      "title": "Mangrove Trail Rotting Dock Murky Water",
+      "file": "images/swamp-marsh__mangrove-trail-rotting-dock-murky-water__024.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0024"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.025",
+      "title": "Fen Campsite Rotting Dock Bubbling Pools",
+      "file": "images/swamp-marsh__fen-campsite-rotting-dock-bubbling-pools__025.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0025"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.026",
+      "title": "Witch Marsh Deep Pool Foggy Edges",
+      "file": "images/swamp-marsh__witch-marsh-deep-pool-foggy-edges__026.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0026"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.027",
+      "title": "Bog Crossing Deep Pool Dead Trees",
+      "file": "images/swamp-marsh__bog-crossing-deep-pool-dead-trees__027.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0027"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.028",
+      "title": "Sunken Ruins Deep Pool Broken Planks",
+      "file": "images/swamp-marsh__sunken-ruins-deep-pool-broken-planks__028.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0028"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.029",
+      "title": "Fen Campsite Deep Pool Bubbling Pools",
+      "file": "images/swamp-marsh__fen-campsite-deep-pool-bubbling-pools__029.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0030"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.030",
+      "title": "Witch Marsh Fallen Cypress Foggy Edges",
+      "file": "images/swamp-marsh__witch-marsh-fallen-cypress-foggy-edges__030.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0031"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.031",
+      "title": "Bog Crossing Fallen Cypress Dead Trees",
+      "file": "images/swamp-marsh__bog-crossing-fallen-cypress-dead-trees__031.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0032"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.032",
+      "title": "Sunken Ruins Fallen Cypress Mossy Logs",
+      "file": "images/swamp-marsh__sunken-ruins-fallen-cypress-mossy-logs__032.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0033"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.033",
+      "title": "Mangrove Trail Fallen Cypress Hidden Sinkholes",
+      "file": "images/swamp-marsh__mangrove-trail-fallen-cypress-hidden-sinkholes__033.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0034"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.034",
+      "title": "Fen Campsite Fallen Cypress Bubbling Pools",
+      "file": "images/swamp-marsh__fen-campsite-fallen-cypress-bubbling-pools__034.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0035"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.035",
+      "title": "Witch Marsh Reed Maze Foggy Edges",
+      "file": "images/swamp-marsh__witch-marsh-reed-maze-foggy-edges__035.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0036"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.036",
+      "title": "Bog Crossing Reed Maze Dead Trees",
+      "file": "images/swamp-marsh__bog-crossing-reed-maze-dead-trees__036.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0037"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.037",
+      "title": "Sunken Ruins Reed Maze Mossy Logs",
+      "file": "images/swamp-marsh__sunken-ruins-reed-maze-mossy-logs__037.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0038"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.038",
+      "title": "Mangrove Trail Reed Maze Hidden Sinkholes",
+      "file": "images/swamp-marsh__mangrove-trail-reed-maze-hidden-sinkholes__038.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0039"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.wilderness.swamp_marsh.039",
+      "title": "Fen Campsite Reed Maze Reeds",
+      "file": "images/swamp-marsh__fen-campsite-reed-maze-reeds__039.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:outdoor.swamp_marsh:0040"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v1"
+  ],
+  "assetCount": 39
+}

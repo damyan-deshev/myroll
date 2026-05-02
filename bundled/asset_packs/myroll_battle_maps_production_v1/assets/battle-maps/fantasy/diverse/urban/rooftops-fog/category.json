@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "city.rooftops_fog",
+  "label": "Foggy Rooftops",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "urban",
+  "slug": "rooftops-fog",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.001",
+      "title": "Slate Roof Terraces Broad Central Roof Deck Low Parapet Cover",
+      "file": "images/rooftops-fog__slate-roof-terraces-broad-central-roof-deck-low-parapet-cover__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.002",
+      "title": "Foggy Noble District Roofs Broad Central Roof Deck Small Crates",
+      "file": "images/rooftops-fog__foggy-noble-district-roofs-broad-central-roof-deck-small-crates__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.003",
+      "title": "Rain Slick Market Rooftops Broad Central Roof Deck Warm Window Wells",
+      "file": "images/rooftops-fog__rain-slick-market-rooftops-broad-central-roof-deck-warm-window-wells__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.004",
+      "title": "Foggy Noble District Roofs Wide Plank Bridge Warm Window Wells",
+      "file": "images/rooftops-fog__foggy-noble-district-roofs-wide-plank-bridge-warm-window-wells__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.005",
+      "title": "Old Town Roofs Wide Plank Bridge Smoke Vents",
+      "file": "images/rooftops-fog__old-town-roofs-wide-plank-bridge-smoke-vents__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.006",
+      "title": "Slate Roof Terraces Skylight Cluster Low Parapet Cover",
+      "file": "images/rooftops-fog__slate-roof-terraces-skylight-cluster-low-parapet-cover__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.007",
+      "title": "Foggy Noble District Roofs Chimney Line Warm Window Wells",
+      "file": "images/rooftops-fog__foggy-noble-district-roofs-chimney-line-warm-window-wells__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.008",
+      "title": "Rain Slick Market Rooftops Chimney Line Low Parapet Cover",
+      "file": "images/rooftops-fog__rain-slick-market-rooftops-chimney-line-low-parapet-cover__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.009",
+      "title": "Old Town Roofs Chimney Line Small Crates",
+      "file": "images/rooftops-fog__old-town-roofs-chimney-line-small-crates__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.urban.rooftops_fog.010",
+      "title": "Old Town Roofs Open Rooftop Courtyard Warm Window Wells",
+      "file": "images/rooftops-fog__old-town-roofs-open-rooftop-courtyard-warm-window-wells__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 10
+}

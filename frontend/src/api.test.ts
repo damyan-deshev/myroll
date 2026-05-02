@@ -580,4 +580,59 @@ describe("api client", () => {
       expect.objectContaining({ method: "POST", body: expect.any(FormData), headers: undefined })
     );
   });
+
+  it("uploads asset batches with FormData and auto-create map flag", async () => {
+    const fetchMock = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) => mockResponse({ results: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api.uploadAssetsBatch("campaign-id", {
+      files: [
+        new File(["one"], "one.png", { type: "image/png" }),
+        new File(["two"], "two.png", { type: "image/png" })
+      ],
+      kind: "map_image",
+      visibility: "public_displayable",
+      tags: "battle, cave",
+      auto_create_maps: true
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/campaigns/campaign-id/assets/upload-batch",
+      expect.objectContaining({ method: "POST", body: expect.any(FormData), headers: undefined })
+    );
+    const body = fetchMock.mock.calls[0][1]?.body as FormData;
+    expect(body.getAll("files")).toHaveLength(2);
+    expect(body.get("kind")).toBe("map_image");
+    expect(body.get("visibility")).toBe("public_displayable");
+    expect(body.get("tags")).toBe("battle, cave");
+    expect(body.get("auto_create_maps")).toBe("true");
+  });
+
+  it("calls bundled catalog and add-map endpoints", async () => {
+    const fetchMock = vi.fn(() => mockResponse([]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api.bundledAssetPacks();
+    await api.bundledAssetPackMaps("pack/id");
+    await api.addBundledMapToCampaign("campaign-id", { pack_id: "pack/id", asset_id: "asset/id", name: "Cave" });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/api/bundled-asset-packs",
+      expect.objectContaining({ headers: expect.objectContaining({ "Content-Type": "application/json" }) })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/bundled-asset-packs/pack%2Fid/maps",
+      expect.objectContaining({ headers: expect.objectContaining({ "Content-Type": "application/json" }) })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/api/campaigns/campaign-id/bundled-maps",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ pack_id: "pack/id", asset_id: "asset/id", name: "Cave" })
+      })
+    );
+  });
 });

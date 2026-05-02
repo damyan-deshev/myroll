@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "underground.toxic_sewer_canals",
+  "label": "Toxic Sewer Canals",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "underground",
+  "slug": "toxic-sewer-canals",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.001",
+      "title": "Alchemical Sewer Junction Two Toxic Canals Green Glow",
+      "file": "images/toxic-sewer-canals__alchemical-sewer-junction-two-toxic-canals-green-glow__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.002",
+      "title": "Old City Drain Two Toxic Canals Stone Ledges",
+      "file": "images/toxic-sewer-canals__old-city-drain-two-toxic-canals-stone-ledges__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.003",
+      "title": "Poison Canal Crossing Two Toxic Canals Rusted Grates",
+      "file": "images/toxic-sewer-canals__poison-canal-crossing-two-toxic-canals-rusted-grates__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.004",
+      "title": "Underworks Sluice Hall Two Toxic Canals Steam Vents",
+      "file": "images/toxic-sewer-canals__underworks-sluice-hall-two-toxic-canals-steam-vents__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.005",
+      "title": "Alchemical Sewer Junction Central Stone Walkway Stone Ledges",
+      "file": "images/toxic-sewer-canals__alchemical-sewer-junction-central-stone-walkway-stone-ledges__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.006",
+      "title": "Old City Drain Central Stone Walkway Rusted Grates",
+      "file": "images/toxic-sewer-canals__old-city-drain-central-stone-walkway-rusted-grates__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.007",
+      "title": "Underworks Sluice Hall Central Stone Walkway Barrel Clusters",
+      "file": "images/toxic-sewer-canals__underworks-sluice-hall-central-stone-walkway-barrel-clusters__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.008",
+      "title": "Alchemical Sewer Junction Wide Plank Crossings Green Glow",
+      "file": "images/toxic-sewer-canals__alchemical-sewer-junction-wide-plank-crossings-green-glow__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.009",
+      "title": "Poison Canal Crossing Wide Plank Crossings Barrel Clusters",
+      "file": "images/toxic-sewer-canals__poison-canal-crossing-wide-plank-crossings-barrel-clusters__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.010",
+      "title": "Underworks Sluice Hall Wide Plank Crossings Green Glow",
+      "file": "images/toxic-sewer-canals__underworks-sluice-hall-wide-plank-crossings-green-glow__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.011",
+      "title": "Alchemical Sewer Junction Pipe Outlet Wall Stone Ledges",
+      "file": "images/toxic-sewer-canals__alchemical-sewer-junction-pipe-outlet-wall-stone-ledges__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.012",
+      "title": "Old City Drain Pipe Outlet Wall Rusted Grates",
+      "file": "images/toxic-sewer-canals__old-city-drain-pipe-outlet-wall-rusted-grates__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.013",
+      "title": "Underworks Sluice Hall Pipe Outlet Wall Stone Ledges",
+      "file": "images/toxic-sewer-canals__underworks-sluice-hall-pipe-outlet-wall-stone-ledges__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.014",
+      "title": "Alchemical Sewer Junction Maintenance Platform Rusted Grates",
+      "file": "images/toxic-sewer-canals__alchemical-sewer-junction-maintenance-platform-rusted-grates__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.015",
+      "title": "Old City Drain Maintenance Platform Steam Vents",
+      "file": "images/toxic-sewer-canals__old-city-drain-maintenance-platform-steam-vents__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.016",
+      "title": "Poison Canal Crossing Maintenance Platform Barrel Clusters",
+      "file": "images/toxic-sewer-canals__poison-canal-crossing-maintenance-platform-barrel-clusters__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.underground.toxic_sewer_canals.017",
+      "title": "Underworks Sluice Hall Maintenance Platform Rusted Grates",
+      "file": "images/toxic-sewer-canals__underworks-sluice-hall-maintenance-platform-rusted-grates__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 17
+}

@@ -30,6 +30,7 @@ class Settings:
     asset_dir: Path
     backup_dir: Path
     export_dir: Path
+    bundled_asset_pack_dirs: tuple[Path, ...]
     seed_mode: str = "dev"
     demo_name_map_path: Path | None = None
     host: str = "127.0.0.1"
@@ -48,6 +49,9 @@ class Settings:
         asset_dir = Path(source.get("MYROLL_ASSET_DIR", data_dir / "assets")).expanduser()
         backup_dir = Path(source.get("MYROLL_BACKUP_DIR", data_dir / "backups")).expanduser()
         export_dir = Path(source.get("MYROLL_EXPORT_DIR", data_dir / "exports")).expanduser()
+        default_bundled_dir = root / "bundled" / "asset_packs"
+        configured_bundled_dirs = tuple(Path(item).expanduser() for item in _csv_setting(source.get("MYROLL_BUNDLED_ASSET_PACKS_DIR")))
+        bundled_asset_pack_dirs = tuple(dict.fromkeys((default_bundled_dir, *configured_bundled_dirs)))
         seed_mode = source.get("MYROLL_SEED_MODE", "dev").strip().lower() or "dev"
         demo_name_map_raw = source.get("MYROLL_DEMO_NAME_MAP_PATH")
         demo_name_map_path = Path(demo_name_map_raw).expanduser() if demo_name_map_raw else root / "demo" / "local" / "name-map.private.json"
@@ -64,6 +68,7 @@ class Settings:
             asset_dir=asset_dir.resolve(),
             backup_dir=backup_dir.resolve(),
             export_dir=export_dir.resolve(),
+            bundled_asset_pack_dirs=tuple(path.resolve() for path in bundled_asset_pack_dirs),
             seed_mode=seed_mode,
             demo_name_map_path=demo_name_map_path.resolve(),
             host=host,

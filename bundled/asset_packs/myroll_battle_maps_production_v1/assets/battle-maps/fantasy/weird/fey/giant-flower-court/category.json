@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "fey.giant_flower_court",
+  "label": "Giant Flower Court",
+  "theme": "fantasy",
+  "collection": "weird",
+  "group": "fey",
+  "slug": "giant-flower-court",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.001",
+      "title": "Giant Flower Court Large Central Petal Meadow Pink Petals",
+      "file": "images/giant-flower-court__giant-flower-court-large-central-petal-meadow-pink-petals__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.002",
+      "title": "Feywild Petal Meadow Large Central Petal Meadow Blue Fairy Dew",
+      "file": "images/giant-flower-court__feywild-petal-meadow-large-central-petal-meadow-blue-fairy-dew__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.003",
+      "title": "Luminous Vine Garden Large Central Petal Meadow Gold Pollen Light",
+      "file": "images/giant-flower-court__luminous-vine-garden-large-central-petal-meadow-gold-pollen-light__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.004",
+      "title": "Pollen Spring Clearing Large Central Petal Meadow Luminous Vines",
+      "file": "images/giant-flower-court__pollen-spring-clearing-large-central-petal-meadow-luminous-vines__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.005",
+      "title": "Giant Flower Court Curved Moss Path Blue Fairy Dew",
+      "file": "images/giant-flower-court__giant-flower-court-curved-moss-path-blue-fairy-dew__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.006",
+      "title": "Feywild Petal Meadow Curved Moss Path Gold Pollen Light",
+      "file": "images/giant-flower-court__feywild-petal-meadow-curved-moss-path-gold-pollen-light__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.007",
+      "title": "Luminous Vine Garden Curved Moss Path Luminous Vines",
+      "file": "images/giant-flower-court__luminous-vine-garden-curved-moss-path-luminous-vines__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.008",
+      "title": "Pollen Spring Clearing Curved Moss Path Emerald Moss",
+      "file": "images/giant-flower-court__pollen-spring-clearing-curved-moss-path-emerald-moss__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.009",
+      "title": "Giant Flower Court Pollen Pool Edge Pink Petals",
+      "file": "images/giant-flower-court__giant-flower-court-pollen-pool-edge-pink-petals__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.010",
+      "title": "Feywild Petal Meadow Pollen Pool Edge Luminous Vines",
+      "file": "images/giant-flower-court__feywild-petal-meadow-pollen-pool-edge-luminous-vines__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.011",
+      "title": "Luminous Vine Garden Pollen Pool Edge Emerald Moss",
+      "file": "images/giant-flower-court__luminous-vine-garden-pollen-pool-edge-emerald-moss__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.012",
+      "title": "Pollen Spring Clearing Pollen Pool Edge Pink Petals",
+      "file": "images/giant-flower-court__pollen-spring-clearing-pollen-pool-edge-pink-petals__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.013",
+      "title": "Giant Flower Court Giant Blossom Perimeter Blue Fairy Dew",
+      "file": "images/giant-flower-court__giant-flower-court-giant-blossom-perimeter-blue-fairy-dew__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.014",
+      "title": "Feywild Petal Meadow Giant Blossom Perimeter Gold Pollen Light",
+      "file": "images/giant-flower-court__feywild-petal-meadow-giant-blossom-perimeter-gold-pollen-light__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.015",
+      "title": "Luminous Vine Garden Giant Blossom Perimeter Pink Petals",
+      "file": "images/giant-flower-court__luminous-vine-garden-giant-blossom-perimeter-pink-petals__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.016",
+      "title": "Pollen Spring Clearing Giant Blossom Perimeter Blue Fairy Dew",
+      "file": "images/giant-flower-court__pollen-spring-clearing-giant-blossom-perimeter-blue-fairy-dew__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.017",
+      "title": "Giant Flower Court Vine Arch Boundary Gold Pollen Light",
+      "file": "images/giant-flower-court__giant-flower-court-vine-arch-boundary-gold-pollen-light__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.018",
+      "title": "Feywild Petal Meadow Vine Arch Boundary Luminous Vines",
+      "file": "images/giant-flower-court__feywild-petal-meadow-vine-arch-boundary-luminous-vines__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.019",
+      "title": "Luminous Vine Garden Vine Arch Boundary Emerald Moss",
+      "file": "images/giant-flower-court__luminous-vine-garden-vine-arch-boundary-emerald-moss__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.fey.giant_flower_court.020",
+      "title": "Pollen Spring Clearing Vine Arch Boundary Gold Pollen Light",
+      "file": "images/giant-flower-court__pollen-spring-clearing-vine-arch-boundary-gold-pollen-light__020.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v3_weird_fantasy"
+  ],
+  "assetCount": 20
+}

@@ -1,0 +1,3518 @@
+{
+  "schemaVersion": 1,
+  "packId": "myroll_battle_maps_production_v1",
+  "policy": {
+    "defaultStatus": "accepted",
+    "rejectCriteria": [
+      "not a readable top-down battle map",
+      "too abstract or texture-only",
+      "too little playable movement space",
+      "obvious 3D/perspective/isometric scene",
+      "text, labels, or UI artifacts",
+      "category identity badly mismatched",
+      "visual corruption, severe blur, repeated blobs, or broken geometry"
+    ]
+  },
+  "decisions": {
+    "myroll_battle_maps_v1:dungeon.cave_complex:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0012": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0021": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0024": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0025": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0028": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0029": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0030": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0031": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected blob/island composition with poor tactical readability",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0033": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0035": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0036": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.cave_complex:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0008": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0017": {
+      "status": "rejected",
+      "reason": "category identity mismatch: reads more like an organic cave/green wilderness pocket than stone dungeon",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0021": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0024": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0025": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0028": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0029": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0030": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0031": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0033": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0035": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0036": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:dungeon.stone_complex:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0014": {
+      "status": "rejected",
+      "reason": "category identity mismatch: reads as an outdoor/garden layout rather than a house floor",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0020": {
+      "status": "rejected",
+      "reason": "category identity mismatch: water/moat-heavy scene is not a reliable house-floor map",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0021": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0024": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0025": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0028": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0029": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0030": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0031": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0033": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0035": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0036": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.house_floor:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0021": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0024": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0025": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0028": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0029": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0030": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0031": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0033": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0035": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0036": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:interior.small_chamber:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0002": {
+      "status": "rejected",
+      "reason": "poor tactical readability: scattered arena islands rather than a coherent large arena",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0008": {
+      "status": "rejected",
+      "reason": "poor tactical readability: cluttered small islands with weak arena structure",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0013": {
+      "status": "rejected",
+      "reason": "category identity mismatch: cell-like maze, no central arena or lair space",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0020": {
+      "status": "rejected",
+      "reason": "category identity mismatch: dense corridor map rather than large arena/lair",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0021": {
+      "status": "rejected",
+      "reason": "category identity mismatch: reads as a small cave/room map rather than a large arena/lair",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0024": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0025": {
+      "status": "rejected",
+      "reason": "category identity mismatch: reads as a room/cave map rather than a large arena/lair",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0028": {
+      "status": "rejected",
+      "reason": "poor tactical readability: dense maze-like arena with weak movement clarity",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0029": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0030": {
+      "status": "rejected",
+      "reason": "poor tactical readability: over-dense maze-like layout",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0031": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0033": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0035": {
+      "status": "rejected",
+      "reason": "poor tactical readability: cluttered lava-cave layout with weak arena structure",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0036": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:large.arena_lair:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0001": {
+      "status": "rejected",
+      "reason": "poor tactical readability: maze-like forest without a clear road or movement lane",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0007": {
+      "status": "rejected",
+      "reason": "poor tactical readability: dense green swirl/maze with weak playable route",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0018": {
+      "status": "rejected",
+      "reason": "poor tactical readability: over-dense looping road pattern",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0021": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0024": {
+      "status": "rejected",
+      "reason": "poor tactical readability: labyrinthine density with weak movement space",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0025": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0028": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0029": {
+      "status": "rejected",
+      "reason": "too cluttered: dense lights and trees obscure clear travel lanes",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0030": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0031": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0033": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0035": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0036": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.forest_road:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0014": {
+      "status": "rejected",
+      "reason": "category identity mismatch: no readable river or crossing",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0015": {
+      "status": "rejected",
+      "reason": "category identity mismatch: generic forest maze, no readable river or crossing",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0017": {
+      "status": "rejected",
+      "reason": "category identity mismatch: generic boulder field, no crossing feature",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0020": {
+      "status": "rejected",
+      "reason": "category identity mismatch: generic paths, no readable river or crossing",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0021": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0024": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0025": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0028": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0029": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0030": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0031": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0033": {
+      "status": "rejected",
+      "reason": "category identity mismatch: settlement/maze composition, no readable crossing",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0035": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0036": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.river_bridge:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0021": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0024": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0025": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0028": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0029": {
+      "status": "rejected",
+      "reason": "poor tactical readability: too dense and tiny-maze-like for practical play",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0030": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0031": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0033": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0035": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0036": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:outdoor.swamp_marsh:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0021": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0024": {
+      "status": "rejected",
+      "reason": "too abstract: disconnected green composition with weak ruin/temple readability",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0025": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0028": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0029": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected island-like composition",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0030": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0031": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0033": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0035": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0036": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:ruins.temple_shrine:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0003": {
+      "status": "rejected",
+      "reason": "too cluttered: over-zoomed settlement tangle with weak movement lanes",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0010": {
+      "status": "rejected",
+      "reason": "category identity mismatch: water-island map rather than settlement streets or square",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0020": {
+      "status": "rejected",
+      "reason": "category identity mismatch: green maze with weak settlement identity",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0021": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0022": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0023": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0024": {
+      "status": "rejected",
+      "reason": "category identity mismatch: sparse blobs without readable street or square layout",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0025": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0026": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0027": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0028": {
+      "status": "rejected",
+      "reason": "category identity mismatch: no clear street or square structure",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0029": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0030": {
+      "status": "rejected",
+      "reason": "poor tactical readability: weird maze-like composition",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0031": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0032": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0033": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0034": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0035": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0036": {
+      "status": "rejected",
+      "reason": "poor tactical readability: maze-like layout with weak settlement identity",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0037": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0038": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0039": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v1:settlement.street_square:0040": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0009": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0010": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected layout with weak battle-map readability",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0012": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0016": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0017": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0019": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected UI-like layout",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0014": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0004": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0005": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0007": {
+      "status": "rejected",
+      "reason": "obvious perspective/isometric scene, not a flat top-down battle map",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0010": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected tiny roof islands with poor movement continuity",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0011": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0012": {
+      "status": "rejected",
+      "reason": "obvious perspective/skew artifact, weak top-down usability",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0013": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0017": {
+      "status": "rejected",
+      "reason": "too abstract: amorphous island-like rooftop composition with weak tactical readability",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0018": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0019": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:city.rooftops_fog:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0004": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0013": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:coast.shipwreck_beach:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0006": {
+      "status": "rejected",
+      "reason": "broken geometry: isolated island/void-like scene with weak movement continuity",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0007": {
+      "status": "rejected",
+      "reason": "too flat and isolated: weak terrain information for play",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0009": {
+      "status": "rejected",
+      "reason": "broken geometry: isolated blob/void-like scene",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0013": {
+      "status": "rejected",
+      "reason": "visual artifact: repeated tile-like/tree pattern, weak battle-map readability",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0017": {
+      "status": "rejected",
+      "reason": "broken geometry: isolated island/void-like scene",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0020": {
+      "status": "rejected",
+      "reason": "too flat and empty: weak terrain information for play",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0001": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0004": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0007": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0010": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected building/island cluster rather than a coherent tavern map",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0011": {
+      "status": "rejected",
+      "reason": "category identity mismatch: huge green courtyard with weak tavern identity",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0017": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:nature.waterfall_cliff_crossing:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0010": {
+      "status": "rejected",
+      "reason": "category identity mismatch: forest scatter rather than a clean arena",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0011": {
+      "status": "rejected",
+      "reason": "category identity mismatch: island/ring composition rather than a clean arena",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0017": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0007": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected abstract sewer islands",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0010": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected walkways over excessive black void",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0015": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected linear segments over excessive black void",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v2_diverse_spacious:underground.toxic_sewer_canals:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0005": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0007": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0008": {
+      "status": "rejected",
+      "reason": "visual corruption/category mismatch: flat green broken composition",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0010": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0013": {
+      "status": "rejected",
+      "reason": "too little playable movement space: huge central void dominates the map",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0017": {
+      "status": "rejected",
+      "reason": "visible text/signature artifact in the image corner",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0018": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected layout with excessive void",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0019": {
+      "status": "rejected",
+      "reason": "too little playable movement space: huge void holes dominate the map",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0004": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:celestial.starforge_sanctum:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:elemental.storm_glass_citadel:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0002": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0003": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0004": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0006": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0007": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0010": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0011": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0012": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0016": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0017": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0019": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:fey.giant_flower_court:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0001": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0002": {
+      "status": "rejected",
+      "reason": "broken geometry: isolated platform with poor movement continuity",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0003": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0004": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0005": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0006": {
+      "status": "rejected",
+      "reason": "text/UI artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0007": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected platform lanes with no clear crossing",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0008": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0009": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0010": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0011": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0012": {
+      "status": "rejected",
+      "reason": "broken geometry: disconnected fragments with poor movement continuity",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0013": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0014": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0015": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0016": {
+      "status": "rejected",
+      "reason": "text/UI artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0017": {
+      "status": "rejected",
+      "reason": "text/signature artifact visible in the image",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0018": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0019": {
+      "status": "rejected",
+      "reason": "broken geometry and logo artifact: disconnected island composition",
+      "rename": ""
+    },
+    "myroll_battle_maps_v3_weird_fantasy:void.astral_orrery:0020": {
+      "status": "accepted",
+      "reason": "",
+      "rename": ""
+    }
+  }
+}

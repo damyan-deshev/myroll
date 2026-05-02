@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "hazard.lava_bridges",
+  "label": "Lava Bridges",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "hazards",
+  "slug": "lava-bridges",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.001",
+      "title": "Black Obsidian Plaza Two Lava Channels Heat Shimmer",
+      "file": "images/lava-bridges__black-obsidian-plaza-two-lava-channels-heat-shimmer__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.002",
+      "title": "Dwarven Forge Crossing Two Lava Channels Glowing Cracks",
+      "file": "images/lava-bridges__dwarven-forge-crossing-two-lava-channels-glowing-cracks__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.003",
+      "title": "Infernal Bridge Chamber Two Lava Channels Charred Barrels",
+      "file": "images/lava-bridges__infernal-bridge-chamber-two-lava-channels-charred-barrels__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.004",
+      "title": "Volcanic Fortress Yard Two Lava Channels Iron Grates",
+      "file": "images/lava-bridges__volcanic-fortress-yard-two-lava-channels-iron-grates__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.005",
+      "title": "Black Obsidian Plaza Wide Stone Bridge Glowing Cracks",
+      "file": "images/lava-bridges__black-obsidian-plaza-wide-stone-bridge-glowing-cracks__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.006",
+      "title": "Dwarven Forge Crossing Wide Stone Bridge Charred Barrels",
+      "file": "images/lava-bridges__dwarven-forge-crossing-wide-stone-bridge-charred-barrels__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.007",
+      "title": "Infernal Bridge Chamber Wide Stone Bridge Iron Grates",
+      "file": "images/lava-bridges__infernal-bridge-chamber-wide-stone-bridge-iron-grates__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.008",
+      "title": "Volcanic Fortress Yard Wide Stone Bridge Scorched Pillars",
+      "file": "images/lava-bridges__volcanic-fortress-yard-wide-stone-bridge-scorched-pillars__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.009",
+      "title": "Black Obsidian Plaza Central Safe Platform Heat Shimmer",
+      "file": "images/lava-bridges__black-obsidian-plaza-central-safe-platform-heat-shimmer__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.010",
+      "title": "Dwarven Forge Crossing Central Safe Platform Iron Grates",
+      "file": "images/lava-bridges__dwarven-forge-crossing-central-safe-platform-iron-grates__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.011",
+      "title": "Infernal Bridge Chamber Central Safe Platform Scorched Pillars",
+      "file": "images/lava-bridges__infernal-bridge-chamber-central-safe-platform-scorched-pillars__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.012",
+      "title": "Volcanic Fortress Yard Central Safe Platform Heat Shimmer",
+      "file": "images/lava-bridges__volcanic-fortress-yard-central-safe-platform-heat-shimmer__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.013",
+      "title": "Black Obsidian Plaza Broken Forge Gate Glowing Cracks",
+      "file": "images/lava-bridges__black-obsidian-plaza-broken-forge-gate-glowing-cracks__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.014",
+      "title": "Dwarven Forge Crossing Broken Forge Gate Charred Barrels",
+      "file": "images/lava-bridges__dwarven-forge-crossing-broken-forge-gate-charred-barrels__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.015",
+      "title": "Infernal Bridge Chamber Broken Forge Gate Heat Shimmer",
+      "file": "images/lava-bridges__infernal-bridge-chamber-broken-forge-gate-heat-shimmer__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.016",
+      "title": "Volcanic Fortress Yard Broken Forge Gate Glowing Cracks",
+      "file": "images/lava-bridges__volcanic-fortress-yard-broken-forge-gate-glowing-cracks__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.017",
+      "title": "Black Obsidian Plaza Edge Braziers Charred Barrels",
+      "file": "images/lava-bridges__black-obsidian-plaza-edge-braziers-charred-barrels__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.018",
+      "title": "Dwarven Forge Crossing Edge Braziers Iron Grates",
+      "file": "images/lava-bridges__dwarven-forge-crossing-edge-braziers-iron-grates__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.019",
+      "title": "Infernal Bridge Chamber Edge Braziers Scorched Pillars",
+      "file": "images/lava-bridges__infernal-bridge-chamber-edge-braziers-scorched-pillars__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.hazards.lava_bridges.020",
+      "title": "Volcanic Fortress Yard Edge Braziers Charred Barrels",
+      "file": "images/lava-bridges__volcanic-fortress-yard-edge-braziers-charred-barrels__020.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:hazard.lava_bridges:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 20
+}

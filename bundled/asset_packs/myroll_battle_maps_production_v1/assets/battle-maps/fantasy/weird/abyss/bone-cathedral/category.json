@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "abyss.bone_cathedral",
+  "label": "Bone Cathedral",
+  "theme": "fantasy",
+  "collection": "weird",
+  "group": "abyss",
+  "slug": "bone-cathedral",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.001",
+      "title": "Bone Cathedral Nave Long Open Central Aisle Emerald Ghostfire",
+      "file": "images/bone-cathedral__bone-cathedral-nave-long-open-central-aisle-emerald-ghostfire__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.002",
+      "title": "Abyssal Ossuary Chapel Long Open Central Aisle Skull Mosaics",
+      "file": "images/bone-cathedral__abyssal-ossuary-chapel-long-open-central-aisle-skull-mosaics__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.003",
+      "title": "Necrotic Reliquary Hall Long Open Central Aisle Bone Pillars",
+      "file": "images/bone-cathedral__necrotic-reliquary-hall-long-open-central-aisle-bone-pillars__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.004",
+      "title": "Black Altar Sanctuary Long Open Central Aisle Shadow Pools",
+      "file": "images/bone-cathedral__black-altar-sanctuary-long-open-central-aisle-shadow-pools__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.005",
+      "title": "Abyssal Ossuary Chapel Rib Bone Arcade Edge Bone Pillars",
+      "file": "images/bone-cathedral__abyssal-ossuary-chapel-rib-bone-arcade-edge-bone-pillars__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.006",
+      "title": "Bone Cathedral Nave Skull Altar Side Emerald Ghostfire",
+      "file": "images/bone-cathedral__bone-cathedral-nave-skull-altar-side-emerald-ghostfire__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.007",
+      "title": "Necrotic Reliquary Hall Skull Altar Side Black Ash Floor",
+      "file": "images/bone-cathedral__necrotic-reliquary-hall-skull-altar-side-black-ash-floor__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.008",
+      "title": "Black Altar Sanctuary Skull Altar Side Emerald Ghostfire",
+      "file": "images/bone-cathedral__black-altar-sanctuary-skull-altar-side-emerald-ghostfire__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.009",
+      "title": "Abyssal Ossuary Chapel Ghostfire Transept Bone Pillars",
+      "file": "images/bone-cathedral__abyssal-ossuary-chapel-ghostfire-transept-bone-pillars__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.010",
+      "title": "Necrotic Reliquary Hall Ghostfire Transept Emerald Ghostfire",
+      "file": "images/bone-cathedral__necrotic-reliquary-hall-ghostfire-transept-emerald-ghostfire__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.011",
+      "title": "Black Altar Sanctuary Ghostfire Transept Skull Mosaics",
+      "file": "images/bone-cathedral__black-altar-sanctuary-ghostfire-transept-skull-mosaics__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.weird.abyss.bone_cathedral.012",
+      "title": "Black Altar Sanctuary Broken Pew Perimeter Bone Pillars",
+      "file": "images/bone-cathedral__black-altar-sanctuary-broken-pew-perimeter-bone-pillars__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v3_weird_fantasy:abyss.bone_cathedral:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v3_weird_fantasy"
+  ],
+  "assetCount": 12
+}

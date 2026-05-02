@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "cavern.crystal_blackrock",
+  "label": "Crystal Blackrock Cavern",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "cavern",
+  "slug": "crystal-blackrock",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.001",
+      "title": "Blackrock Crystal Hall Central Open Cavern Floor Cyan Crystals",
+      "file": "images/crystal-blackrock__blackrock-crystal-hall-central-open-cavern-floor-cyan-crystals__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.002",
+      "title": "Underdark Crystal Bowl Central Open Cavern Floor Glowing Reflections",
+      "file": "images/crystal-blackrock__underdark-crystal-bowl-central-open-cavern-floor-glowing-reflections__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.003",
+      "title": "Moonlit Geode Cave Central Open Cavern Floor Magenta Crystals",
+      "file": "images/crystal-blackrock__moonlit-geode-cave-central-open-cavern-floor-magenta-crystals__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.004",
+      "title": "Arcane Mineral Cavern Central Open Cavern Floor Fungus Edge Cover",
+      "file": "images/crystal-blackrock__arcane-mineral-cavern-central-open-cavern-floor-fungus-edge-cover__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.005",
+      "title": "Blackrock Crystal Hall Perimeter Crystal Clusters Glowing Reflections",
+      "file": "images/crystal-blackrock__blackrock-crystal-hall-perimeter-crystal-clusters-glowing-reflections__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.006",
+      "title": "Underdark Crystal Bowl Perimeter Crystal Clusters Magenta Crystals",
+      "file": "images/crystal-blackrock__underdark-crystal-bowl-perimeter-crystal-clusters-magenta-crystals__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.007",
+      "title": "Moonlit Geode Cave Perimeter Crystal Clusters Fungus Edge Cover",
+      "file": "images/crystal-blackrock__moonlit-geode-cave-perimeter-crystal-clusters-fungus-edge-cover__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.008",
+      "title": "Arcane Mineral Cavern Perimeter Crystal Clusters Black Basalt",
+      "file": "images/crystal-blackrock__arcane-mineral-cavern-perimeter-crystal-clusters-black-basalt__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.009",
+      "title": "Blackrock Crystal Hall Glowing Pool Cyan Crystals",
+      "file": "images/crystal-blackrock__blackrock-crystal-hall-glowing-pool-cyan-crystals__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.010",
+      "title": "Underdark Crystal Bowl Glowing Pool Fungus Edge Cover",
+      "file": "images/crystal-blackrock__underdark-crystal-bowl-glowing-pool-fungus-edge-cover__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.011",
+      "title": "Moonlit Geode Cave Glowing Pool Black Basalt",
+      "file": "images/crystal-blackrock__moonlit-geode-cave-glowing-pool-black-basalt__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.012",
+      "title": "Arcane Mineral Cavern Glowing Pool Cyan Crystals",
+      "file": "images/crystal-blackrock__arcane-mineral-cavern-glowing-pool-cyan-crystals__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.013",
+      "title": "Blackrock Crystal Hall Dark Rock Wall Glowing Reflections",
+      "file": "images/crystal-blackrock__blackrock-crystal-hall-dark-rock-wall-glowing-reflections__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.014",
+      "title": "Moonlit Geode Cave Dark Rock Wall Cyan Crystals",
+      "file": "images/crystal-blackrock__moonlit-geode-cave-dark-rock-wall-cyan-crystals__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.015",
+      "title": "Arcane Mineral Cavern Dark Rock Wall Glowing Reflections",
+      "file": "images/crystal-blackrock__arcane-mineral-cavern-dark-rock-wall-glowing-reflections__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.016",
+      "title": "Blackrock Crystal Hall Small Crystal Island Magenta Crystals",
+      "file": "images/crystal-blackrock__blackrock-crystal-hall-small-crystal-island-magenta-crystals__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.017",
+      "title": "Underdark Crystal Bowl Small Crystal Island Fungus Edge Cover",
+      "file": "images/crystal-blackrock__underdark-crystal-bowl-small-crystal-island-fungus-edge-cover__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.018",
+      "title": "Moonlit Geode Cave Small Crystal Island Black Basalt",
+      "file": "images/crystal-blackrock__moonlit-geode-cave-small-crystal-island-black-basalt__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.cavern.crystal_blackrock.019",
+      "title": "Arcane Mineral Cavern Small Crystal Island Magenta Crystals",
+      "file": "images/crystal-blackrock__arcane-mineral-cavern-small-crystal-island-magenta-crystals__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:cavern.crystal_blackrock:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 19
+}

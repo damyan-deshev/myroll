@@ -16,7 +16,8 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from backend.app.api.errors import api_error
-from backend.app.asset_store import AssetImportError, resolve_asset_path, store_image_stream
+from backend.app.asset_store import AssetImportError, resolve_asset_path, store_image_path, store_image_stream
+from backend.app.bundled_assets import BundledAssetPackError, BundledMap, find_bundled_map, load_bundled_packs
 from backend.app.db.engine import assert_database_ok, session_for_settings
 from backend.app.db.meta import get_app_meta, get_schema_version
 from backend.app.db.models import (
@@ -47,6 +48,7 @@ from backend.app.db.models import (
 )
 from backend.app.db.models import Session as CampaignSession
 from backend.app.db.seed import DEMO_SEED_VERSION, PLAYER_DISPLAY_ID, RUNTIME_ID, SEED_META_KEY
+from backend.app.db.seed_ids import deterministic_uuid
 from backend.app.fog_store import (
     FogPoint,
     FogRect,
@@ -75,7 +77,7 @@ from backend.app.workspace_defaults import DEFAULT_WIDGET_IDS, DEFAULT_WORKSPACE
 
 router = APIRouter()
 
-IMAGE_ASSET_KINDS = {"map_image", "handout_image", "npc_portrait", "item_image", "scene_image"}
+IMAGE_ASSET_KINDS = {"map_image", "handout_image", "npc_portrait", "item_image", "scene_image", "token_image"}
 ASSET_VISIBILITIES = {"private", "public_displayable"}
 DISPLAY_FIT_MODES = {"fit", "fill", "stretch", "actual_size"}
 TOKEN_VISIBILITIES = {"gm_only", "player_visible", "hidden_until_revealed"}
@@ -339,6 +341,76 @@ class MapOut(BaseModel):
     grid_opacity: float
     created_at: str
     updated_at: str
+
+
+class AssetBatchErrorOut(BaseModel):
+    code: str
+    message: str
+
+
+class AssetBatchItemOut(BaseModel):
+    filename: str
+    asset: AssetOut | None = None
+    map: MapOut | None = None
+    error: AssetBatchErrorOut | None = None
+
+
+class AssetBatchUploadOut(BaseModel):
+    results: list[AssetBatchItemOut]
+
+
+class BundledGridOut(BaseModel):
+    cols: int
+    rows: int
+    feet_per_cell: int
+    px_per_cell: int
+    offset_x: float
+    offset_y: float
+
+
+class BundledPackOut(BaseModel):
+    id: str
+    title: str
+    asset_count: int
+    category_count: int
+    collections: list[str]
+
+
+class BundledMapOut(BaseModel):
+    id: str
+    pack_id: str
+    title: str
+    collection: str
+    group: str
+    category_key: str
+    category_label: str
+    width: int
+    height: int
+    tags: list[str]
+    grid: BundledGridOut
+
+
+class BundledMapCreate(BaseModel):
+    pack_id: str = Field(min_length=1, max_length=160)
+    asset_id: str = Field(min_length=1, max_length=240)
+    name: str | None = Field(default=None, max_length=160)
+
+    @field_validator("pack_id", "asset_id", mode="before")
+    @classmethod
+    def trim_required_fields(cls, value: object) -> object:
+        return _trim_required(value)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def trim_optional_name(cls, value: object) -> object:
+        return _trim_optional(value)
+
+
+class BundledMapCreateOut(BaseModel):
+    asset: AssetOut
+    map: MapOut
+    created_asset: bool
+    created_map: bool
 
 
 class MapCreate(BaseModel):
@@ -2513,6 +2585,77 @@ def _map_out(db: Session, campaign_map: CampaignMap) -> MapOut:
     )
 
 
+def _bundled_grid_out(bundled_map: BundledMap) -> BundledGridOut:
+    return BundledGridOut(
+        cols=bundled_map.grid.cols,
+        rows=bundled_map.grid.rows,
+        feet_per_cell=bundled_map.grid.feet_per_cell,
+        px_per_cell=bundled_map.grid.px_per_cell,
+        offset_x=bundled_map.grid.offset_x,
+        offset_y=bundled_map.grid.offset_y,
+    )
+
+
+def _bundled_map_out(pack_id: str, bundled_map: BundledMap) -> BundledMapOut:
+    return BundledMapOut(
+        id=bundled_map.id,
+        pack_id=pack_id,
+        title=bundled_map.title,
+        collection=bundled_map.collection,
+        group=bundled_map.group,
+        category_key=bundled_map.category_key,
+        category_label=bundled_map.category_label,
+        width=bundled_map.width,
+        height=bundled_map.height,
+        tags=list(bundled_map.tags),
+        grid=_bundled_grid_out(bundled_map),
+    )
+
+
+def _create_campaign_map_for_asset(
+    db: Session,
+    campaign_id: UUID | str,
+    asset: Asset,
+    *,
+    name: str | None,
+    map_id: str | None = None,
+    grid_enabled: bool = False,
+    grid_size_px: int = 70,
+    grid_offset_x: float = 0,
+    grid_offset_y: float = 0,
+    grid_color: str = "#FFFFFF",
+    grid_opacity: float = 0.35,
+) -> tuple[CampaignMap, bool]:
+    if asset.width is None or asset.height is None:
+        raise api_error(400, "asset_missing_image_metadata", "Asset is missing image metadata")
+    if map_id is not None:
+        existing = db.get(CampaignMap, map_id)
+        if existing is not None:
+            return existing, False
+    campaign_map = CampaignMap(
+        id=map_id or _new_id(),
+        campaign_id=str(campaign_id),
+        asset_id=asset.id,
+        name=_clean_asset_name(name, asset.name),
+        width=asset.width,
+        height=asset.height,
+        grid_enabled=grid_enabled,
+        grid_size_px=grid_size_px,
+        grid_offset_x=grid_offset_x,
+        grid_offset_y=grid_offset_y,
+        grid_color=grid_color,
+        grid_opacity=grid_opacity,
+        created_at=utc_now_z(),
+        updated_at=utc_now_z(),
+    )
+    db.add(campaign_map)
+    return campaign_map, True
+
+
+def _batch_error(filename: str, code: str, message: str) -> AssetBatchItemOut:
+    return AssetBatchItemOut(filename=filename, error=AssetBatchErrorOut(code=code, message=message))
+
+
 def _private_fog_mask_url(fog: SceneMapFogMask) -> str:
     return f"/api/scene-maps/{fog.scene_map_id}/fog/mask?revision={fog.revision}"
 
@@ -3386,6 +3529,142 @@ def upload_asset(
     return _asset_out(asset)
 
 
+@router.post(
+    "/api/campaigns/{campaign_id}/assets/upload-batch",
+    response_model=AssetBatchUploadOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def upload_asset_batch(
+    campaign_id: UUID,
+    request: Request,
+    db: DbSession,
+    files: list[UploadFile] = File(...),
+    kind: str = Form("handout_image"),
+    visibility: str = Form("private"),
+    tags: str | None = Form(None),
+    auto_create_maps: bool = Form(False),
+) -> AssetBatchUploadOut:
+    kind = _require_image_asset_kind(kind.strip())
+    visibility = _require_asset_visibility(visibility.strip())
+    should_create_maps = auto_create_maps and kind == "map_image"
+    results: list[AssetBatchItemOut] = []
+    with db.begin():
+        _require_campaign(db, campaign_id)
+    for upload in files:
+        filename = upload.filename or "uploaded-image"
+        try:
+            stored = store_image_stream(request.app.state.settings, upload.file, upload.filename)
+            with db.begin():
+                _require_campaign(db, campaign_id)
+                asset = _create_asset_record(
+                    db,
+                    campaign_id,
+                    kind=kind,
+                    visibility=visibility,
+                    name=None,
+                    tags=tags,
+                    stored=stored,
+                )
+                campaign_map = None
+                if should_create_maps:
+                    campaign_map, _ = _create_campaign_map_for_asset(db, campaign_id, asset, name=asset.name)
+            results.append(
+                AssetBatchItemOut(
+                    filename=filename,
+                    asset=_asset_out(asset),
+                    map=_map_out(db, campaign_map) if campaign_map is not None else None,
+                )
+            )
+        except AssetImportError as error:
+            results.append(_batch_error(filename, error.code, error.message))
+    return AssetBatchUploadOut(results=results)
+
+
+@router.get("/api/bundled-asset-packs", response_model=list[BundledPackOut])
+def list_bundled_asset_packs(request: Request) -> list[BundledPackOut]:
+    try:
+        packs = load_bundled_packs(request.app.state.settings)
+    except BundledAssetPackError as error:
+        raise api_error(500, error.code, error.message) from error
+    return [
+        BundledPackOut(
+            id=pack.id,
+            title=pack.title,
+            asset_count=pack.asset_count,
+            category_count=pack.category_count,
+            collections=list(pack.collections),
+        )
+        for pack in packs
+    ]
+
+
+@router.get("/api/bundled-asset-packs/{pack_id}/maps", response_model=list[BundledMapOut])
+def list_bundled_asset_pack_maps(pack_id: str, request: Request) -> list[BundledMapOut]:
+    try:
+        for pack in load_bundled_packs(request.app.state.settings):
+            if pack.id == pack_id:
+                return [_bundled_map_out(pack.id, bundled_map) for bundled_map in pack.maps]
+    except BundledAssetPackError as error:
+        raise api_error(500, error.code, error.message) from error
+    raise api_error(404, "bundled_pack_not_found", "Bundled asset pack not found")
+
+
+@router.post(
+    "/api/campaigns/{campaign_id}/bundled-maps",
+    response_model=BundledMapCreateOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_bundled_map_to_campaign(campaign_id: UUID, payload: BundledMapCreate, request: Request, db: DbSession) -> BundledMapCreateOut:
+    try:
+        pack, bundled_map = find_bundled_map(request.app.state.settings, payload.pack_id, payload.asset_id)
+    except BundledAssetPackError as error:
+        status_code = 404 if error.code in {"bundled_pack_not_found", "bundled_asset_not_found"} else 500
+        raise api_error(status_code, error.code, error.message) from error
+    asset_id = deterministic_uuid(f"bundled-map-asset:{campaign_id}:{pack.id}:{bundled_map.id}")
+    map_id = deterministic_uuid(f"bundled-map:{campaign_id}:{pack.id}:{bundled_map.id}")
+    created_asset = False
+    with db.begin():
+        _require_campaign(db, campaign_id)
+        asset = db.get(Asset, asset_id)
+        if asset is None:
+            try:
+                stored = store_image_path(request.app.state.settings, bundled_map.path)
+            except AssetImportError as error:
+                raise api_error(error.status_code, error.code, error.message) from error
+            asset = Asset(
+                id=asset_id,
+                campaign_id=str(campaign_id),
+                kind="map_image",
+                visibility="public_displayable",
+                name=_clean_asset_name(payload.name, bundled_map.title),
+                mime_type=stored.mime_type,
+                byte_size=stored.byte_size,
+                checksum=stored.checksum,
+                relative_path=stored.relative_path,
+                original_filename=stored.original_filename,
+                width=stored.width,
+                height=stored.height,
+                duration_ms=None,
+                tags_json=json.dumps(_normalize_tags([*bundled_map.tags, "bundled", pack.id, bundled_map.category_key])),
+                created_at=utc_now_z(),
+                updated_at=utc_now_z(),
+            )
+            db.add(asset)
+            created_asset = True
+        campaign_map, created_map = _create_campaign_map_for_asset(
+            db,
+            campaign_id,
+            asset,
+            name=payload.name or bundled_map.title,
+            map_id=map_id,
+            grid_enabled=True,
+            grid_size_px=bundled_map.grid.px_per_cell,
+            grid_offset_x=bundled_map.grid.offset_x,
+            grid_offset_y=bundled_map.grid.offset_y,
+        )
+    return BundledMapCreateOut(asset=_asset_out(asset), map=_map_out(db, campaign_map), created_asset=created_asset, created_map=created_map)
+
+
 @router.get("/api/campaigns/{campaign_id}/entities", response_model=EntitiesOut)
 def list_entities(campaign_id: UUID, db: DbSession) -> EntitiesOut:
     _require_campaign(db, campaign_id)
@@ -3971,7 +4250,6 @@ def list_maps(campaign_id: UUID, db: DbSession) -> list[MapOut]:
     status_code=status.HTTP_201_CREATED,
 )
 def create_map(campaign_id: UUID, payload: MapCreate, db: DbSession) -> MapOut:
-    now = utc_now_z()
     with db.begin():
         _require_campaign(db, campaign_id)
         asset = _require_asset(db, payload.asset_id)
@@ -3979,25 +4257,7 @@ def create_map(campaign_id: UUID, payload: MapCreate, db: DbSession) -> MapOut:
             raise api_error(400, "asset_campaign_mismatch", "Asset does not belong to campaign")
         if asset.kind != "map_image":
             raise api_error(400, "asset_not_map_image", "Asset must be a map image")
-        if asset.width is None or asset.height is None:
-            raise api_error(400, "asset_missing_image_metadata", "Asset is missing image metadata")
-        campaign_map = CampaignMap(
-            id=_new_id(),
-            campaign_id=str(campaign_id),
-            asset_id=asset.id,
-            name=_clean_asset_name(payload.name, asset.name),
-            width=asset.width,
-            height=asset.height,
-            grid_enabled=False,
-            grid_size_px=70,
-            grid_offset_x=0,
-            grid_offset_y=0,
-            grid_color="#FFFFFF",
-            grid_opacity=0.35,
-            created_at=now,
-            updated_at=now,
-        )
-        db.add(campaign_map)
+        campaign_map, _ = _create_campaign_map_for_asset(db, campaign_id, asset, name=payload.name)
     return _map_out(db, campaign_map)
 
 

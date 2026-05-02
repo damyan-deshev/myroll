@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "forest.fey_clearing",
+  "label": "Fey Clearing",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "fey",
+  "slug": "fey-clearing",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.001",
+      "title": "Moonlit Fey Glade Open Mossy Glade Violet Flowers",
+      "file": "images/fey-clearing__moonlit-fey-glade-open-mossy-glade-violet-flowers__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.002",
+      "title": "Mushroom Circle Clearing Open Mossy Glade Tree Edge Cover",
+      "file": "images/fey-clearing__mushroom-circle-clearing-open-mossy-glade-tree-edge-cover__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.003",
+      "title": "Emerald Moss Clearing Open Mossy Glade Luminous Mushrooms",
+      "file": "images/fey-clearing__emerald-moss-clearing-open-mossy-glade-luminous-mushrooms__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.004",
+      "title": "Enchanted Forest Spring Open Mossy Glade Moss Texture",
+      "file": "images/fey-clearing__enchanted-forest-spring-open-mossy-glade-moss-texture__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.005",
+      "title": "Moonlit Fey Glade Moonwell Edge Tree Edge Cover",
+      "file": "images/fey-clearing__moonlit-fey-glade-moonwell-edge-tree-edge-cover__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.006",
+      "title": "Enchanted Forest Spring Moonwell Edge Soft Fairy Lights",
+      "file": "images/fey-clearing__enchanted-forest-spring-moonwell-edge-soft-fairy-lights__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.007",
+      "title": "Mushroom Circle Clearing Perimeter Mushroom Ring Moss Texture",
+      "file": "images/fey-clearing__mushroom-circle-clearing-perimeter-mushroom-ring-moss-texture__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.008",
+      "title": "Emerald Moss Clearing Perimeter Mushroom Ring Soft Fairy Lights",
+      "file": "images/fey-clearing__emerald-moss-clearing-perimeter-mushroom-ring-soft-fairy-lights__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.009",
+      "title": "Enchanted Forest Spring Perimeter Mushroom Ring Violet Flowers",
+      "file": "images/fey-clearing__enchanted-forest-spring-perimeter-mushroom-ring-violet-flowers__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.010",
+      "title": "Mushroom Circle Clearing Curved Forest Path Luminous Mushrooms",
+      "file": "images/fey-clearing__mushroom-circle-clearing-curved-forest-path-luminous-mushrooms__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.011",
+      "title": "Emerald Moss Clearing Curved Forest Path Violet Flowers",
+      "file": "images/fey-clearing__emerald-moss-clearing-curved-forest-path-violet-flowers__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.012",
+      "title": "Enchanted Forest Spring Curved Forest Path Tree Edge Cover",
+      "file": "images/fey-clearing__enchanted-forest-spring-curved-forest-path-tree-edge-cover__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.013",
+      "title": "Mushroom Circle Clearing Small Glowing Pool Moss Texture",
+      "file": "images/fey-clearing__mushroom-circle-clearing-small-glowing-pool-moss-texture__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.fey.fey_clearing.014",
+      "title": "Emerald Moss Clearing Small Glowing Pool Soft Fairy Lights",
+      "file": "images/fey-clearing__emerald-moss-clearing-small-glowing-pool-soft-fairy-lights__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:forest.fey_clearing:0019"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 14
+}

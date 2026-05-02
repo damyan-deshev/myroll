@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "ruins.clean_arena",
+  "label": "Clean Arena",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "ruins",
+  "slug": "clean-arena",
+  "grid": {
+    "type": "square",
+    "cols": 32,
+    "rows": 24,
+    "feetPerCell": 5,
+    "pxPerCell": 48,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.001",
+      "title": "Sand Coliseum Floor Huge Central Sand Floor Sparse Rocks",
+      "file": "images/clean-arena__sand-coliseum-floor-huge-central-sand-floor-sparse-rocks__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.002",
+      "title": "Ruined Oval Arena Huge Central Sand Floor Shadowed Gates",
+      "file": "images/clean-arena__ruined-oval-arena-huge-central-sand-floor-shadowed-gates__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.003",
+      "title": "Training Arena Huge Central Sand Floor Fallen Standards",
+      "file": "images/clean-arena__training-arena-huge-central-sand-floor-fallen-standards__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.004",
+      "title": "Ancient Duel Pit Huge Central Sand Floor Edge Rubble",
+      "file": "images/clean-arena__ancient-duel-pit-huge-central-sand-floor-edge-rubble__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.005",
+      "title": "Sand Coliseum Floor Four Entrances Shadowed Gates",
+      "file": "images/clean-arena__sand-coliseum-floor-four-entrances-shadowed-gates__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.006",
+      "title": "Ruined Oval Arena Four Entrances Fallen Standards",
+      "file": "images/clean-arena__ruined-oval-arena-four-entrances-fallen-standards__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.007",
+      "title": "Training Arena Four Entrances Edge Rubble",
+      "file": "images/clean-arena__training-arena-four-entrances-edge-rubble__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.008",
+      "title": "Ancient Duel Pit Four Entrances Sand Scuffs",
+      "file": "images/clean-arena__ancient-duel-pit-four-entrances-sand-scuffs__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.009",
+      "title": "Sand Coliseum Floor Tiered Seating Ring Sparse Rocks",
+      "file": "images/clean-arena__sand-coliseum-floor-tiered-seating-ring-sparse-rocks__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.010",
+      "title": "Ancient Duel Pit Tiered Seating Ring Sparse Rocks",
+      "file": "images/clean-arena__ancient-duel-pit-tiered-seating-ring-sparse-rocks__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.011",
+      "title": "Sand Coliseum Floor Broken Column Edge Shadowed Gates",
+      "file": "images/clean-arena__sand-coliseum-floor-broken-column-edge-shadowed-gates__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.012",
+      "title": "Ruined Oval Arena Broken Column Edge Fallen Standards",
+      "file": "images/clean-arena__ruined-oval-arena-broken-column-edge-fallen-standards__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.013",
+      "title": "Training Arena Broken Column Edge Sparse Rocks",
+      "file": "images/clean-arena__training-arena-broken-column-edge-sparse-rocks__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.014",
+      "title": "Ancient Duel Pit Broken Column Edge Shadowed Gates",
+      "file": "images/clean-arena__ancient-duel-pit-broken-column-edge-shadowed-gates__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.015",
+      "title": "Ruined Oval Arena Low Dais Edge Rubble",
+      "file": "images/clean-arena__ruined-oval-arena-low-dais-edge-rubble__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.016",
+      "title": "Training Arena Low Dais Sand Scuffs",
+      "file": "images/clean-arena__training-arena-low-dais-sand-scuffs__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.ruins.clean_arena.017",
+      "title": "Ancient Duel Pit Low Dais Fallen Standards",
+      "file": "images/clean-arena__ancient-duel-pit-low-dais-fallen-standards__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:ruins.clean_arena:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 17
+}

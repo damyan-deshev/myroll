@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "interior.tavern_night",
+  "label": "Night Tavern",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "interior",
+  "slug": "tavern-night",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.001",
+      "title": "Tavern Yard At Night Cleared Central Floor Ale Barrels",
+      "file": "images/tavern-night__tavern-yard-at-night-cleared-central-floor-ale-barrels__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.002",
+      "title": "Roadside Alehouse Cleared Central Floor Pushed Tables",
+      "file": "images/tavern-night__roadside-alehouse-cleared-central-floor-pushed-tables__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.003",
+      "title": "Busy Inn Common Room Bar Counter Edge Ale Barrels",
+      "file": "images/tavern-night__busy-inn-common-room-bar-counter-edge-ale-barrels__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.004",
+      "title": "Tavern Yard At Night Bar Counter Edge Pushed Tables",
+      "file": "images/tavern-night__tavern-yard-at-night-bar-counter-edge-pushed-tables__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.005",
+      "title": "Dockside Tavern Courtyard Bar Counter Edge Benches At Edges",
+      "file": "images/tavern-night__dockside-tavern-courtyard-bar-counter-edge-benches-at-edges__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.006",
+      "title": "Busy Inn Common Room Balcony Perimeter Warm Lanterns",
+      "file": "images/tavern-night__busy-inn-common-room-balcony-perimeter-warm-lanterns__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.007",
+      "title": "Dockside Tavern Courtyard Balcony Perimeter Warm Lanterns",
+      "file": "images/tavern-night__dockside-tavern-courtyard-balcony-perimeter-warm-lanterns__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.008",
+      "title": "Busy Inn Common Room Stable Door Wall Ale Barrels",
+      "file": "images/tavern-night__busy-inn-common-room-stable-door-wall-ale-barrels__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.009",
+      "title": "Tavern Yard At Night Stable Door Wall Pushed Tables",
+      "file": "images/tavern-night__tavern-yard-at-night-stable-door-wall-pushed-tables__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.010",
+      "title": "Roadside Alehouse Stable Door Wall Warm Lanterns",
+      "file": "images/tavern-night__roadside-alehouse-stable-door-wall-warm-lanterns__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.011",
+      "title": "Dockside Tavern Courtyard Stable Door Wall Ale Barrels",
+      "file": "images/tavern-night__dockside-tavern-courtyard-stable-door-wall-ale-barrels__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.012",
+      "title": "Busy Inn Common Room Hearth Corner Pushed Tables",
+      "file": "images/tavern-night__busy-inn-common-room-hearth-corner-pushed-tables__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0017"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.013",
+      "title": "Tavern Yard At Night Hearth Corner Wood Plank Floor",
+      "file": "images/tavern-night__tavern-yard-at-night-hearth-corner-wood-plank-floor__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.014",
+      "title": "Roadside Alehouse Hearth Corner Benches At Edges",
+      "file": "images/tavern-night__roadside-alehouse-hearth-corner-benches-at-edges__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.interior.tavern_night.015",
+      "title": "Dockside Tavern Courtyard Hearth Corner Pushed Tables",
+      "file": "images/tavern-night__dockside-tavern-courtyard-hearth-corner-pushed-tables__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:interior.tavern_night:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 15
+}

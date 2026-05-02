@@ -1,8 +1,12 @@
 import type {
   ApiErrorEnvelope,
   Asset,
+  AssetBatchUploadResponse,
   AssetKind,
   AssetVisibility,
+  BundledAssetPack,
+  BundledMap,
+  BundledMapCreateResult,
   Campaign,
   CombatantDeleteResult,
   CombatantDisposition,
@@ -277,6 +281,31 @@ export const api = {
     if (payload.tags) body.append("tags", payload.tags);
     return request<Asset>(`/api/campaigns/${campaignId}/assets/upload`, { method: "POST", body });
   },
+  uploadAssetsBatch: (
+    campaignId: string,
+    payload: {
+      files: File[];
+      kind: AssetKind;
+      visibility: AssetVisibility;
+      tags?: string;
+      auto_create_maps?: boolean;
+    }
+  ) => {
+    const body = new FormData();
+    payload.files.forEach((file) => body.append("files", file));
+    body.append("kind", payload.kind);
+    body.append("visibility", payload.visibility);
+    if (payload.tags) body.append("tags", payload.tags);
+    body.append("auto_create_maps", payload.auto_create_maps ? "true" : "false");
+    return request<AssetBatchUploadResponse>(`/api/campaigns/${campaignId}/assets/upload-batch`, { method: "POST", body });
+  },
+  bundledAssetPacks: () => request<BundledAssetPack[]>("/api/bundled-asset-packs"),
+  bundledAssetPackMaps: (packId: string) => request<BundledMap[]>(`/api/bundled-asset-packs/${encodeURIComponent(packId)}/maps`),
+  addBundledMapToCampaign: (campaignId: string, payload: { pack_id: string; asset_id: string; name?: string | null }) =>
+    request<BundledMapCreateResult>(`/api/campaigns/${campaignId}/bundled-maps`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
   maps: (campaignId: string) => request<MapRecord[]>(`/api/campaigns/${campaignId}/maps`),
   createMap: (campaignId: string, payload: { asset_id: string; name?: string | null }) =>
     request<MapRecord>(`/api/campaigns/${campaignId}/maps`, {

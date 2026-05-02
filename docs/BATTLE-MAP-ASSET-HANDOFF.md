@@ -2,9 +2,18 @@
 
 Date: 2026-05-02
 
-This is the entry note for the next Myroll integration slice. The generated battle maps are not imported into the app yet; they are curated external input artifacts.
+This is the entry note for the Myroll battle-map integration slice. The generated battle maps started as curated external input artifacts; the first production pack is now bundled with the app as an immutable asset-pack version.
 
 Product requirement update: the current curated static maps should ship with Myroll directly. End users should not have to import this pack manually after installation.
+
+Implementation status update:
+
+- The production pack is committed under `bundled/asset_packs/myroll_battle_maps_production_v1/`.
+- The backend bundled registry scans `project_root/bundled/asset_packs` plus optional `MYROLL_BUNDLED_ASSET_PACKS_DIR` paths.
+- Bundled maps are exposed through `GET /api/bundled-asset-packs` and `GET /api/bundled-asset-packs/{pack_id}/maps`.
+- Adding a bundled map uses copy-on-add through managed `data/assets/` storage via `POST /api/campaigns/{campaign_id}/bundled-maps`.
+- User uploads now support batch image upload and `token_image` assets.
+- The GM map workbench has bundled-map browsing plus grid size and fine/coarse nudge controls.
 
 ## Current Production Pack
 
@@ -74,7 +83,7 @@ Accepted images have stable descriptive filenames and are gridless. The tactical
 
 ## Integration Slice
 
-Start backend-first. Do not build the GM browser UI before the importer is correct.
+The first implementation is backend-first in behavior: the browser UI depends on the validated registry and add-to-campaign endpoint rather than reading pack files directly.
 
 There are three related but separate asset workflows:
 
@@ -104,6 +113,8 @@ Recommended first slice:
 7. Create campaign map records with square grid settings from `asset.grid`.
 8. Persist `categoryKey`, `collection`, `categoryLabel`, source provenance, curation status, and bundled pack version as metadata for search/filter/regeneration.
 9. Add the GM category browser after catalog validation and storage behavior are stable.
+
+Chosen storage behavior for this first version: copy-on-add into managed content-addressed storage. Read-only bundled blob serving remains a possible future optimization, but it is not part of the current public display path.
 
 Product rule: Myroll must overlay the grid live. Never infer tactical scale from prompt text, filename text, or visual contents.
 

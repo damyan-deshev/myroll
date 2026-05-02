@@ -504,6 +504,40 @@ textarea {
   font-size: 11px;
 }
 
+.upload-results {
+  display: grid;
+  gap: 6px;
+}
+
+.upload-result {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #254135;
+  border-radius: 6px;
+  padding: 7px 8px;
+  background: #0e1714;
+}
+
+.upload-result.error {
+  border-color: #7e4a40;
+  background: #1d1110;
+}
+
+.upload-result strong,
+.upload-result small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-result small {
+  color: #9aa6ad;
+  font-size: 11px;
+}
+
 .asset-send {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr) auto;
@@ -730,6 +764,7 @@ textarea {
 }
 
 .map-controls label,
+.bundled-map-grid label,
 .grid-editor label,
 .token-grid label {
   display: grid;
@@ -738,11 +773,64 @@ textarea {
   font-size: 12px;
 }
 
+.bundled-map-browser {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #28343a;
+  border-radius: 6px;
+  padding: 8px;
+  background: #0d1113;
+}
+
+.bundled-map-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.bundled-map-select {
+  grid-column: span 2;
+}
+
+.input-with-icon {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+.input-with-icon input {
+  min-width: 0;
+}
+
 .grid-editor {
   display: grid;
-  grid-template-columns: 95px repeat(5, minmax(0, 1fr)) auto;
+  grid-template-columns: 100px minmax(78px, 0.8fr) minmax(180px, 1.2fr) minmax(70px, 0.7fr) minmax(70px, 0.7fr) repeat(2, auto) minmax(92px, 0.8fr) minmax(78px, 0.7fr) auto;
   gap: 8px;
   align-items: center;
+}
+
+.grid-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(42px, 1fr));
+  gap: 4px;
+}
+
+.grid-stepper button,
+.grid-nudge button {
+  display: inline-flex;
+  min-width: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding-inline: 6px;
+}
+
+.grid-nudge {
+  display: grid;
+  grid-template-columns: repeat(2, 34px);
+  gap: 4px;
 }
 
 .fog-editor {

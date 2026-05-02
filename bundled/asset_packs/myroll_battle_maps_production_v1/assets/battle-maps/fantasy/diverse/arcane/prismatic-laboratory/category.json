@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "arcane.prismatic_laboratory",
+  "label": "Prismatic Laboratory",
+  "theme": "fantasy",
+  "collection": "diverse",
+  "group": "arcane",
+  "slug": "prismatic-laboratory",
+  "grid": {
+    "type": "square",
+    "cols": 16,
+    "rows": 12,
+    "feetPerCell": 5,
+    "pxPerCell": 80,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.001",
+      "title": "Prismatic Alchemy Hall Large Central Empty Work Floor Teal Magical Light",
+      "file": "images/prismatic-laboratory__prismatic-alchemy-hall-large-central-empty-work-floor-teal-magical-light__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.002",
+      "title": "Wizard Experiment Room Large Central Empty Work Floor Brass Floor Inlays",
+      "file": "images/prismatic-laboratory__wizard-experiment-room-large-central-empty-work-floor-brass-floor-inlays__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.003",
+      "title": "Arcane Machine Chamber Large Central Empty Work Floor Magenta Lamps",
+      "file": "images/prismatic-laboratory__arcane-machine-chamber-large-central-empty-work-floor-magenta-lamps__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.004",
+      "title": "Glass Tank Laboratory Large Central Empty Work Floor Shelved Reagents",
+      "file": "images/prismatic-laboratory__glass-tank-laboratory-large-central-empty-work-floor-shelved-reagents__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.005",
+      "title": "Prismatic Alchemy Hall Perimeter Machines Brass Floor Inlays",
+      "file": "images/prismatic-laboratory__prismatic-alchemy-hall-perimeter-machines-brass-floor-inlays__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.006",
+      "title": "Wizard Experiment Room Perimeter Machines Magenta Lamps",
+      "file": "images/prismatic-laboratory__wizard-experiment-room-perimeter-machines-magenta-lamps__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.007",
+      "title": "Arcane Machine Chamber Perimeter Machines Shelved Reagents",
+      "file": "images/prismatic-laboratory__arcane-machine-chamber-perimeter-machines-shelved-reagents__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.008",
+      "title": "Glass Tank Laboratory Perimeter Machines Alchemy Tubes",
+      "file": "images/prismatic-laboratory__glass-tank-laboratory-perimeter-machines-alchemy-tubes__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0008"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.009",
+      "title": "Arcane Machine Chamber Rune Circle Edge Alchemy Tubes",
+      "file": "images/prismatic-laboratory__arcane-machine-chamber-rune-circle-edge-alchemy-tubes__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.010",
+      "title": "Prismatic Alchemy Hall Glass Tank Wall Brass Floor Inlays",
+      "file": "images/prismatic-laboratory__prismatic-alchemy-hall-glass-tank-wall-brass-floor-inlays__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.011",
+      "title": "Wizard Experiment Room Glass Tank Wall Magenta Lamps",
+      "file": "images/prismatic-laboratory__wizard-experiment-room-glass-tank-wall-magenta-lamps__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.012",
+      "title": "Arcane Machine Chamber Glass Tank Wall Teal Magical Light",
+      "file": "images/prismatic-laboratory__arcane-machine-chamber-glass-tank-wall-teal-magical-light__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.013",
+      "title": "Wizard Experiment Room Brass Workbench Row Shelved Reagents",
+      "file": "images/prismatic-laboratory__wizard-experiment-room-brass-workbench-row-shelved-reagents__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.diverse.arcane.prismatic_laboratory.014",
+      "title": "Glass Tank Laboratory Brass Workbench Row Magenta Lamps",
+      "file": "images/prismatic-laboratory__glass-tank-laboratory-brass-workbench-row-magenta-lamps__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v2_diverse_spacious:arcane.prismatic_laboratory:0020"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v2_diverse_spacious"
+  ],
+  "assetCount": 14
+}

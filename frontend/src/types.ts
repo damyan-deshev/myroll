@@ -61,7 +61,7 @@ export type RuntimeState = {
   updated_at: string;
 };
 
-export type AssetKind = "map_image" | "handout_image" | "npc_portrait" | "item_image" | "scene_image";
+export type AssetKind = "map_image" | "handout_image" | "npc_portrait" | "item_image" | "scene_image" | "token_image";
 export type AssetVisibility = "private" | "public_displayable";
 export type DisplayFitMode = "fit" | "fill" | "stretch" | "actual_size";
 
@@ -475,6 +475,55 @@ export type MapRecord = {
   grid_opacity: number;
   created_at: string;
   updated_at: string;
+};
+
+export type AssetBatchUploadResult = {
+  filename: string;
+  asset: Asset | null;
+  map: MapRecord | null;
+  error: { code: string; message: string } | null;
+};
+
+export type AssetBatchUploadResponse = {
+  results: AssetBatchUploadResult[];
+};
+
+export type BundledGrid = {
+  cols: number;
+  rows: number;
+  feet_per_cell: number;
+  px_per_cell: number;
+  offset_x: number;
+  offset_y: number;
+};
+
+export type BundledAssetPack = {
+  id: string;
+  title: string;
+  asset_count: number;
+  category_count: number;
+  collections: string[];
+};
+
+export type BundledMap = {
+  id: string;
+  pack_id: string;
+  title: string;
+  collection: string;
+  group: string;
+  category_key: string;
+  category_label: string;
+  width: number;
+  height: number;
+  tags: string[];
+  grid: BundledGrid;
+};
+
+export type BundledMapCreateResult = {
+  asset: Asset;
+  map: MapRecord;
+  created_asset: boolean;
+  created_map: boolean;
 };
 
 export type SceneMap = {

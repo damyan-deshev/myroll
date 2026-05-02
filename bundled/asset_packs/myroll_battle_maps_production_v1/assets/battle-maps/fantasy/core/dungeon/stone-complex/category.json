@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "categoryKey": "dungeon.stone_complex",
+  "label": "Stone Dungeon Complex",
+  "theme": "fantasy",
+  "collection": "core",
+  "group": "dungeon",
+  "slug": "stone-complex",
+  "grid": {
+    "type": "square",
+    "cols": 24,
+    "rows": 18,
+    "feetPerCell": 5,
+    "pxPerCell": 64,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "assets": [
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.001",
+      "title": "Crypt Halls Guard Room Sarcophagi",
+      "file": "images/stone-complex__crypt-halls-guard-room-sarcophagi__001.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0001"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.002",
+      "title": "Prison Block Guard Room Torch Alcoves",
+      "file": "images/stone-complex__prison-block-guard-room-torch-alcoves__002.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0002"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.003",
+      "title": "Old Fortress Basement Guard Room Cracked Floor",
+      "file": "images/stone-complex__old-fortress-basement-guard-room-cracked-floor__003.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0003"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.004",
+      "title": "Temple Undercroft Guard Room Rubble Piles",
+      "file": "images/stone-complex__temple-undercroft-guard-room-rubble-piles__004.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0004"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.005",
+      "title": "Sealed Catacombs Guard Room Pit Trap",
+      "file": "images/stone-complex__sealed-catacombs-guard-room-pit-trap__005.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0005"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.006",
+      "title": "Crypt Halls Collapsed Passage Secret Passage",
+      "file": "images/stone-complex__crypt-halls-collapsed-passage-secret-passage__006.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0006"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.007",
+      "title": "Prison Block Collapsed Passage Torch Alcoves",
+      "file": "images/stone-complex__prison-block-collapsed-passage-torch-alcoves__007.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0007"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.008",
+      "title": "Temple Undercroft Collapsed Passage Rubble Piles",
+      "file": "images/stone-complex__temple-undercroft-collapsed-passage-rubble-piles__008.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0009"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.009",
+      "title": "Sealed Catacombs Collapsed Passage Pit Trap",
+      "file": "images/stone-complex__sealed-catacombs-collapsed-passage-pit-trap__009.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0010"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.010",
+      "title": "Crypt Halls Altar Chamber Secret Passage",
+      "file": "images/stone-complex__crypt-halls-altar-chamber-secret-passage__010.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0011"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.011",
+      "title": "Prison Block Altar Chamber Iron Doors",
+      "file": "images/stone-complex__prison-block-altar-chamber-iron-doors__011.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0012"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.012",
+      "title": "Old Fortress Basement Altar Chamber Bone Piles",
+      "file": "images/stone-complex__old-fortress-basement-altar-chamber-bone-piles__012.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0013"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.013",
+      "title": "Temple Undercroft Altar Chamber Rubble Piles",
+      "file": "images/stone-complex__temple-undercroft-altar-chamber-rubble-piles__013.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0014"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.014",
+      "title": "Sealed Catacombs Altar Chamber Pit Trap",
+      "file": "images/stone-complex__sealed-catacombs-altar-chamber-pit-trap__014.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0015"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.015",
+      "title": "Crypt Halls Cell Corridor Secret Passage",
+      "file": "images/stone-complex__crypt-halls-cell-corridor-secret-passage__015.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0016"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.016",
+      "title": "Old Fortress Basement Cell Corridor Bone Piles",
+      "file": "images/stone-complex__old-fortress-basement-cell-corridor-bone-piles__016.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0018"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.017",
+      "title": "Temple Undercroft Cell Corridor Sarcophagi",
+      "file": "images/stone-complex__temple-undercroft-cell-corridor-sarcophagi__017.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0019"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.018",
+      "title": "Sealed Catacombs Cell Corridor Torch Alcoves",
+      "file": "images/stone-complex__sealed-catacombs-cell-corridor-torch-alcoves__018.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0020"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.019",
+      "title": "Crypt Halls Flooded Hall Secret Passage",
+      "file": "images/stone-complex__crypt-halls-flooded-hall-secret-passage__019.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0021"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.020",
+      "title": "Prison Block Flooded Hall Iron Doors",
+      "file": "images/stone-complex__prison-block-flooded-hall-iron-doors__020.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0022"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.021",
+      "title": "Old Fortress Basement Flooded Hall Bone Piles",
+      "file": "images/stone-complex__old-fortress-basement-flooded-hall-bone-piles__021.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0023"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.022",
+      "title": "Temple Undercroft Flooded Hall Sarcophagi",
+      "file": "images/stone-complex__temple-undercroft-flooded-hall-sarcophagi__022.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0024"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.023",
+      "title": "Sealed Catacombs Flooded Hall Torch Alcoves",
+      "file": "images/stone-complex__sealed-catacombs-flooded-hall-torch-alcoves__023.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0025"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.024",
+      "title": "Crypt Halls Treasure Room Cracked Floor",
+      "file": "images/stone-complex__crypt-halls-treasure-room-cracked-floor__024.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0026"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.025",
+      "title": "Prison Block Treasure Room Rubble Piles",
+      "file": "images/stone-complex__prison-block-treasure-room-rubble-piles__025.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0027"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.026",
+      "title": "Old Fortress Basement Treasure Room Bone Piles",
+      "file": "images/stone-complex__old-fortress-basement-treasure-room-bone-piles__026.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0028"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.027",
+      "title": "Temple Undercroft Treasure Room Sarcophagi",
+      "file": "images/stone-complex__temple-undercroft-treasure-room-sarcophagi__027.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0029"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.028",
+      "title": "Sealed Catacombs Treasure Room Torch Alcoves",
+      "file": "images/stone-complex__sealed-catacombs-treasure-room-torch-alcoves__028.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0030"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.029",
+      "title": "Crypt Halls Trap Corridor Cracked Floor",
+      "file": "images/stone-complex__crypt-halls-trap-corridor-cracked-floor__029.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0031"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.030",
+      "title": "Prison Block Trap Corridor Rubble Piles",
+      "file": "images/stone-complex__prison-block-trap-corridor-rubble-piles__030.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0032"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.031",
+      "title": "Old Fortress Basement Trap Corridor Pit Trap",
+      "file": "images/stone-complex__old-fortress-basement-trap-corridor-pit-trap__031.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0033"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.032",
+      "title": "Temple Undercroft Trap Corridor Secret Passage",
+      "file": "images/stone-complex__temple-undercroft-trap-corridor-secret-passage__032.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0034"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.033",
+      "title": "Sealed Catacombs Trap Corridor Torch Alcoves",
+      "file": "images/stone-complex__sealed-catacombs-trap-corridor-torch-alcoves__033.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0035"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.034",
+      "title": "Crypt Halls Statue Gallery Cracked Floor",
+      "file": "images/stone-complex__crypt-halls-statue-gallery-cracked-floor__034.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0036"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.035",
+      "title": "Prison Block Statue Gallery Rubble Piles",
+      "file": "images/stone-complex__prison-block-statue-gallery-rubble-piles__035.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0037"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.036",
+      "title": "Old Fortress Basement Statue Gallery Pit Trap",
+      "file": "images/stone-complex__old-fortress-basement-statue-gallery-pit-trap__036.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0038"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.037",
+      "title": "Temple Undercroft Statue Gallery Secret Passage",
+      "file": "images/stone-complex__temple-undercroft-statue-gallery-secret-passage__037.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0039"
+    },
+    {
+      "id": "myroll.battle_map.fantasy.core.dungeon.stone_complex.038",
+      "title": "Sealed Catacombs Statue Gallery Iron Doors",
+      "file": "images/stone-complex__sealed-catacombs-statue-gallery-iron-doors__038.webp",
+      "sourceDecisionKey": "myroll_battle_maps_v1:dungeon.stone_complex:0040"
+    }
+  ],
+  "sourcePacks": [
+    "myroll_battle_maps_v1"
+  ],
+  "assetCount": 38
+}

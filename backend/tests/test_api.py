@@ -4,13 +4,17 @@ import hashlib
 import io
 import json
 import uuid
+from dataclasses import replace
+from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 from sqlalchemy import select
 from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
 
+from backend.app.bundled_assets import BundledAssetPackError, clear_bundled_pack_cache, load_bundled_packs
 from backend.app.db.engine import get_engine
 from backend.app.db.models import (
     Asset,
@@ -71,6 +75,96 @@ def _image_bytes(fmt: str = "PNG", size: tuple[int, int] = (64, 40)) -> bytes:
     return buffer.getvalue()
 
 
+def _write_json(path: Path, payload: dict) -> None:
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _write_fixture_bundled_pack(scan_root: Path, *, pack_id: str = "fixture_battle_maps", asset_id: str = "fixture_ruins_entry") -> dict:
+    pack_dir = scan_root / pack_id
+    category_dir = pack_dir / "ruins" / "entry"
+    category_dir.mkdir(parents=True)
+    image_path = category_dir / "entry.webp"
+    image_content = _image_bytes("WEBP", (32, 32))
+    image_path.write_bytes(image_content)
+    checksum = hashlib.sha256(image_content).hexdigest()
+    grid = {
+        "type": "square",
+        "cols": 2,
+        "rows": 2,
+        "feetPerCell": 5,
+        "pxPerCell": 16,
+        "offsetX": 1,
+        "offsetY": 2,
+    }
+    category_key = "ruins_entry"
+    manifest = {
+        "schemaVersion": 1,
+        "packId": pack_id,
+        "title": "Fixture Battle Maps",
+        "assetCount": 1,
+        "categories": [
+            {
+                "categoryKey": category_key,
+                "categoryPath": "ruins/entry",
+                "acceptedCount": 1,
+            }
+        ],
+        "assets": [
+            {
+                "id": asset_id,
+                "title": "Fixture Ruins Entry",
+                "file": "ruins/entry/entry.webp",
+                "collection": "Fixture Collection",
+                "categoryKey": category_key,
+                "categoryLabel": "Entry",
+                "categoryPath": "ruins/entry",
+                "image": {"width": 32, "height": 32, "gridless": True},
+                "grid": grid,
+                "checksum": {"sha256": checksum},
+                "tags": ["fixture", "ruins"],
+                "curation": {},
+                "provenance": {},
+            }
+        ],
+    }
+    taxonomy = {
+        "schemaVersion": 1,
+        "collections": {
+            "fixture": {
+                "groups": {
+                    "ruins": {
+                        "categories": [
+                            {
+                                "categoryKey": category_key,
+                                "label": "Entry",
+                                "path": "ruins/entry",
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+    }
+    category = {
+        "schemaVersion": 1,
+        "categoryKey": category_key,
+        "grid": grid,
+        "assets": [{"id": asset_id, "file": "entry.webp"}],
+    }
+    _write_json(pack_dir / "manifest.json", manifest)
+    _write_json(pack_dir / "taxonomy.json", taxonomy)
+    _write_json(category_dir / "category.json", category)
+    return {
+        "pack_dir": pack_dir,
+        "manifest_path": pack_dir / "manifest.json",
+        "taxonomy_path": pack_dir / "taxonomy.json",
+        "category_path": category_dir / "category.json",
+        "image_path": image_path,
+        "pack_id": pack_id,
+        "asset_id": asset_id,
+    }
+
+
 def _upload_image(
     client: TestClient,
     campaign_id: str,
@@ -124,7 +218,7 @@ def test_health_reports_db_ok_and_z_timestamp(seeded_settings):
     body = response.json()
     assert body["status"] == "ok"
     assert body["db"] == "ok"
-    assert body["schema_version"] == "20260427_0012"
+    assert body["schema_version"] == "20260502_0013"
     assert body["db_path"].endswith("myroll.test.sqlite3")
     assert not body["db_path"].startswith("/")
     assert body["time"].endswith("Z")
@@ -161,7 +255,7 @@ def test_meta_reports_seed_and_schema(seeded_settings):
     body = response.json()
     assert body["app"] == "myroll"
     assert body["version"] == "dev"
-    assert body["schema_version"] == "20260427_0012"
+    assert body["schema_version"] == "20260502_0013"
     assert body["seed_version"] == DEMO_SEED_VERSION
     assert body["db_path"].endswith("myroll.test.sqlite3")
     assert not body["db_path"].startswith("/")
@@ -189,7 +283,7 @@ def test_storage_status_reports_shortened_paths_and_artifacts(seeded_settings):
     assert body["latest_backup"]["created_at"].endswith("Z")
     assert body["latest_export"]["archive_name"].endswith(".export.tar.gz")
     assert body["latest_export"]["download_url"].startswith("/api/storage/exports/")
-    assert body["schema_version"] == "20260427_0012"
+    assert body["schema_version"] == "20260502_0013"
     assert body["seed_version"] == DEMO_SEED_VERSION
     assert body["private_demo_name_map_active"] is False
 
@@ -565,6 +659,178 @@ def test_asset_import_rejects_unsupported_large_and_decompression_bomb_inputs(se
     )
     assert too_many_pixels.status_code == 413
     assert too_many_pixels.json()["error"]["code"] == "image_too_large"
+
+
+def test_committed_production_bundled_pack_validates(seeded_settings):
+    clear_bundled_pack_cache()
+    packs = load_bundled_packs(seeded_settings)
+    pack = next((item for item in packs if item.id == "myroll_battle_maps_production_v1"), None)
+
+    assert pack is not None
+    assert pack.asset_count == 608
+    assert pack.category_count == 25
+    assert pack.maps[0].path.is_file()
+    assert pack.maps[0].grid.px_per_cell > 0
+
+
+@pytest.mark.parametrize(
+    ("case", "expected_code"),
+    [
+        ("traversal", "bundled_pack_invalid"),
+        ("checksum", "bundled_asset_checksum_mismatch"),
+        ("dimensions", "bundled_asset_invalid_image"),
+        ("category", "bundled_category_invalid"),
+    ],
+)
+def test_bundled_pack_fixture_validation_rejects_invalid_packs(seeded_settings, tmp_path, case, expected_code):
+    scan_root = tmp_path / case
+    paths = _write_fixture_bundled_pack(scan_root)
+    if case == "traversal":
+        manifest = json.loads(paths["manifest_path"].read_text(encoding="utf-8"))
+        manifest["assets"][0]["file"] = "../escape.webp"
+        _write_json(paths["manifest_path"], manifest)
+    elif case == "checksum":
+        manifest = json.loads(paths["manifest_path"].read_text(encoding="utf-8"))
+        manifest["assets"][0]["checksum"]["sha256"] = "0" * 64
+        _write_json(paths["manifest_path"], manifest)
+    elif case == "dimensions":
+        image_content = _image_bytes("WEBP", (64, 32))
+        paths["image_path"].write_bytes(image_content)
+        manifest = json.loads(paths["manifest_path"].read_text(encoding="utf-8"))
+        manifest["assets"][0]["checksum"]["sha256"] = hashlib.sha256(image_content).hexdigest()
+        _write_json(paths["manifest_path"], manifest)
+    elif case == "category":
+        category = json.loads(paths["category_path"].read_text(encoding="utf-8"))
+        category["categoryKey"] = "wrong_category"
+        _write_json(paths["category_path"], category)
+
+    clear_bundled_pack_cache()
+    settings = replace(seeded_settings, bundled_asset_pack_dirs=(scan_root,))
+    with pytest.raises(BundledAssetPackError) as error:
+        load_bundled_packs(settings)
+    assert error.value.code == expected_code
+
+
+def test_bundled_catalog_endpoints_list_fixture_pack(seeded_settings, tmp_path):
+    scan_root = tmp_path / "packs"
+    fixture = _write_fixture_bundled_pack(scan_root)
+    settings = replace(seeded_settings, bundled_asset_pack_dirs=(scan_root,))
+    clear_bundled_pack_cache()
+    client = _client(settings)
+
+    packs = client.get("/api/bundled-asset-packs")
+    maps = client.get(f"/api/bundled-asset-packs/{fixture['pack_id']}/maps")
+    missing = client.get("/api/bundled-asset-packs/missing/maps")
+
+    assert packs.status_code == 200
+    assert packs.json() == [
+        {
+            "id": fixture["pack_id"],
+            "title": "Fixture Battle Maps",
+            "asset_count": 1,
+            "category_count": 1,
+            "collections": ["Fixture Collection"],
+        }
+    ]
+    assert maps.status_code == 200
+    assert maps.json()[0]["id"] == fixture["asset_id"]
+    assert maps.json()[0]["grid"]["px_per_cell"] == 16
+    assert missing.status_code == 404
+    assert missing.json()["error"]["code"] == "bundled_pack_not_found"
+
+
+def test_add_bundled_map_to_campaign_is_idempotent_and_player_blob_gated(seeded_settings, tmp_path):
+    scan_root = tmp_path / "packs"
+    fixture = _write_fixture_bundled_pack(scan_root)
+    settings = replace(seeded_settings, bundled_asset_pack_dirs=(scan_root,))
+    clear_bundled_pack_cache()
+    client = _client(settings)
+
+    first = client.post(
+        f"/api/campaigns/{DEMO_CAMPAIGN_ID}/bundled-maps",
+        json={"pack_id": fixture["pack_id"], "asset_id": fixture["asset_id"]},
+    )
+    assert first.status_code == 201
+    body = first.json()
+    assert body["created_asset"] is True
+    assert body["created_map"] is True
+    assert body["asset"]["kind"] == "map_image"
+    assert body["asset"]["visibility"] == "public_displayable"
+    assert body["map"]["grid_enabled"] is True
+    assert body["map"]["grid_size_px"] == 16
+    assert body["map"]["grid_offset_x"] == 1
+    assert body["map"]["grid_offset_y"] == 2
+
+    gated = client.get(f"/api/player-display/assets/{body['asset']['id']}/blob")
+    assert gated.status_code == 404
+    assert gated.json()["error"]["code"] == "player_display_asset_not_active"
+
+    repeat = client.post(
+        f"/api/campaigns/{DEMO_CAMPAIGN_ID}/bundled-maps",
+        json={"pack_id": fixture["pack_id"], "asset_id": fixture["asset_id"]},
+    )
+    assert repeat.status_code == 201
+    assert repeat.json()["asset"]["id"] == body["asset"]["id"]
+    assert repeat.json()["map"]["id"] == body["map"]["id"]
+    assert repeat.json()["created_asset"] is False
+    assert repeat.json()["created_map"] is False
+
+    scene_map = _assign_scene_map(client, DEMO_CAMPAIGN_ID, DEMO_SCENE_ID, body["map"]["id"], is_active=True)
+    shown = client.post("/api/player-display/show-map", json={"scene_map_id": scene_map["id"]})
+    assert shown.status_code == 200
+    assert shown.json()["payload"]["asset_id"] == body["asset"]["id"]
+
+    blob = client.get(f"/api/player-display/assets/{body['asset']['id']}/blob")
+    assert blob.status_code == 200
+    assert blob.content == (settings.asset_dir / body["asset"]["relative_path"]).read_bytes()
+
+
+def test_batch_asset_upload_reports_partial_success_and_creates_maps(seeded_settings):
+    client = _client(seeded_settings)
+    response = client.post(
+        f"/api/campaigns/{DEMO_CAMPAIGN_ID}/assets/upload-batch",
+        data={"kind": "map_image", "visibility": "public_displayable", "tags": "batch", "auto_create_maps": "true"},
+        files=[
+            ("files", ("good.png", _image_bytes("PNG", (48, 32)), "image/png")),
+            ("files", ("bad.png", b"not an image", "image/png")),
+        ],
+    )
+
+    assert response.status_code == 201
+    results = response.json()["results"]
+    assert [item["filename"] for item in results] == ["good.png", "bad.png"]
+    assert results[0]["asset"]["kind"] == "map_image"
+    assert results[0]["map"]["asset_id"] == results[0]["asset"]["id"]
+    assert results[0]["error"] is None
+    assert results[1]["asset"] is None
+    assert results[1]["map"] is None
+    assert results[1]["error"]["code"] == "invalid_image"
+
+
+def test_token_image_assets_are_accepted_and_usable_for_map_tokens(seeded_settings):
+    client = _client(seeded_settings)
+    campaign = _create_campaign(client, "Token Image Campaign")
+    scene = _create_scene(client, campaign["id"], "Token Image Scene")
+    token_asset = _upload_image(client, campaign["id"], kind="token_image", visibility="public_displayable", name="Ghoul Token")
+    map_asset = _upload_image(client, campaign["id"], kind="map_image", visibility="public_displayable", name="Ghoul Room")
+    campaign_map = _create_map(client, campaign["id"], map_asset["id"], "Ghoul Room")
+    scene_map = _assign_scene_map(client, campaign["id"], scene["id"], campaign_map["id"], is_active=True)
+
+    response = client.post(
+        f"/api/scene-maps/{scene_map['id']}/tokens",
+        json={
+            "name": "Ghoul",
+            "visibility": "player_visible",
+            "label_visibility": "player_visible",
+            "shape": "portrait",
+            "asset_id": token_asset["id"],
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["token"]["asset_id"] == token_asset["id"]
+    assert body["token"]["asset_name"] == "Ghoul Token"
 
 
 def test_duplicate_asset_imports_create_distinct_rows_with_shared_blob(seeded_settings):

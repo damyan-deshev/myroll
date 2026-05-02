@@ -152,7 +152,7 @@ class Asset(Base):
     __tablename__ = "assets"
     __table_args__ = (
         CheckConstraint(
-            "kind in ('map_image', 'handout_image', 'npc_portrait', 'item_image', 'scene_image', 'audio', 'markdown', 'pdf', 'other')",
+            "kind in ('map_image', 'handout_image', 'npc_portrait', 'item_image', 'scene_image', 'token_image', 'audio', 'markdown', 'pdf', 'other')",
             name="ck_assets_kind",
         ),
         CheckConstraint(

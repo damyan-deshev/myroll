@@ -5,6 +5,10 @@ import { Rnd } from "react-rnd";
 import {
   Activity,
   AlertTriangle,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
   CheckCircle2,
   CircleDashed,
   Download,
@@ -16,11 +20,13 @@ import {
   Image as ImageIcon,
   LayoutDashboard,
   Map,
+  Minus,
   PanelTop,
   Paintbrush,
   Plus,
   Radio,
   RotateCcw,
+  Search,
   Send,
   Swords,
   Trash2,
@@ -41,8 +47,10 @@ import { PlayerDisplayApp } from "./player-display/PlayerDisplayApp";
 import { SafeMarkdownRenderer } from "./SafeMarkdownRenderer";
 import type {
   Asset,
+  AssetBatchUploadResult,
   AssetKind,
   AssetVisibility,
+  BundledMap,
   Campaign,
   CombatantDisposition,
   CombatantRecord,
@@ -1137,7 +1145,7 @@ export function SceneContextWidget(props: SharedWidgetProps) {
   );
 }
 
-const assetKinds: AssetKind[] = ["handout_image", "map_image", "scene_image", "npc_portrait", "item_image"];
+const assetKinds: AssetKind[] = ["handout_image", "map_image", "scene_image", "npc_portrait", "token_image", "item_image"];
 const assetVisibilities: AssetVisibility[] = ["private", "public_displayable"];
 const fitModes: DisplayFitMode[] = ["fit", "fill", "stretch", "actual_size"];
 const entityKinds: EntityKind[] = ["pc", "npc", "creature", "location", "item", "handout", "faction", "vehicle", "generic"];
@@ -1169,11 +1177,12 @@ function broadcastDisplayChange(state: PlayerDisplayState, targetWindow?: Window
 
 export function AssetLibraryWidget(props: SharedWidgetProps) {
   const queryClient = useQueryClient();
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [kind, setKind] = useState<AssetKind>("handout_image");
   const [visibility, setVisibility] = useState<AssetVisibility>("private");
-  const [name, setName] = useState("");
   const [tags, setTags] = useState("");
+  const [autoCreateMaps, setAutoCreateMaps] = useState(false);
+  const [batchResults, setBatchResults] = useState<AssetBatchUploadResult[]>([]);
   const [caption, setCaption] = useState("");
   const [fitMode, setFitMode] = useState<DisplayFitMode>("fit");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -1195,19 +1204,23 @@ export function AssetLibraryWidget(props: SharedWidgetProps) {
 
   const upload = useMutation({
     mutationFn: () =>
-      api.uploadAsset(props.selectedCampaignId!, {
-        file: file!,
+      api.uploadAssetsBatch(props.selectedCampaignId!, {
+        files,
         kind,
         visibility,
-        name,
-        tags
+        tags,
+        auto_create_maps: kind === "map_image" && autoCreateMaps
       }),
-    onSuccess: (asset) => {
-      setFile(null);
-      setName("");
+    onSuccess: (response) => {
+      setFiles([]);
       setTags("");
-      setSelectedAssetId(asset.id);
+      setBatchResults(response.results);
+      const firstAsset = response.results.find((result) => result.asset)?.asset ?? null;
+      if (firstAsset) setSelectedAssetId(firstAsset.id);
       void queryClient.invalidateQueries({ queryKey: ["assets", props.selectedCampaignId] });
+      if (response.results.some((result) => result.map)) {
+        void queryClient.invalidateQueries({ queryKey: ["maps", props.selectedCampaignId] });
+      }
     }
   });
 
@@ -1235,13 +1248,20 @@ export function AssetLibraryWidget(props: SharedWidgetProps) {
         className="asset-form"
         onSubmit={(event) => {
           event.preventDefault();
-          if (file) upload.mutate();
+          if (files.length > 0) upload.mutate();
         }}
       >
-        <input aria-label="Asset name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Name" />
         <input aria-label="Asset tags" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="tags, comma separated" />
         <div className="inline-form">
-          <select value={kind} onChange={(event) => setKind(event.target.value as AssetKind)} aria-label="Asset kind">
+          <select
+            value={kind}
+            onChange={(event) => {
+              const nextKind = event.target.value as AssetKind;
+              setKind(nextKind);
+              if (nextKind !== "map_image") setAutoCreateMaps(false);
+            }}
+            aria-label="Asset kind"
+          >
             {assetKinds.map((value) => (
               <option key={value} value={value}>
                 {value}
@@ -1256,18 +1276,49 @@ export function AssetLibraryWidget(props: SharedWidgetProps) {
             ))}
           </select>
         </div>
+        {kind === "map_image" ? (
+          <label className="checkbox-row">
+            <input
+              aria-label="Auto-create maps"
+              type="checkbox"
+              checked={autoCreateMaps}
+              onChange={(event) => setAutoCreateMaps(event.target.checked)}
+            />{" "}
+            Auto-create maps
+          </label>
+        ) : null}
         <div className="inline-form">
           <input
-            aria-label="Asset file"
+            aria-label="Asset files"
             type="file"
             accept="image/png,image/jpeg,image/webp"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            multiple
+            onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
           />
-          <button type="submit" disabled={!file || upload.isPending}>
+          <button type="submit" disabled={!files.length || upload.isPending}>
             <Upload size={14} /> Upload
           </button>
         </div>
       </form>
+      {batchResults.length ? (
+        <div className="upload-results" aria-label="Upload results">
+          {batchResults.map((result) => (
+            <div key={result.filename} className={result.error ? "upload-result error" : "upload-result"}>
+              {result.error ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
+              <span>
+                <strong>{result.filename}</strong>
+                <small>
+                  {result.error
+                    ? result.error.message
+                    : result.map
+                      ? `Uploaded · map created: ${result.map.name}`
+                      : `Uploaded · ${result.asset?.name ?? "asset"}`}
+                </small>
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="asset-list">
         {(assetsQuery.data ?? []).map((asset) => (
@@ -2659,6 +2710,11 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
   const [selectedSceneMapId, setSelectedSceneMapId] = useState<string | null>(null);
+  const [selectedBundledPackId, setSelectedBundledPackId] = useState<string | null>(null);
+  const [bundledCollection, setBundledCollection] = useState("");
+  const [bundledCategory, setBundledCategory] = useState("");
+  const [bundledSearch, setBundledSearch] = useState("");
+  const [selectedBundledMapId, setSelectedBundledMapId] = useState<string | null>(null);
   const [gridSize, setGridSize] = useState(70);
   const [gridOffsetX, setGridOffsetX] = useState(0);
   const [gridOffsetY, setGridOffsetY] = useState(0);
@@ -2728,11 +2784,53 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
     queryFn: () => api.sceneMaps(props.selectedCampaignId!, props.selectedSceneId!),
     enabled: selectedSceneBelongsToCampaign
   });
+  const bundledPacksQuery = useQuery({
+    queryKey: ["bundled-asset-packs"],
+    queryFn: api.bundledAssetPacks
+  });
+  const bundledMapsQuery = useQuery({
+    queryKey: ["bundled-asset-packs", selectedBundledPackId, "maps"],
+    queryFn: () => api.bundledAssetPackMaps(selectedBundledPackId!),
+    enabled: Boolean(selectedBundledPackId)
+  });
 
   const mapAssets = useMemo(() => (assetsQuery.data ?? []).filter((asset) => asset.kind === "map_image"), [assetsQuery.data]);
   const tokenAssets = useMemo(
     () => (assetsQuery.data ?? []).filter((asset) => asset.kind !== "map_image" && asset.width && asset.height),
     [assetsQuery.data]
+  );
+  const selectedBundledPack = useMemo(
+    () => bundledPacksQuery.data?.find((pack) => pack.id === selectedBundledPackId) ?? bundledPacksQuery.data?.[0] ?? null,
+    [bundledPacksQuery.data, selectedBundledPackId]
+  );
+  const bundledCollectionOptions = useMemo(
+    () => Array.from(new Set((bundledMapsQuery.data ?? []).map((map) => map.collection))).sort((a, b) => a.localeCompare(b)),
+    [bundledMapsQuery.data]
+  );
+  const bundledCategoryOptions = useMemo(() => {
+    const options = (bundledMapsQuery.data ?? [])
+      .filter((map) => !bundledCollection || map.collection === bundledCollection)
+      .reduce<Array<{ key: string; label: string }>>((items, map) => {
+        if (items.some((item) => item.key === map.category_key)) return items;
+        return [...items, { key: map.category_key, label: `${map.category_label} · ${map.group}` }];
+      }, []);
+    return options.sort((a, b) => a.label.localeCompare(b.label));
+  }, [bundledCollection, bundledMapsQuery.data]);
+  const filteredBundledMaps = useMemo(() => {
+    const search = bundledSearch.trim().toLowerCase();
+    return (bundledMapsQuery.data ?? [])
+      .filter((map) => !bundledCollection || map.collection === bundledCollection)
+      .filter((map) => !bundledCategory || map.category_key === bundledCategory)
+      .filter((map) => {
+        if (!search) return true;
+        const haystack = [map.title, map.collection, map.group, map.category_label, ...map.tags].join(" ").toLowerCase();
+        return haystack.includes(search);
+      })
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [bundledCategory, bundledCollection, bundledMapsQuery.data, bundledSearch]);
+  const selectedBundledMap = useMemo(
+    () => filteredBundledMaps.find((map) => map.id === selectedBundledMapId) ?? filteredBundledMaps[0] ?? null,
+    [filteredBundledMaps, selectedBundledMapId]
   );
   const tokenEntities = entitiesQuery.data?.entities ?? [];
   const selectedMap = useMemo(
@@ -2762,6 +2860,40 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
   useEffect(() => {
     if (!selectedAssetId && mapAssets[0]) setSelectedAssetId(mapAssets[0].id);
   }, [mapAssets, selectedAssetId]);
+
+  useEffect(() => {
+    const packs = bundledPacksQuery.data ?? [];
+    if (!packs.length) {
+      setSelectedBundledPackId(null);
+      return;
+    }
+    if (!selectedBundledPackId || !packs.some((pack) => pack.id === selectedBundledPackId)) {
+      setSelectedBundledPackId(packs[0].id);
+    }
+  }, [bundledPacksQuery.data, selectedBundledPackId]);
+
+  useEffect(() => {
+    setBundledCollection("");
+    setBundledCategory("");
+    setBundledSearch("");
+    setSelectedBundledMapId(null);
+  }, [selectedBundledPackId]);
+
+  useEffect(() => {
+    if (bundledCategory && !bundledCategoryOptions.some((option) => option.key === bundledCategory)) {
+      setBundledCategory("");
+    }
+  }, [bundledCategory, bundledCategoryOptions]);
+
+  useEffect(() => {
+    if (!filteredBundledMaps.length) {
+      setSelectedBundledMapId(null);
+      return;
+    }
+    if (!selectedBundledMapId || !filteredBundledMaps.some((map) => map.id === selectedBundledMapId)) {
+      setSelectedBundledMapId(filteredBundledMaps[0].id);
+    }
+  }, [filteredBundledMaps, selectedBundledMapId]);
 
   useEffect(() => {
     if (selectedMap) {
@@ -2866,6 +2998,26 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
     onSuccess: (map) => {
       setSelectedMapId(map.id);
       void queryClient.invalidateQueries({ queryKey: ["maps", props.selectedCampaignId] });
+    }
+  });
+  const addBundledMap = useMutation({
+    mutationFn: () =>
+      api.addBundledMapToCampaign(props.selectedCampaignId!, {
+        pack_id: selectedBundledPack!.id,
+        asset_id: selectedBundledMap!.id
+      }),
+    onSuccess: (result) => {
+      setSelectedAssetId(result.asset.id);
+      setSelectedMapId(result.map.id);
+      setGridEnabled(result.map.grid_enabled);
+      setGridSize(result.map.grid_size_px);
+      setGridOffsetX(result.map.grid_offset_x);
+      setGridOffsetY(result.map.grid_offset_y);
+      setGridColor(result.map.grid_color);
+      setGridOpacity(result.map.grid_opacity);
+      void queryClient.invalidateQueries({ queryKey: ["assets", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["maps", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["scene-maps", props.selectedCampaignId, props.selectedSceneId] });
     }
   });
   const assignMap = useMutation({
@@ -2981,8 +3133,11 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
     entitiesQuery.error ??
     mapsQuery.error ??
     sceneMapsQuery.error ??
+    bundledPacksQuery.error ??
+    bundledMapsQuery.error ??
     tokensQuery.error ??
     createMap.error ??
+    addBundledMap.error ??
     assignMap.error ??
     activateMap.error ??
     saveGrid.error ??
@@ -2993,7 +3148,37 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
     createToken.error ??
     patchToken.error ??
     deleteToken.error;
-  const previewPayload = selectedSceneMap ? mapPayloadFromSceneMap(selectedSceneMap, fogQuery.data, localTokens) : null;
+  const previewPayload = useMemo(() => {
+    if (!selectedSceneMap) return null;
+    const payload = mapPayloadFromSceneMap(selectedSceneMap, fogQuery.data, localTokens);
+    return {
+      ...payload,
+      fit_mode: playerFitMode,
+      grid: {
+        ...payload.grid,
+        visible: gridEnabled,
+        size_px: gridSize,
+        offset_x: gridOffsetX,
+        offset_y: gridOffsetY,
+        color: gridColor,
+        opacity: gridOpacity
+      }
+    };
+  }, [fogQuery.data, gridColor, gridEnabled, gridOffsetX, gridOffsetY, gridOpacity, gridSize, localTokens, playerFitMode, selectedSceneMap]);
+
+  function clampGridSize(value: number) {
+    if (!Number.isFinite(value)) return 70;
+    return Math.max(4, Math.min(500, Math.round(value)));
+  }
+
+  function adjustGridSize(delta: number) {
+    setGridSize((value) => clampGridSize(value + delta));
+  }
+
+  function adjustGridOffset(dx: number, dy: number) {
+    setGridOffsetX((value) => value + dx);
+    setGridOffsetY((value) => value + dy);
+  }
 
   function pointFromClient(element: HTMLElement, clientX: number, clientY: number): { x: number; y: number } | null {
     if (!previewPayload) return null;
@@ -3327,6 +3512,89 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
           Activate scene map
         </button>
       </div>
+      <div className="bundled-map-browser">
+        <div className="fog-header">
+          <strong>Bundled maps</strong>
+          <span className="muted">{selectedBundledPack ? `${selectedBundledPack.asset_count} maps` : "No bundled packs"}</span>
+        </div>
+        <div className="bundled-map-grid">
+          <label>
+            <span>Pack</span>
+            <select
+              aria-label="Bundled asset pack"
+              value={selectedBundledPack?.id ?? ""}
+              onChange={(event) => setSelectedBundledPackId(event.target.value || null)}
+            >
+              <option value="">No bundled packs</option>
+              {(bundledPacksQuery.data ?? []).map((pack) => (
+                <option key={pack.id} value={pack.id}>
+                  {pack.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Collection</span>
+            <select value={bundledCollection} onChange={(event) => setBundledCollection(event.target.value)} aria-label="Bundled collection">
+              <option value="">All collections</option>
+              {bundledCollectionOptions.map((collection) => (
+                <option key={collection} value={collection}>
+                  {collection}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Category</span>
+            <select value={bundledCategory} onChange={(event) => setBundledCategory(event.target.value)} aria-label="Bundled category">
+              <option value="">All categories</option>
+              {bundledCategoryOptions.map((category) => (
+                <option key={category.key} value={category.key}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Search</span>
+            <span className="input-with-icon">
+              <Search size={14} />
+              <input
+                aria-label="Bundled map search"
+                value={bundledSearch}
+                onChange={(event) => setBundledSearch(event.target.value)}
+                placeholder="name, tag, category"
+              />
+            </span>
+          </label>
+          <label className="bundled-map-select">
+            <span>Map</span>
+            <select
+              aria-label="Bundled map"
+              value={selectedBundledMap?.id ?? ""}
+              onChange={(event) => setSelectedBundledMapId(event.target.value || null)}
+            >
+              <option value="">No bundled maps</option>
+              {filteredBundledMaps.map((map) => (
+                <option key={map.id} value={map.id}>
+                  {map.title} · {map.grid.px_per_cell}px
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            onClick={() => addBundledMap.mutate()}
+            disabled={!selectedBundledPack || !selectedBundledMap || addBundledMap.isPending}
+          >
+            <Plus size={14} /> Add to campaign
+          </button>
+        </div>
+        {selectedBundledMap ? (
+          <p className="muted">
+            {selectedBundledMap.collection} · {selectedBundledMap.category_label} · {selectedBundledMap.width}x{selectedBundledMap.height}
+          </p>
+        ) : null}
+      </div>
       <MapRenderer
         payload={previewPayload}
         renderMode="gm"
@@ -3553,19 +3821,83 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
         <label className="checkbox-row">
           <input type="checkbox" checked={gridEnabled} onChange={(event) => setGridEnabled(event.target.checked)} /> GM grid
         </label>
-        <input aria-label="Grid size" type="number" min={4} max={500} value={gridSize} onChange={(event) => setGridSize(Number(event.target.value))} />
-        <input aria-label="Grid offset X" type="number" value={gridOffsetX} onChange={(event) => setGridOffsetX(Number(event.target.value))} />
-        <input aria-label="Grid offset Y" type="number" value={gridOffsetY} onChange={(event) => setGridOffsetY(Number(event.target.value))} />
-        <input aria-label="Grid color" value={gridColor} onChange={(event) => setGridColor(event.target.value)} />
-        <input
-          aria-label="Grid opacity"
-          type="number"
-          min={0}
-          max={1}
-          step={0.05}
-          value={gridOpacity}
-          onChange={(event) => setGridOpacity(Number(event.target.value))}
-        />
+        <label>
+          <span>Size</span>
+          <input
+            aria-label="Grid size"
+            type="number"
+            min={4}
+            max={500}
+            value={gridSize}
+            onChange={(event) => setGridSize(clampGridSize(Number(event.target.value)))}
+          />
+        </label>
+        <div className="grid-stepper" aria-label="Grid size controls">
+          <button type="button" aria-label="Decrease grid size by 5" onClick={() => adjustGridSize(-5)}>
+            <Minus size={14} /> 5
+          </button>
+          <button type="button" aria-label="Decrease grid size by 1" onClick={() => adjustGridSize(-1)}>
+            <Minus size={14} /> 1
+          </button>
+          <button type="button" aria-label="Increase grid size by 1" onClick={() => adjustGridSize(1)}>
+            <Plus size={14} /> 1
+          </button>
+          <button type="button" aria-label="Increase grid size by 5" onClick={() => adjustGridSize(5)}>
+            <Plus size={14} /> 5
+          </button>
+        </div>
+        <label>
+          <span>X</span>
+          <input aria-label="Grid offset X" type="number" value={gridOffsetX} onChange={(event) => setGridOffsetX(Number(event.target.value))} />
+        </label>
+        <label>
+          <span>Y</span>
+          <input aria-label="Grid offset Y" type="number" value={gridOffsetY} onChange={(event) => setGridOffsetY(Number(event.target.value))} />
+        </label>
+        <div className="grid-nudge" aria-label="Grid nudge 1px">
+          <button type="button" aria-label="Nudge grid up 1px" onClick={() => adjustGridOffset(0, -1)}>
+            <ArrowUp size={14} />
+          </button>
+          <button type="button" aria-label="Nudge grid left 1px" onClick={() => adjustGridOffset(-1, 0)}>
+            <ArrowLeft size={14} />
+          </button>
+          <button type="button" aria-label="Nudge grid right 1px" onClick={() => adjustGridOffset(1, 0)}>
+            <ArrowRight size={14} />
+          </button>
+          <button type="button" aria-label="Nudge grid down 1px" onClick={() => adjustGridOffset(0, 1)}>
+            <ArrowDown size={14} />
+          </button>
+        </div>
+        <div className="grid-nudge" aria-label="Grid nudge 10px">
+          <button type="button" aria-label="Nudge grid up 10px" onClick={() => adjustGridOffset(0, -10)}>
+            <ArrowUp size={14} />
+          </button>
+          <button type="button" aria-label="Nudge grid left 10px" onClick={() => adjustGridOffset(-10, 0)}>
+            <ArrowLeft size={14} />
+          </button>
+          <button type="button" aria-label="Nudge grid right 10px" onClick={() => adjustGridOffset(10, 0)}>
+            <ArrowRight size={14} />
+          </button>
+          <button type="button" aria-label="Nudge grid down 10px" onClick={() => adjustGridOffset(0, 10)}>
+            <ArrowDown size={14} />
+          </button>
+        </div>
+        <label>
+          <span>Color</span>
+          <input aria-label="Grid color" value={gridColor} onChange={(event) => setGridColor(event.target.value)} />
+        </label>
+        <label>
+          <span>Opacity</span>
+          <input
+            aria-label="Grid opacity"
+            type="number"
+            min={0}
+            max={1}
+            step={0.05}
+            value={gridOpacity}
+            onChange={(event) => setGridOpacity(Number(event.target.value))}
+          />
+        </label>
         <button onClick={() => saveGrid.mutate()} disabled={!selectedMap || saveGrid.isPending}>
           Save grid
         </button>
