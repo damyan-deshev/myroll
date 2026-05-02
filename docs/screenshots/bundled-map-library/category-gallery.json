@@ -1,0 +1,252 @@
+[
+  {
+    "collection": "core",
+    "group": "dungeon",
+    "label": "Cave Complex",
+    "count": 38,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__dungeon-cave-complex-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__dungeon-cave-complex-sample.jpg",
+    "sample_title": "Goblin Cave Main Cavern Stalagmites"
+  },
+  {
+    "collection": "core",
+    "group": "dungeon",
+    "label": "Stone Dungeon Complex",
+    "count": 38,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__dungeon-stone-complex-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__dungeon-stone-complex-sample.jpg",
+    "sample_title": "Crypt Halls Guard Room Sarcophagi"
+  },
+  {
+    "collection": "core",
+    "group": "interior",
+    "label": "House Floor",
+    "count": 38,
+    "grid": "16x12 @ 80px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__interior-house-floor-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__interior-house-floor-sample.jpg",
+    "sample_title": "Abandoned Manor Wing Central Hallway Broken Furniture"
+  },
+  {
+    "collection": "core",
+    "group": "interior",
+    "label": "Small Chamber",
+    "count": 40,
+    "grid": "10x10 @ 128px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__interior-small-chamber-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__interior-small-chamber-sample.jpg",
+    "sample_title": "Ritual Chamber Central Altar Four Pillars"
+  },
+  {
+    "collection": "core",
+    "group": "large-sites",
+    "label": "Arena Lair",
+    "count": 31,
+    "grid": "32x24 @ 48px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__large-arena-lair-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__large-arena-lair-sample.jpg",
+    "sample_title": "Ruined Arena Central Boss Area Cover Clusters"
+  },
+  {
+    "collection": "core",
+    "group": "ruins",
+    "label": "Temple Shrine",
+    "count": 38,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__ruins-temple-shrine-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__ruins-temple-shrine-sample.jpg",
+    "sample_title": "Forest Shrine Central Altar Mossy Stones"
+  },
+  {
+    "collection": "core",
+    "group": "settlement",
+    "label": "Settlement Streets And Squares",
+    "count": 33,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__settlement-street-square-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__settlement-street-square-sample.jpg",
+    "sample_title": "Village Market Central Fountain Barrels And Crates"
+  },
+  {
+    "collection": "core",
+    "group": "wilderness",
+    "label": "Forest Road",
+    "count": 35,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__outdoor-forest-road-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__outdoor-forest-road-sample.jpg",
+    "sample_title": "Muddy Forest Trail Fallen Wagon Brush Cover"
+  },
+  {
+    "collection": "core",
+    "group": "wilderness",
+    "label": "River Crossings",
+    "count": 35,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__outdoor-river-bridge-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__outdoor-river-bridge-sample.jpg",
+    "sample_title": "Stone Bridge Central Bridge Riverbanks"
+  },
+  {
+    "collection": "core",
+    "group": "wilderness",
+    "label": "Swamp Marsh",
+    "count": 39,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/core__outdoor-swamp-marsh-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/core__outdoor-swamp-marsh-sample.jpg",
+    "sample_title": "Witch Marsh Wooden Boardwalk Murky Water"
+  },
+  {
+    "collection": "diverse",
+    "group": "arcane",
+    "label": "Prismatic Laboratory",
+    "count": 14,
+    "grid": "16x12 @ 80px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__arcane-prismatic-laboratory-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__arcane-prismatic-laboratory-sample.jpg",
+    "sample_title": "Prismatic Alchemy Hall Large Central Empty Work Floor Teal Magical Light"
+  },
+  {
+    "collection": "diverse",
+    "group": "cavern",
+    "label": "Crystal Blackrock Cavern",
+    "count": 19,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__cavern-crystal-blackrock-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__cavern-crystal-blackrock-sample.jpg",
+    "sample_title": "Blackrock Crystal Hall Central Open Cavern Floor Cyan Crystals"
+  },
+  {
+    "collection": "diverse",
+    "group": "coast",
+    "label": "Shipwreck Beach",
+    "count": 18,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__coast-shipwreck-beach-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__coast-shipwreck-beach-sample.jpg",
+    "sample_title": "Tropical Wreck Beach Broken Hull Edge Driftwood Cover"
+  },
+  {
+    "collection": "diverse",
+    "group": "fey",
+    "label": "Fey Clearing",
+    "count": 14,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__forest-fey-clearing-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__forest-fey-clearing-sample.jpg",
+    "sample_title": "Moonlit Fey Glade Open Mossy Glade Violet Flowers"
+  },
+  {
+    "collection": "diverse",
+    "group": "hazards",
+    "label": "Lava Bridges",
+    "count": 20,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__hazard-lava-bridges-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__hazard-lava-bridges-sample.jpg",
+    "sample_title": "Black Obsidian Plaza Two Lava Channels Heat Shimmer"
+  },
+  {
+    "collection": "diverse",
+    "group": "interior",
+    "label": "Night Tavern",
+    "count": 15,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__interior-tavern-night-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__interior-tavern-night-sample.jpg",
+    "sample_title": "Tavern Yard At Night Cleared Central Floor Ale Barrels"
+  },
+  {
+    "collection": "diverse",
+    "group": "ruins",
+    "label": "Clean Arena",
+    "count": 17,
+    "grid": "32x24 @ 48px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__ruins-clean-arena-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__ruins-clean-arena-sample.jpg",
+    "sample_title": "Sand Coliseum Floor Huge Central Sand Floor Sparse Rocks"
+  },
+  {
+    "collection": "diverse",
+    "group": "underground",
+    "label": "Toxic Sewer Canals",
+    "count": 17,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__underground-toxic-sewer-canals-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__underground-toxic-sewer-canals-sample.jpg",
+    "sample_title": "Alchemical Sewer Junction Two Toxic Canals Green Glow"
+  },
+  {
+    "collection": "diverse",
+    "group": "urban",
+    "label": "Foggy Rooftops",
+    "count": 10,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__city-rooftops-fog-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__city-rooftops-fog-sample.jpg",
+    "sample_title": "Slate Roof Terraces Broad Central Roof Deck Low Parapet Cover"
+  },
+  {
+    "collection": "diverse",
+    "group": "wilderness",
+    "label": "Waterfall Cliff Crossing",
+    "count": 19,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/diverse__nature-waterfall-cliff-crossing-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/diverse__nature-waterfall-cliff-crossing-sample.jpg",
+    "sample_title": "Cliff Waterfall Trail Waterfall Edge Mist Spray"
+  },
+  {
+    "collection": "weird",
+    "group": "abyss",
+    "label": "Bone Cathedral",
+    "count": 12,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/weird__abyss-bone-cathedral-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/weird__abyss-bone-cathedral-sample.jpg",
+    "sample_title": "Bone Cathedral Nave Long Open Central Aisle Emerald Ghostfire"
+  },
+  {
+    "collection": "weird",
+    "group": "celestial",
+    "label": "Starforge Sanctum",
+    "count": 19,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/weird__celestial-starforge-sanctum-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/weird__celestial-starforge-sanctum-sample.jpg",
+    "sample_title": "Starforge Sanctum Huge Open Radiant Floor White Gold Light"
+  },
+  {
+    "collection": "weird",
+    "group": "elemental",
+    "label": "Storm Glass Citadel",
+    "count": 20,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/weird__elemental-storm-glass-citadel-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/weird__elemental-storm-glass-citadel-sample.jpg",
+    "sample_title": "Storm Glass Plaza Broad Glass Central Floor Cyan Lightning"
+  },
+  {
+    "collection": "weird",
+    "group": "fey",
+    "label": "Giant Flower Court",
+    "count": 20,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/weird__fey-giant-flower-court-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/weird__fey-giant-flower-court-sample.jpg",
+    "sample_title": "Giant Flower Court Large Central Petal Meadow Pink Petals"
+  },
+  {
+    "collection": "weird",
+    "group": "void",
+    "label": "Astral Orrery",
+    "count": 9,
+    "grid": "24x18 @ 64px",
+    "overview": "docs/screenshots/bundled-map-library/categories/weird__void-astral-orrery-overview.jpg",
+    "sample": "docs/screenshots/bundled-map-library/categories/weird__void-astral-orrery-sample.jpg",
+    "sample_title": "Astral Orrery Bridge Large Central Round Platform Violet Nebula Glow"
+  }
+]

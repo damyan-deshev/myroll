@@ -3124,6 +3124,23 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
     },
     onError: () => setTokenSaveStatus("error")
   });
+  const previewPayload = useMemo(() => {
+    if (!selectedSceneMap) return null;
+    const payload = mapPayloadFromSceneMap(selectedSceneMap, fogQuery.data, localTokens);
+    return {
+      ...payload,
+      fit_mode: playerFitMode,
+      grid: {
+        ...payload.grid,
+        visible: gridEnabled,
+        size_px: gridSize,
+        offset_x: gridOffsetX,
+        offset_y: gridOffsetY,
+        color: gridColor,
+        opacity: gridOpacity
+      }
+    };
+  }, [fogQuery.data, gridColor, gridEnabled, gridOffsetX, gridOffsetY, gridOpacity, gridSize, localTokens, playerFitMode, selectedSceneMap]);
 
   if (!props.selectedCampaignId || !props.selectedSceneId || !selectedSceneBelongsToCampaign) {
     return <EmptyText text="Select a campaign and scene to manage maps." />;
@@ -3148,23 +3165,6 @@ export function MapDisplayWidget(props: SharedWidgetProps) {
     createToken.error ??
     patchToken.error ??
     deleteToken.error;
-  const previewPayload = useMemo(() => {
-    if (!selectedSceneMap) return null;
-    const payload = mapPayloadFromSceneMap(selectedSceneMap, fogQuery.data, localTokens);
-    return {
-      ...payload,
-      fit_mode: playerFitMode,
-      grid: {
-        ...payload.grid,
-        visible: gridEnabled,
-        size_px: gridSize,
-        offset_x: gridOffsetX,
-        offset_y: gridOffsetY,
-        color: gridColor,
-        opacity: gridOpacity
-      }
-    };
-  }, [fogQuery.data, gridColor, gridEnabled, gridOffsetX, gridOffsetY, gridOpacity, gridSize, localTokens, playerFitMode, selectedSceneMap]);
 
   function clampGridSize(value: number) {
     if (!Number.isFinite(value)) return 70;
