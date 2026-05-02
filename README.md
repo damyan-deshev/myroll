@@ -64,33 +64,132 @@ Available bundled categories:
 - `diverse`: Prismatic Laboratory, Crystal Blackrock Cavern, Shipwreck Beach, Fey Clearing, Lava Bridges, Night Tavern, Clean Arena, Toxic Sewer Canals, Foggy Rooftops, Waterfall Cliff Crossing.
 - `weird`: Bone Cathedral, Starforge Sanctum, Storm Glass Citadel, Giant Flower Court, Astral Orrery.
 
-| Collection | Category | Maps | Grid contract | Overview | Representative map |
-|---|---|---:|---|---|---|
-| core / dungeon | Cave Complex | 38 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/core__dungeon-cave-complex-overview.jpg" width="180" alt="Cave Complex bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__dungeon-cave-complex-sample.jpg" width="180" alt="Goblin Cave Main Cavern Stalagmites representative bundled map"><br>Goblin Cave Main Cavern Stalagmites |
-| core / dungeon | Stone Dungeon Complex | 38 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/core__dungeon-stone-complex-overview.jpg" width="180" alt="Stone Dungeon Complex bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__dungeon-stone-complex-sample.jpg" width="180" alt="Crypt Halls Guard Room Sarcophagi representative bundled map"><br>Crypt Halls Guard Room Sarcophagi |
-| core / interior | House Floor | 38 | 16x12 @ 80px | <img src="docs/screenshots/bundled-map-library/categories/core__interior-house-floor-overview.jpg" width="180" alt="House Floor bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__interior-house-floor-sample.jpg" width="180" alt="Abandoned Manor Wing Central Hallway Broken Furniture representative bundled map"><br>Abandoned Manor Wing Central Hallway Broken Furniture |
-| core / interior | Small Chamber | 40 | 10x10 @ 128px | <img src="docs/screenshots/bundled-map-library/categories/core__interior-small-chamber-overview.jpg" width="180" alt="Small Chamber bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__interior-small-chamber-sample.jpg" width="180" alt="Ritual Chamber Central Altar Four Pillars representative bundled map"><br>Ritual Chamber Central Altar Four Pillars |
-| core / large-sites | Arena Lair | 31 | 32x24 @ 48px | <img src="docs/screenshots/bundled-map-library/categories/core__large-arena-lair-overview.jpg" width="180" alt="Arena Lair bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__large-arena-lair-sample.jpg" width="180" alt="Ruined Arena Central Boss Area Cover Clusters representative bundled map"><br>Ruined Arena Central Boss Area Cover Clusters |
-| core / ruins | Temple Shrine | 38 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/core__ruins-temple-shrine-overview.jpg" width="180" alt="Temple Shrine bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__ruins-temple-shrine-sample.jpg" width="180" alt="Forest Shrine Central Altar Mossy Stones representative bundled map"><br>Forest Shrine Central Altar Mossy Stones |
-| core / settlement | Settlement Streets And Squares | 33 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/core__settlement-street-square-overview.jpg" width="180" alt="Settlement Streets And Squares bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__settlement-street-square-sample.jpg" width="180" alt="Village Market Central Fountain Barrels And Crates representative bundled map"><br>Village Market Central Fountain Barrels And Crates |
-| core / wilderness | Forest Road | 35 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/core__outdoor-forest-road-overview.jpg" width="180" alt="Forest Road bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__outdoor-forest-road-sample.jpg" width="180" alt="Muddy Forest Trail Fallen Wagon Brush Cover representative bundled map"><br>Muddy Forest Trail Fallen Wagon Brush Cover |
-| core / wilderness | River Crossings | 35 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/core__outdoor-river-bridge-overview.jpg" width="180" alt="River Crossings bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__outdoor-river-bridge-sample.jpg" width="180" alt="Stone Bridge Central Bridge Riverbanks representative bundled map"><br>Stone Bridge Central Bridge Riverbanks |
-| core / wilderness | Swamp Marsh | 39 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/core__outdoor-swamp-marsh-overview.jpg" width="180" alt="Swamp Marsh bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/core__outdoor-swamp-marsh-sample.jpg" width="180" alt="Witch Marsh Wooden Boardwalk Murky Water representative bundled map"><br>Witch Marsh Wooden Boardwalk Murky Water |
-| diverse / arcane | Prismatic Laboratory | 14 | 16x12 @ 80px | <img src="docs/screenshots/bundled-map-library/categories/diverse__arcane-prismatic-laboratory-overview.jpg" width="180" alt="Prismatic Laboratory bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__arcane-prismatic-laboratory-sample.jpg" width="180" alt="Prismatic Alchemy Hall Large Central Empty Work Floor Teal Magical Light representative bundled map"><br>Prismatic Alchemy Hall Large Central Empty Work Floor Teal Magical Light |
-| diverse / cavern | Crystal Blackrock Cavern | 19 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/diverse__cavern-crystal-blackrock-overview.jpg" width="180" alt="Crystal Blackrock Cavern bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__cavern-crystal-blackrock-sample.jpg" width="180" alt="Blackrock Crystal Hall Central Open Cavern Floor Cyan Crystals representative bundled map"><br>Blackrock Crystal Hall Central Open Cavern Floor Cyan Crystals |
-| diverse / coast | Shipwreck Beach | 18 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/diverse__coast-shipwreck-beach-overview.jpg" width="180" alt="Shipwreck Beach bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__coast-shipwreck-beach-sample.jpg" width="180" alt="Tropical Wreck Beach Broken Hull Edge Driftwood Cover representative bundled map"><br>Tropical Wreck Beach Broken Hull Edge Driftwood Cover |
-| diverse / fey | Fey Clearing | 14 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/diverse__forest-fey-clearing-overview.jpg" width="180" alt="Fey Clearing bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__forest-fey-clearing-sample.jpg" width="180" alt="Moonlit Fey Glade Open Mossy Glade Violet Flowers representative bundled map"><br>Moonlit Fey Glade Open Mossy Glade Violet Flowers |
-| diverse / hazards | Lava Bridges | 20 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/diverse__hazard-lava-bridges-overview.jpg" width="180" alt="Lava Bridges bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__hazard-lava-bridges-sample.jpg" width="180" alt="Black Obsidian Plaza Two Lava Channels Heat Shimmer representative bundled map"><br>Black Obsidian Plaza Two Lava Channels Heat Shimmer |
-| diverse / interior | Night Tavern | 15 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/diverse__interior-tavern-night-overview.jpg" width="180" alt="Night Tavern bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__interior-tavern-night-sample.jpg" width="180" alt="Tavern Yard At Night Cleared Central Floor Ale Barrels representative bundled map"><br>Tavern Yard At Night Cleared Central Floor Ale Barrels |
-| diverse / ruins | Clean Arena | 17 | 32x24 @ 48px | <img src="docs/screenshots/bundled-map-library/categories/diverse__ruins-clean-arena-overview.jpg" width="180" alt="Clean Arena bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__ruins-clean-arena-sample.jpg" width="180" alt="Sand Coliseum Floor Huge Central Sand Floor Sparse Rocks representative bundled map"><br>Sand Coliseum Floor Huge Central Sand Floor Sparse Rocks |
-| diverse / underground | Toxic Sewer Canals | 17 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/diverse__underground-toxic-sewer-canals-overview.jpg" width="180" alt="Toxic Sewer Canals bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__underground-toxic-sewer-canals-sample.jpg" width="180" alt="Alchemical Sewer Junction Two Toxic Canals Green Glow representative bundled map"><br>Alchemical Sewer Junction Two Toxic Canals Green Glow |
-| diverse / urban | Foggy Rooftops | 10 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/diverse__city-rooftops-fog-overview.jpg" width="180" alt="Foggy Rooftops bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__city-rooftops-fog-sample.jpg" width="180" alt="Slate Roof Terraces Broad Central Roof Deck Low Parapet Cover representative bundled map"><br>Slate Roof Terraces Broad Central Roof Deck Low Parapet Cover |
-| diverse / wilderness | Waterfall Cliff Crossing | 19 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/diverse__nature-waterfall-cliff-crossing-overview.jpg" width="180" alt="Waterfall Cliff Crossing bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/diverse__nature-waterfall-cliff-crossing-sample.jpg" width="180" alt="Cliff Waterfall Trail Waterfall Edge Mist Spray representative bundled map"><br>Cliff Waterfall Trail Waterfall Edge Mist Spray |
-| weird / abyss | Bone Cathedral | 12 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/weird__abyss-bone-cathedral-overview.jpg" width="180" alt="Bone Cathedral bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/weird__abyss-bone-cathedral-sample.jpg" width="180" alt="Bone Cathedral Nave Long Open Central Aisle Emerald Ghostfire representative bundled map"><br>Bone Cathedral Nave Long Open Central Aisle Emerald Ghostfire |
-| weird / celestial | Starforge Sanctum | 19 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/weird__celestial-starforge-sanctum-overview.jpg" width="180" alt="Starforge Sanctum bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/weird__celestial-starforge-sanctum-sample.jpg" width="180" alt="Starforge Sanctum Huge Open Radiant Floor White Gold Light representative bundled map"><br>Starforge Sanctum Huge Open Radiant Floor White Gold Light |
-| weird / elemental | Storm Glass Citadel | 20 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/weird__elemental-storm-glass-citadel-overview.jpg" width="180" alt="Storm Glass Citadel bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/weird__elemental-storm-glass-citadel-sample.jpg" width="180" alt="Storm Glass Plaza Broad Glass Central Floor Cyan Lightning representative bundled map"><br>Storm Glass Plaza Broad Glass Central Floor Cyan Lightning |
-| weird / fey | Giant Flower Court | 20 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/weird__fey-giant-flower-court-overview.jpg" width="180" alt="Giant Flower Court bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/weird__fey-giant-flower-court-sample.jpg" width="180" alt="Giant Flower Court Large Central Petal Meadow Pink Petals representative bundled map"><br>Giant Flower Court Large Central Petal Meadow Pink Petals |
-| weird / void | Astral Orrery | 9 | 24x18 @ 64px | <img src="docs/screenshots/bundled-map-library/categories/weird__void-astral-orrery-overview.jpg" width="180" alt="Astral Orrery bundled map category overview"> | <img src="docs/screenshots/bundled-map-library/categories/weird__void-astral-orrery-sample.jpg" width="180" alt="Astral Orrery Bridge Large Central Round Platform Violet Nebula Glow representative bundled map"><br>Astral Orrery Bridge Large Central Round Platform Violet Nebula Glow |
+### Visual category gallery
+
+**core / dungeon · Cave Complex**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__dungeon-cave-complex-sample.jpg" width="320" alt="Goblin Cave Main Cavern Stalagmites representative bundled map"><br>
+38 maps · 24x18 @ 64px · representative: Goblin Cave Main Cavern Stalagmites<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__dungeon-cave-complex-overview.jpg" width="220" alt="Cave Complex bundled map category overview">
+
+**core / dungeon · Stone Dungeon Complex**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__dungeon-stone-complex-sample.jpg" width="320" alt="Crypt Halls Guard Room Sarcophagi representative bundled map"><br>
+38 maps · 24x18 @ 64px · representative: Crypt Halls Guard Room Sarcophagi<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__dungeon-stone-complex-overview.jpg" width="220" alt="Stone Dungeon Complex bundled map category overview">
+
+**core / interior · House Floor**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__interior-house-floor-sample.jpg" width="320" alt="Abandoned Manor Wing Central Hallway Broken Furniture representative bundled map"><br>
+38 maps · 16x12 @ 80px · representative: Abandoned Manor Wing Central Hallway Broken Furniture<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__interior-house-floor-overview.jpg" width="220" alt="House Floor bundled map category overview">
+
+**core / interior · Small Chamber**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__interior-small-chamber-sample.jpg" width="320" alt="Ritual Chamber Central Altar Four Pillars representative bundled map"><br>
+40 maps · 10x10 @ 128px · representative: Ritual Chamber Central Altar Four Pillars<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__interior-small-chamber-overview.jpg" width="220" alt="Small Chamber bundled map category overview">
+
+**core / large-sites · Arena Lair**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__large-arena-lair-sample.jpg" width="320" alt="Ruined Arena Central Boss Area Cover Clusters representative bundled map"><br>
+31 maps · 32x24 @ 48px · representative: Ruined Arena Central Boss Area Cover Clusters<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__large-arena-lair-overview.jpg" width="220" alt="Arena Lair bundled map category overview">
+
+**core / ruins · Temple Shrine**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__ruins-temple-shrine-sample.jpg" width="320" alt="Forest Shrine Central Altar Mossy Stones representative bundled map"><br>
+38 maps · 24x18 @ 64px · representative: Forest Shrine Central Altar Mossy Stones<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__ruins-temple-shrine-overview.jpg" width="220" alt="Temple Shrine bundled map category overview">
+
+**core / settlement · Settlement Streets And Squares**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__settlement-street-square-sample.jpg" width="320" alt="Village Market Central Fountain Barrels And Crates representative bundled map"><br>
+33 maps · 24x18 @ 64px · representative: Village Market Central Fountain Barrels And Crates<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__settlement-street-square-overview.jpg" width="220" alt="Settlement Streets And Squares bundled map category overview">
+
+**core / wilderness · Forest Road**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__outdoor-forest-road-sample.jpg" width="320" alt="Muddy Forest Trail Fallen Wagon Brush Cover representative bundled map"><br>
+35 maps · 24x18 @ 64px · representative: Muddy Forest Trail Fallen Wagon Brush Cover<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__outdoor-forest-road-overview.jpg" width="220" alt="Forest Road bundled map category overview">
+
+**core / wilderness · River Crossings**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__outdoor-river-bridge-sample.jpg" width="320" alt="Stone Bridge Central Bridge Riverbanks representative bundled map"><br>
+35 maps · 24x18 @ 64px · representative: Stone Bridge Central Bridge Riverbanks<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__outdoor-river-bridge-overview.jpg" width="220" alt="River Crossings bundled map category overview">
+
+**core / wilderness · Swamp Marsh**<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__outdoor-swamp-marsh-sample.jpg" width="320" alt="Witch Marsh Wooden Boardwalk Murky Water representative bundled map"><br>
+39 maps · 24x18 @ 64px · representative: Witch Marsh Wooden Boardwalk Murky Water<br>
+<img src="docs/screenshots/bundled-map-library/categories/core__outdoor-swamp-marsh-overview.jpg" width="220" alt="Swamp Marsh bundled map category overview">
+
+**diverse / arcane · Prismatic Laboratory**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__arcane-prismatic-laboratory-sample.jpg" width="320" alt="Prismatic Alchemy Hall Large Central Empty Work Floor Teal Magical Light representative bundled map"><br>
+14 maps · 16x12 @ 80px · representative: Prismatic Alchemy Hall Large Central Empty Work Floor Teal Magical Light<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__arcane-prismatic-laboratory-overview.jpg" width="220" alt="Prismatic Laboratory bundled map category overview">
+
+**diverse / cavern · Crystal Blackrock Cavern**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__cavern-crystal-blackrock-sample.jpg" width="320" alt="Blackrock Crystal Hall Central Open Cavern Floor Cyan Crystals representative bundled map"><br>
+19 maps · 24x18 @ 64px · representative: Blackrock Crystal Hall Central Open Cavern Floor Cyan Crystals<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__cavern-crystal-blackrock-overview.jpg" width="220" alt="Crystal Blackrock Cavern bundled map category overview">
+
+**diverse / coast · Shipwreck Beach**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__coast-shipwreck-beach-sample.jpg" width="320" alt="Tropical Wreck Beach Broken Hull Edge Driftwood Cover representative bundled map"><br>
+18 maps · 24x18 @ 64px · representative: Tropical Wreck Beach Broken Hull Edge Driftwood Cover<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__coast-shipwreck-beach-overview.jpg" width="220" alt="Shipwreck Beach bundled map category overview">
+
+**diverse / fey · Fey Clearing**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__forest-fey-clearing-sample.jpg" width="320" alt="Moonlit Fey Glade Open Mossy Glade Violet Flowers representative bundled map"><br>
+14 maps · 24x18 @ 64px · representative: Moonlit Fey Glade Open Mossy Glade Violet Flowers<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__forest-fey-clearing-overview.jpg" width="220" alt="Fey Clearing bundled map category overview">
+
+**diverse / hazards · Lava Bridges**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__hazard-lava-bridges-sample.jpg" width="320" alt="Black Obsidian Plaza Two Lava Channels Heat Shimmer representative bundled map"><br>
+20 maps · 24x18 @ 64px · representative: Black Obsidian Plaza Two Lava Channels Heat Shimmer<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__hazard-lava-bridges-overview.jpg" width="220" alt="Lava Bridges bundled map category overview">
+
+**diverse / interior · Night Tavern**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__interior-tavern-night-sample.jpg" width="320" alt="Tavern Yard At Night Cleared Central Floor Ale Barrels representative bundled map"><br>
+15 maps · 24x18 @ 64px · representative: Tavern Yard At Night Cleared Central Floor Ale Barrels<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__interior-tavern-night-overview.jpg" width="220" alt="Night Tavern bundled map category overview">
+
+**diverse / ruins · Clean Arena**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__ruins-clean-arena-sample.jpg" width="320" alt="Sand Coliseum Floor Huge Central Sand Floor Sparse Rocks representative bundled map"><br>
+17 maps · 32x24 @ 48px · representative: Sand Coliseum Floor Huge Central Sand Floor Sparse Rocks<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__ruins-clean-arena-overview.jpg" width="220" alt="Clean Arena bundled map category overview">
+
+**diverse / underground · Toxic Sewer Canals**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__underground-toxic-sewer-canals-sample.jpg" width="320" alt="Alchemical Sewer Junction Two Toxic Canals Green Glow representative bundled map"><br>
+17 maps · 24x18 @ 64px · representative: Alchemical Sewer Junction Two Toxic Canals Green Glow<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__underground-toxic-sewer-canals-overview.jpg" width="220" alt="Toxic Sewer Canals bundled map category overview">
+
+**diverse / urban · Foggy Rooftops**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__city-rooftops-fog-sample.jpg" width="320" alt="Slate Roof Terraces Broad Central Roof Deck Low Parapet Cover representative bundled map"><br>
+10 maps · 24x18 @ 64px · representative: Slate Roof Terraces Broad Central Roof Deck Low Parapet Cover<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__city-rooftops-fog-overview.jpg" width="220" alt="Foggy Rooftops bundled map category overview">
+
+**diverse / wilderness · Waterfall Cliff Crossing**<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__nature-waterfall-cliff-crossing-sample.jpg" width="320" alt="Cliff Waterfall Trail Waterfall Edge Mist Spray representative bundled map"><br>
+19 maps · 24x18 @ 64px · representative: Cliff Waterfall Trail Waterfall Edge Mist Spray<br>
+<img src="docs/screenshots/bundled-map-library/categories/diverse__nature-waterfall-cliff-crossing-overview.jpg" width="220" alt="Waterfall Cliff Crossing bundled map category overview">
+
+**weird / abyss · Bone Cathedral**<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__abyss-bone-cathedral-sample.jpg" width="320" alt="Bone Cathedral Nave Long Open Central Aisle Emerald Ghostfire representative bundled map"><br>
+12 maps · 24x18 @ 64px · representative: Bone Cathedral Nave Long Open Central Aisle Emerald Ghostfire<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__abyss-bone-cathedral-overview.jpg" width="220" alt="Bone Cathedral bundled map category overview">
+
+**weird / celestial · Starforge Sanctum**<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__celestial-starforge-sanctum-sample.jpg" width="320" alt="Starforge Sanctum Huge Open Radiant Floor White Gold Light representative bundled map"><br>
+19 maps · 24x18 @ 64px · representative: Starforge Sanctum Huge Open Radiant Floor White Gold Light<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__celestial-starforge-sanctum-overview.jpg" width="220" alt="Starforge Sanctum bundled map category overview">
+
+**weird / elemental · Storm Glass Citadel**<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__elemental-storm-glass-citadel-sample.jpg" width="320" alt="Storm Glass Plaza Broad Glass Central Floor Cyan Lightning representative bundled map"><br>
+20 maps · 24x18 @ 64px · representative: Storm Glass Plaza Broad Glass Central Floor Cyan Lightning<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__elemental-storm-glass-citadel-overview.jpg" width="220" alt="Storm Glass Citadel bundled map category overview">
+
+**weird / fey · Giant Flower Court**<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__fey-giant-flower-court-sample.jpg" width="320" alt="Giant Flower Court Large Central Petal Meadow Pink Petals representative bundled map"><br>
+20 maps · 24x18 @ 64px · representative: Giant Flower Court Large Central Petal Meadow Pink Petals<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__fey-giant-flower-court-overview.jpg" width="220" alt="Giant Flower Court bundled map category overview">
+
+**weird / void · Astral Orrery**<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__void-astral-orrery-sample.jpg" width="320" alt="Astral Orrery Bridge Large Central Round Platform Violet Nebula Glow representative bundled map"><br>
+9 maps · 24x18 @ 64px · representative: Astral Orrery Bridge Large Central Round Platform Violet Nebula Glow<br>
+<img src="docs/screenshots/bundled-map-library/categories/weird__void-astral-orrery-overview.jpg" width="220" alt="Astral Orrery bundled map category overview">
 
 ## How it works
 
