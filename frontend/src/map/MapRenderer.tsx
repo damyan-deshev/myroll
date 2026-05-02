@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { WifiOff } from "lucide-react";
 
 import type { MapRenderPayload, PublicMapToken } from "../types";
@@ -11,6 +11,29 @@ function gridLinePositions(length: number, size: number, offset: number): number
   if (start < 0) start += size;
   for (let position = start; position <= length; position += size) positions.push(position);
   return positions.slice(0, 1000);
+}
+
+function mapStageSize(
+  payload: MapRenderPayload,
+  containerSize: { width: number; height: number } | null
+): { width: number; height: number } {
+  const fallback = { width: payload.width, height: payload.height };
+  if (!containerSize || containerSize.width <= 0 || containerSize.height <= 0) return fallback;
+  if (payload.fit_mode === "stretch") {
+    return { width: containerSize.width, height: containerSize.height };
+  }
+  const scaleX = containerSize.width / payload.width;
+  const scaleY = containerSize.height / payload.height;
+  const scale =
+    payload.fit_mode === "fill"
+      ? Math.max(scaleX, scaleY)
+      : payload.fit_mode === "actual_size"
+        ? Math.min(1, scaleX, scaleY)
+        : Math.min(scaleX, scaleY);
+  return {
+    width: payload.width * scale,
+    height: payload.height * scale
+  };
 }
 
 function drawFoggedMap(canvas: HTMLCanvasElement, payload: MapRenderPayload, renderMode: "gm" | "player", onFailure: () => void) {
@@ -185,8 +208,24 @@ export function MapRenderer({
   renderMode?: "gm" | "player";
   interactionLayer?: ReactNode;
 }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [payload?.asset_url, payload?.fog?.mask_url, renderMode]);
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const updateSize = (rect: DOMRectReadOnly | DOMRect) => {
+      setContainerSize({ width: rect.width, height: rect.height });
+    };
+    updateSize(element.getBoundingClientRect());
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) updateSize(entry.contentRect);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   if (!payload || !payload.width || !payload.height || failed) {
     return (
       <div className="map-unavailable">
@@ -201,9 +240,15 @@ export function MapRenderer({
   const xLines = showSvgGrid ? gridLinePositions(payload.width, payload.grid.size_px, payload.grid.offset_x) : [];
   const yLines = showSvgGrid ? gridLinePositions(payload.height, payload.grid.size_px, payload.grid.offset_y) : [];
   const aspectRatio = `${payload.width} / ${payload.height}`;
+  const stageSize = mapStageSize(payload, containerSize);
+  const stageStyle: CSSProperties = {
+    aspectRatio,
+    width: stageSize.width,
+    height: stageSize.height
+  };
   return (
-    <div className={`map-renderer fit-${payload.fit_mode} render-${renderMode}`} style={renderMode === "gm" ? { aspectRatio } : undefined}>
-      <div className="map-stage" style={{ aspectRatio }}>
+    <div ref={containerRef} className={`map-renderer fit-${payload.fit_mode} render-${renderMode}`} style={renderMode === "gm" ? { aspectRatio } : undefined}>
+      <div className="map-stage" style={stageStyle}>
         {usesFog ? (
           <FogCanvas payload={payload} renderMode={renderMode} onFailure={() => setFailed(true)} />
         ) : (
