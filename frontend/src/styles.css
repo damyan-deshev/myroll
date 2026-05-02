@@ -952,6 +952,18 @@ textarea {
   height: auto;
 }
 
+.map-renderer.render-gm {
+  width: 100%;
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+.map-renderer.render-gm .map-stage {
+  width: 100%;
+  height: auto;
+  max-height: none;
+}
+
 .map-stage img {
   display: block;
   width: 100%;
@@ -981,6 +993,14 @@ textarea {
   height: auto;
   max-width: 100%;
   max-height: 100%;
+}
+
+.map-renderer.render-gm .map-stage img,
+.map-renderer.render-gm .map-canvas {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: none;
 }
 
 .map-grid {
@@ -1028,6 +1048,22 @@ textarea {
   height: 100%;
   border-radius: inherit;
   object-fit: cover;
+}
+
+.map-token-portrait-frame {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.map-token-portrait-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.18);
 }
 
 .map-token span {

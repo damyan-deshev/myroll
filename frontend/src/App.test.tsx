@@ -1361,10 +1361,11 @@ describe("GM shell widgets", () => {
         }
       ]
     };
-    render(<MapRenderer payload={payload} />);
+    const { container } = render(<MapRenderer payload={payload} />);
 
     expect(screen.getByText("Captain")).toBeInTheDocument();
     const portrait = screen.getByAltText("Captain");
+    expect(container.querySelector(".shape-portrait .map-token-portrait-frame")).toBeInTheDocument();
     fireEvent.error(portrait);
     expect(screen.queryByAltText("Captain")).not.toBeInTheDocument();
     expect(screen.getByText("Captain")).toBeInTheDocument();
@@ -1394,10 +1395,12 @@ describe("GM shell widgets", () => {
     const { container, rerender } = render(<MapRenderer payload={payload} renderMode="gm" />);
 
     expect(container.querySelector(".render-gm canvas")).toBeInTheDocument();
+    expect(container.querySelector(".render-gm")?.getAttribute("style")).toContain("aspect-ratio: 120 / 80");
     expect(container.querySelectorAll("line").length).toBeGreaterThan(0);
 
     rerender(<MapRenderer payload={payload} renderMode="player" />);
     expect(container.querySelector(".render-player canvas")).toBeInTheDocument();
+    expect(container.querySelector(".render-player")?.getAttribute("style") ?? "").not.toContain("aspect-ratio");
   });
 
   it("renders player display scene title and reconnecting overlay from last known state", () => {

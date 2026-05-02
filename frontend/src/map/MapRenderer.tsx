@@ -153,7 +153,9 @@ function TokenMarker({ token, mapWidth, mapHeight }: { token: PublicMapToken; ma
       data-token-id={token.id}
     >
       {token.style.shape === "portrait" && token.asset_url && !assetFailed ? (
-        <img src={token.asset_url} alt={token.name ?? "Token portrait"} onError={() => setAssetFailed(true)} />
+        <div className="map-token-portrait-frame">
+          <img src={token.asset_url} alt={token.name ?? "Token portrait"} onError={() => setAssetFailed(true)} />
+        </div>
       ) : null}
       {token.name ? <span>{token.name}</span> : null}
     </div>
@@ -198,9 +200,10 @@ export function MapRenderer({
   const showSvgGrid = payload.grid.visible && !(renderMode === "player" && usesFog);
   const xLines = showSvgGrid ? gridLinePositions(payload.width, payload.grid.size_px, payload.grid.offset_x) : [];
   const yLines = showSvgGrid ? gridLinePositions(payload.height, payload.grid.size_px, payload.grid.offset_y) : [];
+  const aspectRatio = `${payload.width} / ${payload.height}`;
   return (
-    <div className={`map-renderer fit-${payload.fit_mode} render-${renderMode}`}>
-      <div className="map-stage" style={{ aspectRatio: `${payload.width} / ${payload.height}` }}>
+    <div className={`map-renderer fit-${payload.fit_mode} render-${renderMode}`} style={renderMode === "gm" ? { aspectRatio } : undefined}>
+      <div className="map-stage" style={{ aspectRatio }}>
         {usesFog ? (
           <FogCanvas payload={payload} renderMode={renderMode} onFailure={() => setFailed(true)} />
         ) : (
