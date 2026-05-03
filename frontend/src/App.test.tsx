@@ -369,7 +369,7 @@ describe("GM shell widgets", () => {
           return jsonResponse({
             status: "ok",
             db: "ok",
-            schema_version: "20260502_0013",
+            schema_version: "20260504_0014",
             db_path: "data/myroll.dev.sqlite3",
             time: "2026-04-27T00:00:00Z"
           });
@@ -378,7 +378,7 @@ describe("GM shell widgets", () => {
           app: "myroll",
           version: "dev",
           db_path: "data/myroll.dev.sqlite3",
-          schema_version: "20260502_0013",
+          schema_version: "20260504_0014",
           seed_version: "2026-04-27-v12",
           expected_seed_version: "2026-04-27-v12"
         });
@@ -388,7 +388,7 @@ describe("GM shell widgets", () => {
     renderWithClient(<BackendStatusWidget />);
 
     expect(await screen.findByText("myroll")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("20260502_0013")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("20260504_0014")).toBeInTheDocument());
   });
 
   it("renders backend unavailable state", async () => {
@@ -431,7 +431,7 @@ describe("GM shell widgets", () => {
         asset_size_bytes: 2048,
         latest_backup: null,
         latest_export: null,
-        schema_version: "20260502_0013",
+        schema_version: "20260504_0014",
         seed_version: "2026-04-27-v12",
         expected_seed_version: "2026-04-27-v12",
         private_demo_name_map_active: true
@@ -498,13 +498,13 @@ describe("GM shell widgets", () => {
           });
         }
         if (url.endsWith("/health")) {
-          return jsonResponse({ status: "ok", db: "ok", schema_version: "20260502_0013", db_path: "data/db", time: "z" });
+          return jsonResponse({ status: "ok", db: "ok", schema_version: "20260504_0014", db_path: "data/db", time: "z" });
         }
         return jsonResponse({
           app: "myroll",
           version: "dev",
           db_path: "data/db",
-          schema_version: "20260502_0013",
+          schema_version: "20260504_0014",
           seed_version: "2026-04-27-v12",
           expected_seed_version: "2026-04-27-v12"
         });

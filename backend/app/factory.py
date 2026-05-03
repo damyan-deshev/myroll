@@ -9,6 +9,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from backend.app.api.errors import install_error_handlers
 from backend.app.api.routes import router
+from backend.app.api.routes_llm import router as llm_router
 from backend.app.settings import Settings, get_settings
 
 
@@ -71,4 +72,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(resolved.allowed_hosts))
     install_error_handlers(app)
     app.include_router(router)
+    app.include_router(llm_router)
     return app

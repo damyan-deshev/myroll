@@ -102,6 +102,40 @@ def _sqlite_snapshot(settings: Settings, out_path: Path) -> None:
         raise StorageExportError(500, "database_backup_failed", "Database snapshot failed") from exc
 
 
+def _redact_llm_payloads(db_snapshot: Path) -> None:
+    try:
+        connection = sqlite3.connect(db_snapshot)
+        try:
+            tables = {
+                row[0]
+                for row in connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('llm_runs', 'llm_context_packages')"
+                ).fetchall()
+            }
+            if "llm_runs" in tables:
+                connection.execute(
+                    """
+                    UPDATE llm_runs
+                    SET request_json = NULL,
+                        response_text = NULL,
+                        normalized_output_json = NULL
+                    """
+                )
+            if "llm_context_packages" in tables:
+                connection.execute(
+                    """
+                    UPDATE llm_context_packages
+                    SET rendered_prompt = '[redacted for export]',
+                        source_refs_json = '[]'
+                    """
+                )
+            connection.commit()
+        finally:
+            connection.close()
+    except sqlite3.Error as exc:
+        raise StorageExportError(500, "database_export_redaction_failed", "Database export redaction failed") from exc
+
+
 def _tar_add_bytes(archive: tarfile.TarFile, name: str, payload: bytes) -> None:
     info = tarfile.TarInfo(name)
     info.size = len(payload)
@@ -119,7 +153,7 @@ def _iter_asset_files(asset_dir: Path) -> list[Path]:
     )
 
 
-def create_export_archive(settings: Settings | None = None, *, timestamp: str | None = None) -> StorageArtifact:
+def create_export_archive(settings: Settings | None = None, *, timestamp: str | None = None, include_llm_history: bool = False) -> StorageArtifact:
     resolved = settings or get_settings()
     resolved.ensure_directories()
     stamp = timestamp or timestamp_for_filename()
@@ -132,6 +166,8 @@ def create_export_archive(settings: Settings | None = None, *, timestamp: str | 
         tmp_dir = Path(tmp_raw)
         db_snapshot = tmp_dir / "myroll.sqlite3"
         _sqlite_snapshot(resolved, db_snapshot)
+        if not include_llm_history:
+            _redact_llm_payloads(db_snapshot)
         tmp_archive = tmp_dir / f"{archive_name}.tmp"
         files: list[dict[str, Any]] = []
 
@@ -168,6 +204,7 @@ def create_export_archive(settings: Settings | None = None, *, timestamp: str | 
                 "format_version": 1,
                 "database_path": DB_ARCHIVE_PATH,
                 "asset_root": "assets",
+                "llm_payloads_included": include_llm_history,
                 "files": files,
             }
             _tar_add_bytes(archive, EXPORT_MANIFEST, json.dumps(manifest, indent=2, sort_keys=True).encode("utf-8"))

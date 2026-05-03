@@ -172,6 +172,12 @@ textarea {
   color: #ffaaa0;
 }
 
+.status-pill.warning {
+  border-color: #6a5732;
+  background: #272113;
+  color: #ffd890;
+}
+
 .workspace-canvas {
   position: relative;
   width: 2200px;
@@ -218,6 +224,108 @@ textarea {
 
 .gm-center-stage {
   overflow: hidden;
+}
+
+.scribe-widget {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scribe-capture textarea {
+  min-height: 86px;
+}
+
+.scribe-feed,
+.scribe-memory,
+.scribe-recall,
+.scribe-inspection,
+.scribe-review-block,
+.scribe-details {
+  border: 1px solid #2b3338;
+  border-radius: 6px;
+  background: #15191b;
+  padding: 9px;
+}
+
+.scribe-feed {
+  display: flex;
+  max-height: 170px;
+  min-height: 0;
+  flex-direction: column;
+  gap: 7px;
+  overflow: auto;
+}
+
+.scribe-feed-row,
+.scribe-candidate,
+.scribe-hit {
+  display: grid;
+  gap: 6px;
+  border-bottom: 1px solid #263035;
+  padding-bottom: 7px;
+}
+
+.scribe-feed-row:last-child,
+.scribe-candidate:last-child,
+.scribe-hit:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.scribe-feed-row {
+  grid-template-columns: 34px 1fr auto;
+  align-items: start;
+}
+
+.scribe-feed-row p,
+.scribe-candidate p,
+.scribe-hit p {
+  margin: 0;
+  color: #d7dee2;
+  line-height: 1.35;
+}
+
+.scribe-actions-row,
+.scribe-provider-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.scribe-actions-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.scribe-provider-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 8px;
+}
+
+.scribe-instruction textarea,
+.scribe-review-block textarea,
+.scribe-inspection textarea {
+  min-height: 92px;
+}
+
+.scribe-inspection {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.scribe-source-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.scribe-source-list span {
+  border: 1px solid #314047;
+  border-radius: 999px;
+  padding: 4px 7px;
+  color: #aab6bd;
+  font-size: 12px;
 }
 
 .workbench-panel,

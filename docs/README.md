@@ -1,6 +1,6 @@
 # Myroll Documentation
 
-Date: 2026-05-02
+Date: 2026-05-04
 
 Start here:
 
@@ -103,6 +103,7 @@ Current implemented slices:
 - scene orchestration with private scene activation, linked context, staged public display, and explicit publish.
 - local backup/export/restore, Storage / Demo widget, original public demo profile, ignored private local override map, and generated demo asset pack.
 - laptop-friendly multi-surface GM shell with the original floating canvas preserved at `/gm/floating`.
+- first Myroll Scribe spine: live DM capture, correction events, provider harness, reviewed context preview, session recap draft/save, targetless Memory Inbox accept, aliases, exact recall, and LLM export redaction.
 
 Frontend verification:
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, Text, text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -572,6 +572,259 @@ class PublicSnippet(Base):
     title: Mapped[str | None] = mapped_column()
     body: Mapped[str] = mapped_column(Text, nullable=False)
     format: Mapped[str] = mapped_column(default="markdown", nullable=False)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class SessionOrderCounter(Base):
+    __tablename__ = "session_order_counters"
+
+    session_id: Mapped[str] = mapped_column(
+        ForeignKey("sessions.id", ondelete="CASCADE"), primary_key=True
+    )
+    next_order_index: Mapped[int] = mapped_column(default=0, nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class SessionTranscriptEvent(Base):
+    __tablename__ = "session_transcript_events"
+    __table_args__ = (
+        CheckConstraint(
+            "event_type in ('live_dm_note', 'correction')",
+            name="ck_session_transcript_events_event_type",
+        ),
+        CheckConstraint("order_index >= 0", name="ck_session_transcript_events_order_index"),
+        UniqueConstraint("session_id", "order_index", name="uq_session_transcript_events_session_order"),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    scene_id: Mapped[str | None] = mapped_column(ForeignKey("scenes.id", ondelete="SET NULL"), index=True)
+    corrects_event_id: Mapped[str | None] = mapped_column(
+        ForeignKey("session_transcript_events.id", ondelete="SET NULL"), index=True
+    )
+    event_type: Mapped[str] = mapped_column(default="live_dm_note", nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    source: Mapped[str] = mapped_column(default="typed", nullable=False)
+    public_safe: Mapped[bool] = mapped_column(default=False, nullable=False)
+    order_index: Mapped[int] = mapped_column(nullable=False)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class LlmProviderProfile(Base):
+    __tablename__ = "llm_provider_profiles"
+    __table_args__ = (
+        CheckConstraint(
+            "vendor in ('openai', 'ollama', 'lmstudio', 'kobold', 'openrouter', 'custom')",
+            name="ck_llm_provider_profiles_vendor",
+        ),
+        CheckConstraint(
+            "key_source_type in ('none', 'env')",
+            name="ck_llm_provider_profiles_key_source_type",
+        ),
+        CheckConstraint(
+            "conformance_level in ('unverified', 'level_0_text_only', 'level_1_json_best_effort', 'level_2_json_validated', 'level_3_tool_capable')",
+            name="ck_llm_provider_profiles_conformance_level",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    label: Mapped[str] = mapped_column(nullable=False)
+    vendor: Mapped[str] = mapped_column(default="custom", nullable=False)
+    base_url: Mapped[str] = mapped_column(nullable=False)
+    model_id: Mapped[str] = mapped_column(nullable=False)
+    key_source_type: Mapped[str] = mapped_column(default="none", nullable=False)
+    key_source_ref: Mapped[str | None] = mapped_column()
+    conformance_level: Mapped[str] = mapped_column(default="unverified", nullable=False)
+    capabilities_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    last_probe_result_json: Mapped[str | None] = mapped_column(Text)
+    probed_at: Mapped[str | None] = mapped_column()
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class LlmContextPackage(Base):
+    __tablename__ = "llm_context_packages"
+    __table_args__ = (
+        CheckConstraint(
+            "visibility_mode in ('gm_private', 'public_safe')",
+            name="ck_llm_context_packages_visibility_mode",
+        ),
+        CheckConstraint(
+            "review_status in ('unreviewed', 'reviewed')",
+            name="ck_llm_context_packages_review_status",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)
+    task_kind: Mapped[str] = mapped_column(nullable=False)
+    visibility_mode: Mapped[str] = mapped_column(default="gm_private", nullable=False)
+    gm_instruction: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    source_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    rendered_prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    source_ref_hash: Mapped[str] = mapped_column(nullable=False, index=True)
+    review_status: Mapped[str] = mapped_column(default="unreviewed", nullable=False)
+    reviewed_at: Mapped[str | None] = mapped_column()
+    reviewed_by: Mapped[str | None] = mapped_column()
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class LlmRun(Base):
+    __tablename__ = "llm_runs"
+    __table_args__ = (
+        CheckConstraint(
+            "status in ('running', 'succeeded', 'failed', 'canceled')",
+            name="ck_llm_runs_status",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="SET NULL"), index=True)
+    provider_profile_id: Mapped[str | None] = mapped_column(ForeignKey("llm_provider_profiles.id", ondelete="SET NULL"), index=True)
+    context_package_id: Mapped[str | None] = mapped_column(ForeignKey("llm_context_packages.id", ondelete="SET NULL"), index=True)
+    parent_run_id: Mapped[str | None] = mapped_column(ForeignKey("llm_runs.id", ondelete="SET NULL"), index=True)
+    task_kind: Mapped[str] = mapped_column(nullable=False)
+    status: Mapped[str] = mapped_column(default="running", nullable=False)
+    error_code: Mapped[str | None] = mapped_column()
+    error_message: Mapped[str | None] = mapped_column(Text)
+    parse_failure_reason: Mapped[str | None] = mapped_column()
+    repair_attempted: Mapped[bool] = mapped_column(default=False, nullable=False)
+    request_metadata_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    request_json: Mapped[str | None] = mapped_column(Text)
+    response_text: Mapped[str | None] = mapped_column(Text)
+    normalized_output_json: Mapped[str | None] = mapped_column(Text)
+    prompt_tokens_estimate: Mapped[int | None] = mapped_column()
+    duration_ms: Mapped[int | None] = mapped_column()
+    cancel_requested_at: Mapped[str | None] = mapped_column()
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class SessionRecap(Base):
+    __tablename__ = "session_recaps"
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    source_llm_run_id: Mapped[str | None] = mapped_column(ForeignKey("llm_runs.id", ondelete="SET NULL"), index=True)
+    title: Mapped[str] = mapped_column(nullable=False)
+    body_markdown: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class MemoryCandidate(Base):
+    __tablename__ = "memory_candidates"
+    __table_args__ = (
+        CheckConstraint(
+            "status in ('draft', 'edited', 'accepted', 'rejected')",
+            name="ck_memory_candidates_status",
+        ),
+        CheckConstraint(
+            "claim_strength in ('directly_evidenced', 'strong_inference', 'weak_inference', 'gm_review_required')",
+            name="ck_memory_candidates_claim_strength",
+        ),
+        Index("uq_memory_candidates_applied_entry", "applied_memory_entry_id", unique=True, sqlite_where=text("applied_memory_entry_id IS NOT NULL")),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="SET NULL"), index=True)
+    source_llm_run_id: Mapped[str | None] = mapped_column(ForeignKey("llm_runs.id", ondelete="SET NULL"), index=True)
+    source_recap_id: Mapped[str | None] = mapped_column(ForeignKey("session_recaps.id", ondelete="SET NULL"), index=True)
+    status: Mapped[str] = mapped_column(default="draft", nullable=False)
+    title: Mapped[str] = mapped_column(nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    claim_strength: Mapped[str] = mapped_column(nullable=False)
+    evidence_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    validation_errors_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    edited_from_candidate_id: Mapped[str | None] = mapped_column(ForeignKey("memory_candidates.id", ondelete="SET NULL"), index=True)
+    applied_memory_entry_id: Mapped[str | None] = mapped_column(ForeignKey("campaign_memory_entries.id", ondelete="SET NULL"), index=True)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class CampaignMemoryEntry(Base):
+    __tablename__ = "campaign_memory_entries"
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="SET NULL"), index=True)
+    source_candidate_id: Mapped[str | None] = mapped_column(ForeignKey("memory_candidates.id", ondelete="SET NULL"), index=True)
+    title: Mapped[str] = mapped_column(nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    tags_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class EntityAlias(Base):
+    __tablename__ = "entity_aliases"
+    __table_args__ = (
+        CheckConstraint(
+            "source in ('manual', 'observed', 'generated_pending_approval')",
+            name="ck_entity_aliases_source",
+        ),
+        CheckConstraint(
+            "confidence in ('gm_confirmed', 'observed', 'generated_pending_approval')",
+            name="ck_entity_aliases_confidence",
+        ),
+        UniqueConstraint("campaign_id", "alias_text", name="uq_entity_aliases_campaign_alias"),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    entity_id: Mapped[str | None] = mapped_column(ForeignKey("entities.id", ondelete="CASCADE"), index=True)
+    alias_text: Mapped[str] = mapped_column(nullable=False)
+    normalized_alias: Mapped[str] = mapped_column(nullable=False, index=True)
+    language: Mapped[str | None] = mapped_column()
+    source: Mapped[str] = mapped_column(default="manual", nullable=False)
+    source_ref_json: Mapped[str | None] = mapped_column(Text)
+    confidence: Mapped[str] = mapped_column(default="gm_confirmed", nullable=False)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class ScribeSearchIndex(Base):
+    __tablename__ = "scribe_search_index"
+    __table_args__ = (
+        UniqueConstraint("source_kind", "source_id", "source_revision", name="uq_scribe_search_source_revision"),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    source_kind: Mapped[str] = mapped_column(nullable=False, index=True)
+    source_id: Mapped[str] = mapped_column(nullable=False, index=True)
+    source_revision: Mapped[str] = mapped_column(nullable=False)
+    title: Mapped[str] = mapped_column(nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    normalized_text: Mapped[str] = mapped_column(Text, nullable=False)
+    lane: Mapped[str] = mapped_column(default="canon", nullable=False)
+    visibility: Mapped[str] = mapped_column(default="gm_private", nullable=False)
     created_at: Mapped[str] = mapped_column(nullable=False)
     updated_at: Mapped[str] = mapped_column(nullable=False)
 

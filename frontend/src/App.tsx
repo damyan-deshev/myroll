@@ -50,6 +50,7 @@ import type {
   AssetBatchUploadResult,
   AssetKind,
   AssetVisibility,
+  BuildRecapResult,
   BundledMap,
   Campaign,
   CombatantDisposition,
@@ -66,6 +67,7 @@ import type {
   FogPayload,
   MapRecord,
   MapRenderPayload,
+  MemoryCandidate,
   Note,
   PlayerDisplayState,
   PartyLayout,
@@ -79,6 +81,7 @@ import type {
   SceneMap,
   SceneMapToken,
   Session,
+  SessionTranscriptEvent,
   StorageArtifact,
   WidgetPatch,
   WorkspaceWidget
@@ -329,6 +332,9 @@ function GmOverviewSurface() {
           </WorkbenchPanel>
         </section>
         <aside className="gm-right-rail">
+          <WorkbenchPanel kind="scribe" title="Scribe">
+            <ScribeWidget {...shared} />
+          </WorkbenchPanel>
           <WorkbenchPanel kind="runtime" title="Runtime">
             <RuntimeWidget {...shared} />
           </WorkbenchPanel>
@@ -590,6 +596,7 @@ function WidgetBody({ widget, shared }: { widget: WorkspaceWidget; shared: Share
   if (widget.kind === "party_tracker") return <PartyTrackerWidget {...shared} />;
   if (widget.kind === "combat_tracker") return <CombatTrackerWidget {...shared} />;
   if (widget.kind === "scene_context") return <SceneContextWidget {...shared} />;
+  if (widget.kind === "scribe") return <ScribeWidget {...shared} />;
   if (widget.config.placeholder) return <PlaceholderWidget kind={widget.kind} />;
   switch (widget.kind) {
     case "backend_status":
@@ -660,7 +667,7 @@ export function StorageDemoWidget() {
     }
   });
   const exportMutation = useMutation({
-    mutationFn: api.createStorageExport,
+    mutationFn: () => api.createStorageExport(),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["storage-status"] });
     }
@@ -863,6 +870,439 @@ function RuntimeWidget(props: SharedWidgetProps) {
       {[activateCampaign, activateSession, activateScene, clearRuntime].some((mutation) => mutation.isError) ? (
         <ErrorLine error={[activateCampaign, activateSession, activateScene, clearRuntime].find((m) => m.error)?.error} />
       ) : null}
+    </div>
+  );
+}
+
+function sourceRefLabel(ref: Record<string, unknown>): string {
+  return `${String(ref.kind ?? "source")}:${String(ref.id ?? "").slice(0, 8)} · ${String(ref.lane ?? "lane")}`;
+}
+
+function ScribeWidget(props: SharedWidgetProps) {
+  const queryClient = useQueryClient();
+  const [captureBody, setCaptureBody] = useState("");
+  const [correctionTarget, setCorrectionTarget] = useState<SessionTranscriptEvent | null>(null);
+  const [correctionBody, setCorrectionBody] = useState("");
+  const [providerId, setProviderId] = useState<string | null>(null);
+  const [providerLabel, setProviderLabel] = useState("Local model");
+  const [providerVendor, setProviderVendor] = useState<"openai" | "ollama" | "lmstudio" | "kobold" | "openrouter" | "custom">("custom");
+  const [providerBaseUrl, setProviderBaseUrl] = useState("http://127.0.0.1:11434/v1");
+  const [providerModelId, setProviderModelId] = useState("llama3");
+  const [providerKeySource, setProviderKeySource] = useState<"none" | "env">("none");
+  const [providerKeyRef, setProviderKeyRef] = useState("MYROLL_LLM_API_KEY");
+  const [gmInstruction, setGmInstruction] = useState("");
+  const [contextPackage, setContextPackage] = useState<null | Awaited<ReturnType<typeof api.createContextPreview>>>(null);
+  const [recapDraft, setRecapDraft] = useState<BuildRecapResult | null>(null);
+  const [recapTitle, setRecapTitle] = useState("");
+  const [recapBody, setRecapBody] = useState("");
+  const [recallQuery, setRecallQuery] = useState("");
+  const [aliasText, setAliasText] = useState("");
+  const [inspectionOpen, setInspectionOpen] = useState(false);
+
+  const transcriptQuery = useQuery({
+    queryKey: ["scribe-transcript", props.selectedCampaignId, props.selectedSessionId],
+    queryFn: () => api.transcriptEvents(props.selectedCampaignId!, props.selectedSessionId),
+    enabled: Boolean(props.selectedCampaignId && props.selectedSessionId)
+  });
+  const providersQuery = useQuery({ queryKey: ["llm-provider-profiles"], queryFn: api.llmProviderProfiles });
+  const candidatesQuery = useQuery({
+    queryKey: ["memory-candidates", props.selectedCampaignId],
+    queryFn: () => api.memoryCandidates(props.selectedCampaignId!),
+    enabled: Boolean(props.selectedCampaignId)
+  });
+  const aliasesQuery = useQuery({
+    queryKey: ["entity-aliases", props.selectedCampaignId],
+    queryFn: () => api.entityAliases(props.selectedCampaignId!),
+    enabled: Boolean(props.selectedCampaignId)
+  });
+  const recallResult = useMutation({
+    mutationFn: () => api.recall(props.selectedCampaignId!, { query: recallQuery })
+  });
+
+  const providers = providersQuery.data?.profiles ?? [];
+  const selectedProvider = providers.find((profile) => profile.id === providerId) ?? providers[0] ?? null;
+
+  useEffect(() => {
+    if (!selectedProvider) return;
+    setProviderId(selectedProvider.id);
+    setProviderLabel(selectedProvider.label);
+    setProviderVendor(selectedProvider.vendor);
+    setProviderBaseUrl(selectedProvider.base_url);
+    setProviderModelId(selectedProvider.model_id);
+    setProviderKeySource(selectedProvider.key_source.type);
+    setProviderKeyRef(selectedProvider.key_source.ref ?? "MYROLL_LLM_API_KEY");
+  }, [selectedProvider?.id]);
+
+  const capture = useMutation({
+    mutationFn: () =>
+      api.createTranscriptEvent(props.selectedCampaignId!, {
+        session_id: props.selectedSessionId!,
+        scene_id: props.selectedSceneId,
+        body: captureBody,
+        source: "typed"
+      }),
+    onSuccess: () => {
+      setCaptureBody("");
+      setContextPackage(null);
+      setRecapDraft(null);
+      void queryClient.invalidateQueries({ queryKey: ["scribe-transcript", props.selectedCampaignId, props.selectedSessionId] });
+    }
+  });
+  const correct = useMutation({
+    mutationFn: () => api.correctTranscriptEvent(correctionTarget!.id, { body: correctionBody }),
+    onSuccess: () => {
+      setCorrectionTarget(null);
+      setCorrectionBody("");
+      setContextPackage(null);
+      setRecapDraft(null);
+      void queryClient.invalidateQueries({ queryKey: ["scribe-transcript", props.selectedCampaignId, props.selectedSessionId] });
+    }
+  });
+  const saveProvider = useMutation({
+    mutationFn: () => {
+      const payload = {
+        label: providerLabel,
+        vendor: providerVendor,
+        base_url: providerBaseUrl,
+        model_id: providerModelId,
+        key_source: { type: providerKeySource, ref: providerKeySource === "env" ? providerKeyRef : null }
+      };
+      return selectedProvider ? api.patchLlmProviderProfile(selectedProvider.id, payload) : api.createLlmProviderProfile(payload);
+    },
+    onSuccess: (profile) => {
+      setProviderId(profile.id);
+      void queryClient.invalidateQueries({ queryKey: ["llm-provider-profiles"] });
+    }
+  });
+  const testProvider = useMutation({
+    mutationFn: () => api.testLlmProviderProfile(selectedProvider!.id),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["llm-provider-profiles"] })
+  });
+  const previewContext = useMutation({
+    mutationFn: () =>
+      api.createContextPreview(props.selectedCampaignId!, {
+        session_id: props.selectedSessionId!,
+        task_kind: "session.build_recap",
+        visibility_mode: "gm_private",
+        gm_instruction: gmInstruction
+      }),
+    onSuccess: (preview) => {
+      setContextPackage(preview);
+      setInspectionOpen(true);
+    }
+  });
+  const reviewContext = useMutation({
+    mutationFn: () => api.reviewContextPackage(contextPackage!.id),
+    onSuccess: (preview) => setContextPackage(preview)
+  });
+  const buildRecap = useMutation({
+    mutationFn: () =>
+      api.buildSessionRecap(props.selectedCampaignId!, {
+        session_id: props.selectedSessionId!,
+        provider_profile_id: selectedProvider!.id,
+        context_package_id: contextPackage!.id
+      }),
+    onSuccess: (result) => {
+      setRecapDraft(result);
+      setRecapTitle(result.bundle.privateRecap?.title ?? "Session recap");
+      setRecapBody(result.bundle.privateRecap?.bodyMarkdown ?? "");
+      void queryClient.invalidateQueries({ queryKey: ["memory-candidates", props.selectedCampaignId] });
+    }
+  });
+  const saveRecap = useMutation({
+    mutationFn: () =>
+      api.saveSessionRecap(props.selectedCampaignId!, {
+        session_id: props.selectedSessionId!,
+        title: recapTitle,
+        body_markdown: recapBody,
+        source_llm_run_id: recapDraft?.run.id ?? null,
+        evidence_refs: contextPackage?.source_refs ?? []
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["memory-candidates", props.selectedCampaignId] });
+    }
+  });
+  const acceptCandidate = useMutation({
+    mutationFn: (candidateId: string) => api.acceptMemoryCandidate(candidateId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["memory-candidates", props.selectedCampaignId] });
+    }
+  });
+  const rejectCandidate = useMutation({
+    mutationFn: (candidateId: string) => api.rejectMemoryCandidate(candidateId),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["memory-candidates", props.selectedCampaignId] })
+  });
+  const createAlias = useMutation({
+    mutationFn: () => api.createEntityAlias(props.selectedCampaignId!, { alias_text: aliasText }),
+    onSuccess: () => {
+      setAliasText("");
+      void queryClient.invalidateQueries({ queryKey: ["entity-aliases", props.selectedCampaignId] });
+    }
+  });
+
+  function submitCapture() {
+    if (!props.selectedCampaignId || !props.selectedSessionId || !captureBody.trim()) return;
+    capture.mutate();
+  }
+
+  if (!props.selectedCampaignId) return <EmptyText text="Select a campaign to use Scribe." />;
+  if (!props.selectedSessionId) return <EmptyText text="Select or create a session before capturing notes." />;
+
+  const activeError =
+    transcriptQuery.error ??
+    providersQuery.error ??
+    candidatesQuery.error ??
+    aliasesQuery.error ??
+    capture.error ??
+    correct.error ??
+    saveProvider.error ??
+    testProvider.error ??
+    previewContext.error ??
+    reviewContext.error ??
+    buildRecap.error ??
+    saveRecap.error ??
+    acceptCandidate.error ??
+    rejectCandidate.error ??
+    createAlias.error ??
+    recallResult.error;
+
+  const projection = transcriptQuery.data?.projection ?? [];
+  const pendingCandidates = (candidatesQuery.data?.candidates ?? []).filter((candidate) => candidate.status !== "accepted" && candidate.status !== "rejected");
+
+  return (
+    <div className="scribe-widget">
+      <div className="scribe-capture">
+        <textarea
+          value={captureBody}
+          onChange={(event) => setCaptureBody(event.target.value)}
+          onKeyDown={(event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+              event.preventDefault();
+              submitCapture();
+            }
+          }}
+          placeholder="Live DM note. Enter for newline, Cmd/Ctrl+Enter to save."
+          aria-label="Live DM note"
+        />
+        <div className="token-actions">
+          <button onClick={submitCapture} disabled={!captureBody.trim() || capture.isPending}>
+            <CheckCircle2 size={14} /> Save
+          </button>
+          <button onClick={() => setInspectionOpen((open) => !open)}>
+            <Search size={14} /> Inspect
+          </button>
+        </div>
+        <span className="muted">⌘↵ to save · Enter keeps dictation/newlines safe</span>
+      </div>
+
+      <div className="scribe-feed" aria-label="Live capture feed">
+        {projection.slice(-4).map((event) => (
+          <div key={event.id} className="scribe-feed-row">
+            <span>#{event.order_index + 1}</span>
+            <p>{event.body}</p>
+            <button
+              onClick={() => {
+                setCorrectionTarget(event);
+                setCorrectionBody(event.body);
+              }}
+            >
+              Correct
+            </button>
+          </div>
+        ))}
+        {!projection.length ? <span className="muted">No live captures yet.</span> : null}
+      </div>
+
+      {correctionTarget ? (
+        <div className="scribe-review-block">
+          <strong>Correction for #{correctionTarget.order_index + 1}</strong>
+          <textarea value={correctionBody} onChange={(event) => setCorrectionBody(event.target.value)} aria-label="Correction body" />
+          <div className="token-actions">
+            <button onClick={() => correct.mutate()} disabled={!correctionBody.trim() || correct.isPending}>
+              Save correction
+            </button>
+            <button onClick={() => setCorrectionTarget(null)}>Cancel</button>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="scribe-actions-row">
+        <button onClick={() => previewContext.mutate()} disabled={previewContext.isPending}>
+          Build Context Preview
+        </button>
+        <button onClick={() => reviewContext.mutate()} disabled={!contextPackage || contextPackage.review_status === "reviewed" || reviewContext.isPending}>
+          Review Context
+        </button>
+        <button
+          onClick={() => buildRecap.mutate()}
+          disabled={!selectedProvider || !contextPackage || contextPackage.review_status !== "reviewed" || buildRecap.isPending}
+        >
+          Build Recap
+        </button>
+      </div>
+
+      <details className="scribe-details">
+        <summary>Provider</summary>
+        <div className="scribe-provider-grid">
+          <label>
+            <span>Profile</span>
+            <select value={selectedProvider?.id ?? ""} onChange={(event) => setProviderId(event.target.value || null)} aria-label="LLM provider profile">
+              <option value="">New provider</option>
+              {providers.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.label} · {profile.conformance_level}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Label</span>
+            <input value={providerLabel} onChange={(event) => setProviderLabel(event.target.value)} />
+          </label>
+          <label>
+            <span>Vendor</span>
+            <select value={providerVendor} onChange={(event) => setProviderVendor(event.target.value as typeof providerVendor)}>
+              {["custom", "openai", "ollama", "lmstudio", "kobold", "openrouter"].map((vendor) => (
+                <option key={vendor} value={vendor}>
+                  {vendor}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Base URL</span>
+            <input value={providerBaseUrl} onChange={(event) => setProviderBaseUrl(event.target.value)} />
+          </label>
+          <label>
+            <span>Model</span>
+            <input value={providerModelId} onChange={(event) => setProviderModelId(event.target.value)} />
+          </label>
+          <label>
+            <span>Key source</span>
+            <select value={providerKeySource} onChange={(event) => setProviderKeySource(event.target.value as "none" | "env")}>
+              <option value="none">none</option>
+              <option value="env">env</option>
+            </select>
+          </label>
+          {providerKeySource === "env" ? (
+            <label>
+              <span>Env var</span>
+              <input value={providerKeyRef} onChange={(event) => setProviderKeyRef(event.target.value)} />
+            </label>
+          ) : null}
+        </div>
+        <div className="token-actions">
+          <button onClick={() => saveProvider.mutate()} disabled={!providerLabel.trim() || !providerBaseUrl.trim() || !providerModelId.trim() || saveProvider.isPending}>
+            Save provider
+          </button>
+          <button onClick={() => selectedProvider && testProvider.mutate()} disabled={!selectedProvider || testProvider.isPending}>
+            Test provider
+          </button>
+        </div>
+        <p className="muted">
+          Provider test sends a real request. API keys stay in the backend and are never returned to the browser.
+        </p>
+      </details>
+
+      <label className="scribe-instruction">
+        <span>GM instruction for recap</span>
+        <textarea value={gmInstruction} onChange={(event) => setGmInstruction(event.target.value)} placeholder="Optional focus for the recap." />
+      </label>
+
+      {recapDraft ? (
+        <div className="scribe-review-block">
+          <strong>Reviewed Recap Draft</strong>
+          <input value={recapTitle} onChange={(event) => setRecapTitle(event.target.value)} aria-label="Recap title" />
+          <textarea value={recapBody} onChange={(event) => setRecapBody(event.target.value)} aria-label="Recap body" />
+          <div className="token-actions">
+            <button onClick={() => saveRecap.mutate()} disabled={!recapTitle.trim() || !recapBody.trim() || saveRecap.isPending}>
+              Save Recap
+            </button>
+            <span className="muted">{recapDraft.candidates.length} memory drafts · {recapDraft.rejected_drafts.length} validation rejects</span>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="scribe-memory">
+        <div className="section-heading">
+          <strong>Memory Inbox</strong>
+          <span className="muted">{pendingCandidates.length} pending</span>
+        </div>
+        {pendingCandidates.slice(0, 3).map((candidate: MemoryCandidate) => (
+          <div key={candidate.id} className="scribe-candidate">
+            <strong>{candidate.title}</strong>
+            <p>{candidate.body}</p>
+            <span className={candidate.claim_strength === "strong_inference" ? "status-pill warning" : "status-pill"}>
+              {candidate.claim_strength}
+            </span>
+            <div className="token-actions">
+              <button onClick={() => acceptCandidate.mutate(candidate.id)} disabled={acceptCandidate.isPending}>
+                Accept into Memory
+              </button>
+              <button onClick={() => rejectCandidate.mutate(candidate.id)} disabled={rejectCandidate.isPending}>
+                Reject
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="scribe-recall">
+        <div className="inline-form">
+          <input value={recallQuery} onChange={(event) => setRecallQuery(event.target.value)} placeholder="Recall accepted memory" aria-label="Scribe recall query" />
+          <button onClick={() => recallResult.mutate()} disabled={!recallQuery.trim() || recallResult.isPending}>
+            Recall
+          </button>
+        </div>
+        {recallResult.data?.hits.map((hit) => (
+          <div key={`${hit.source_kind}-${hit.source_id}`} className="scribe-hit">
+            <strong>{hit.title}</strong>
+            <p>{hit.excerpt}</p>
+            <span className="muted">{hit.source_kind} · {hit.lane} · score {hit.score}</span>
+          </div>
+        ))}
+        <div className="inline-form">
+          <input value={aliasText} onChange={(event) => setAliasText(event.target.value)} placeholder="Add recall alias" aria-label="Recall alias" />
+          <button onClick={() => createAlias.mutate()} disabled={!aliasText.trim() || createAlias.isPending}>
+            Add alias
+          </button>
+        </div>
+        {aliasesQuery.data?.length ? <span className="muted">{aliasesQuery.data.length} campaign aliases</span> : null}
+      </div>
+
+      {inspectionOpen ? (
+        <div className="scribe-inspection" aria-label="Scribe inspection mode">
+          <div className="section-heading">
+            <strong>Inspection Mode</strong>
+            <span className="muted">GM-private</span>
+          </div>
+          {contextPackage ? (
+            <>
+              <InfoRow label="Context" value={`${contextPackage.review_status} · ${contextPackage.token_estimate} est. tokens`} />
+              <InfoRow label="Hash" value={contextPackage.source_ref_hash.slice(0, 16)} />
+              <div className="scribe-source-list">
+                {contextPackage.source_refs.map((ref, index) => (
+                  <span key={`${String(ref.id)}-${index}`}>{sourceRefLabel(ref)}</span>
+                ))}
+              </div>
+              <textarea readOnly value={contextPackage.rendered_prompt} aria-label="Rendered prompt preview" />
+            </>
+          ) : (
+            <span className="muted">Build a context preview to inspect sources and rendered prompt.</span>
+          )}
+          {recapDraft?.run ? (
+            <>
+              <InfoRow label="Run" value={`${recapDraft.run.status} · ${recapDraft.run.duration_ms ?? "-"}ms`} />
+              {recapDraft.run.parse_failure_reason ? <InfoRow label="Parse failure" value={recapDraft.run.parse_failure_reason} /> : null}
+              <textarea readOnly value={JSON.stringify(recapDraft.bundle, null, 2)} aria-label="Normalized output JSON" />
+            </>
+          ) : null}
+        </div>
+      ) : null}
+
+      {testProvider.data ? <p className="muted-block">{testProvider.data.message}</p> : null}
+      {saveRecap.data ? <p className="muted-block">Saved recap: {saveRecap.data.title}</p> : null}
+      {activeError ? <ErrorLine error={activeError} /> : null}
     </div>
   );
 }

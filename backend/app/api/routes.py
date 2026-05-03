@@ -3420,9 +3420,9 @@ def create_storage_backup(request: Request) -> StorageArtifactOut:
 
 
 @router.post("/api/storage/export", response_model=StorageArtifactOut)
-def create_storage_export(request: Request) -> StorageArtifactOut:
+def create_storage_export(request: Request, include_llm_history: bool = False) -> StorageArtifactOut:
     try:
-        artifact = create_export_archive(request.app.state.settings)
+        artifact = create_export_archive(request.app.state.settings, include_llm_history=include_llm_history)
     except StorageExportError as error:
         raise api_error(error.status_code, error.code, error.message) from error
     return StorageArtifactOut(

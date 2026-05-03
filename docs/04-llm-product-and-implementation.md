@@ -1,7 +1,7 @@
 # Myroll LLM Product And Implementation Spec
 
-Date: 2026-05-03
-Status: Draft for review
+Date: 2026-05-04
+Status: First Scribe spine implemented; later creative/public-safe slices remain planned
 
 This document turns the LLM direction into implementable product slices. It assumes the current Myroll architecture:
 
@@ -24,6 +24,26 @@ Player Display:
 LLM:
   private GM assistant, never durable truth by itself
 ```
+
+## 0. Implementation Status
+
+Current shipped status:
+
+- `[shipped]` PRE-LLM live capture: campaign/session-scoped `live_dm_note` transcript events, backend timestamps, per-session `orderIndex`, correction events, and compact `/gm` capture surface.
+- `[shipped]` LLM-0a provider harness: backend-owned OpenAI-compatible non-streaming provider calls, provider profiles, conformance probe, run history, cancellation state, and no raw key exposure to the browser.
+- `[shipped]` LLM-0b context preview: persisted context packages, canonical source hash, explicit review action, rendered prompt/source inspection, and stale-preview blocking.
+- `[shipped]` LLM-0c session recap draft: reviewed context -> provider run -> structured `SessionRecapBundle`, one schema-repair attempt, validation failures, editable reviewed recap save, and export redaction for prompt/response payloads.
+- `[shipped]` LLM-0d memory inbox: targetless memory candidates, `Accept into Memory` as one atomic apply transaction, idempotent repeated accept, and rejected/weak candidates excluded from accepted memory.
+- `[shipped]` LLM-1 first recall spine: campaign memory entries, reviewed session recaps, live capture search indexing, manual aliases, query expansion, and policy-filtered recall results.
+- `[planned]` LLM-2 branch proposals and planning markers.
+- `[planned]` LLM-3 player-safe recap/snippet drafting and leak warning gate.
+- `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
+
+Current implementation entry points are intentionally small:
+
+- `/gm` contains the compact Scribe live surface plus expandable GM-private inspection/review controls.
+- Dedicated backend routes live under `/api/*/scribe/*` and `/api/*/llm/*`.
+- `/player` remains disconnected from all Scribe/LLM APIs.
 
 ## 1. Product Definition
 
@@ -201,6 +221,58 @@ V1 does not:
 - require streaming responses;
 - require tool calls;
 - require user-auth/account infrastructure.
+
+### 2.9 Inspection Mode
+
+Every LLM-backed workflow must expose enough intermediate state for the GM/developer to inspect what happened before trusting the result.
+
+Inspection surfaces may include:
+- provider request metadata;
+- context package source list;
+- rendered prompt preview;
+- structured parse result;
+- parse/repair errors;
+- evidence projection;
+- memory candidate validation failures;
+- public-safety warnings.
+
+Inspection surfaces are GM-private and never available to `/player`.
+
+The shipped `/gm` Scribe panel implements this as an expandable inspection area that shows context source refs, source hash, rendered prompt, run status, parse failure details, and normalized output JSON for the first recap loop.
+
+### 2.10 Correction Loops
+
+Correction is a first-class review action, not an edit-in-place illusion.
+
+V1 correction loops:
+- live capture correction creates a correction transcript event;
+- recap draft correction edits the reviewed recap before saving;
+- memory candidate correction edits the candidate body before accepting into memory;
+- malformed structured output correction uses one schema-repair child run;
+- public-safe warning correction edits the draft before `PublicSnippet` creation.
+
+Corrections must preserve original source evidence and audit metadata where relevant.
+
+The shipped first loop implements transcript correction, recap draft editing, candidate editing API, and one schema-repair child run. Public-safe warning correction remains planned with LLM-3.
+
+### 2.11 No Silent Fallbacks
+
+If a provider cannot satisfy a task requirement, Myroll must fail visibly instead of silently changing task behavior.
+
+Forbidden:
+- silently switching provider;
+- silently downgrading structured output to prose;
+- silently dropping evidence from recap;
+- silently using prior recap when source evidence does not fit;
+- silently accepting malformed partial output.
+
+Allowed:
+- explicit GM-visible retry;
+- explicit schema repair child run;
+- explicit map-reduce mode with visible budget explanation;
+- explicit fallback task selected by the GM.
+
+The shipped recap path blocks unverified/low-conformance providers, requires reviewed context, rejects stale previews, rejects malformed structured output after one repair attempt, and never partially applies failed output.
 
 ## 3. State Lanes
 

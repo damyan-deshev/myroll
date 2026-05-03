@@ -8,6 +8,7 @@ import type {
   BundledMap,
   BundledMapCreateResult,
   Campaign,
+  CampaignMemoryEntry,
   CombatantDeleteResult,
   CombatantDisposition,
   CombatantRecord,
@@ -19,12 +20,20 @@ import type {
   DisplayFitMode,
   EntitiesResponse,
   EntityRecord,
+  EntityAlias,
   FogMask,
   FogOperation,
   FogOperationResult,
   Health,
   MapRecord,
   Meta,
+  BuildRecapResult,
+  LlmContextPackage,
+  LlmProviderProfile,
+  LlmProviderProfilesResponse,
+  LlmRun,
+  MemoryCandidate,
+  MemoryCandidatesResponse,
   Note,
   NotesResponse,
   PlayerDisplayState,
@@ -39,8 +48,12 @@ import type {
   SceneStagedDisplayMode,
   SceneMap,
   Session,
+  SessionRecap,
+  SessionTranscriptEvent,
   StorageArtifact,
   StorageStatus,
+  TranscriptEventsResponse,
+  RecallResult,
   TokenDeleteResult,
   TokenMutationResult,
   TokensResponse,
@@ -100,7 +113,8 @@ export const api = {
   meta: () => request<Meta>("/api/meta"),
   storageStatus: () => request<StorageStatus>("/api/storage/status"),
   createStorageBackup: () => request<StorageArtifact>("/api/storage/backup", { method: "POST" }),
-  createStorageExport: () => request<StorageArtifact>("/api/storage/export", { method: "POST" }),
+  createStorageExport: (payload?: { include_llm_history?: boolean }) =>
+    request<StorageArtifact>(`/api/storage/export${payload?.include_llm_history ? "?include_llm_history=true" : ""}`, { method: "POST" }),
   runtime: () => request<RuntimeState>("/api/runtime"),
   campaigns: () => request<Campaign[]>("/api/campaigns"),
   createCampaign: (payload: { name: string; description?: string }) =>
@@ -153,6 +167,95 @@ export const api = {
   patchPublicSnippet: (snippetId: string, payload: Partial<Pick<PublicSnippet, "title" | "body" | "format">>) =>
     request<PublicSnippet>(`/api/public-snippets/${snippetId}`, {
       method: "PATCH",
+      body: JSON.stringify(payload)
+    }),
+  transcriptEvents: (campaignId: string, sessionId?: string | null) =>
+    request<TranscriptEventsResponse>(`/api/campaigns/${campaignId}/scribe/transcript-events${sessionId ? `?session_id=${sessionId}` : ""}`),
+  createTranscriptEvent: (
+    campaignId: string,
+    payload: { session_id: string; scene_id?: string | null; body: string; source?: string }
+  ) =>
+    request<SessionTranscriptEvent>(`/api/campaigns/${campaignId}/scribe/transcript-events`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  correctTranscriptEvent: (eventId: string, payload: { body: string }) =>
+    request<SessionTranscriptEvent>(`/api/scribe/transcript-events/${eventId}/correct`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  llmProviderProfiles: () => request<LlmProviderProfilesResponse>("/api/llm/provider-profiles"),
+  createLlmProviderProfile: (payload: {
+    label: string;
+    vendor: LlmProviderProfile["vendor"];
+    base_url: string;
+    model_id: string;
+    key_source: { type: "none" | "env"; ref?: string | null };
+  }) =>
+    request<LlmProviderProfile>("/api/llm/provider-profiles", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  patchLlmProviderProfile: (
+    profileId: string,
+    payload: Partial<Pick<LlmProviderProfile, "label" | "vendor" | "base_url" | "model_id">> & {
+      key_source?: { type: "none" | "env"; ref?: string | null };
+    }
+  ) =>
+    request<LlmProviderProfile>(`/api/llm/provider-profiles/${profileId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    }),
+  testLlmProviderProfile: (profileId: string) =>
+    request<{ profile: LlmProviderProfile; ok: boolean; conformance_level: string; message: string; metadata: Record<string, unknown> }>(
+      `/api/llm/provider-profiles/${profileId}/test`,
+      { method: "POST" }
+    ),
+  createContextPreview: (
+    campaignId: string,
+    payload: { session_id: string; task_kind?: string; visibility_mode?: "gm_private" | "public_safe"; gm_instruction?: string }
+  ) =>
+    request<LlmContextPackage>(`/api/campaigns/${campaignId}/llm/context-preview`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  reviewContextPackage: (packageId: string) =>
+    request<LlmContextPackage>(`/api/llm/context-packages/${packageId}/review`, { method: "POST" }),
+  buildSessionRecap: (
+    campaignId: string,
+    payload: { session_id: string; provider_profile_id: string; context_package_id: string }
+  ) =>
+    request<BuildRecapResult>(`/api/campaigns/${campaignId}/llm/session-recap/build`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  saveSessionRecap: (
+    campaignId: string,
+    payload: { session_id: string; title: string; body_markdown: string; source_llm_run_id?: string | null; evidence_refs?: Array<Record<string, unknown>> }
+  ) =>
+    request<SessionRecap>(`/api/campaigns/${campaignId}/scribe/session-recaps`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  memoryCandidates: (campaignId: string) => request<MemoryCandidatesResponse>(`/api/campaigns/${campaignId}/scribe/memory-candidates`),
+  editMemoryCandidate: (candidateId: string, payload: Partial<Pick<MemoryCandidate, "title" | "body">>) =>
+    request<MemoryCandidate>(`/api/scribe/memory-candidates/${candidateId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    }),
+  acceptMemoryCandidate: (candidateId: string) =>
+    request<CampaignMemoryEntry>(`/api/scribe/memory-candidates/${candidateId}/accept`, { method: "POST" }),
+  rejectMemoryCandidate: (candidateId: string) =>
+    request<MemoryCandidate>(`/api/scribe/memory-candidates/${candidateId}/reject`, { method: "POST" }),
+  entityAliases: (campaignId: string) => request<EntityAlias[]>(`/api/campaigns/${campaignId}/scribe/aliases`),
+  createEntityAlias: (campaignId: string, payload: { alias_text: string; entity_id?: string | null; language?: string | null }) =>
+    request<EntityAlias>(`/api/campaigns/${campaignId}/scribe/aliases`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  recall: (campaignId: string, payload: { query: string; include_draft?: boolean }) =>
+    request<RecallResult>(`/api/campaigns/${campaignId}/scribe/recall`, {
+      method: "POST",
       body: JSON.stringify(payload)
     }),
   entities: (campaignId: string) => request<EntitiesResponse>(`/api/campaigns/${campaignId}/entities`),

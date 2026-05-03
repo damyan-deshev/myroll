@@ -623,3 +623,175 @@ export type StorageStatus = {
   expected_seed_version: string;
   private_demo_name_map_active: boolean;
 };
+
+export type SessionTranscriptEvent = {
+  id: string;
+  campaign_id: string;
+  session_id: string;
+  scene_id: string | null;
+  corrects_event_id: string | null;
+  event_type: "live_dm_note" | "correction";
+  body: string;
+  source: string;
+  public_safe: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+  corrected_by_event_id: string | null;
+};
+
+export type TranscriptEventsResponse = {
+  events: SessionTranscriptEvent[];
+  projection: SessionTranscriptEvent[];
+  updated_at: string;
+};
+
+export type LlmProviderProfile = {
+  id: string;
+  label: string;
+  vendor: "openai" | "ollama" | "lmstudio" | "kobold" | "openrouter" | "custom";
+  base_url: string;
+  model_id: string;
+  key_source: { type: "none" | "env"; ref: string | null };
+  conformance_level: string;
+  capabilities: Record<string, unknown>;
+  last_probe_result: Record<string, unknown> | null;
+  probed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LlmProviderProfilesResponse = {
+  profiles: LlmProviderProfile[];
+  updated_at: string;
+};
+
+export type LlmContextPackage = {
+  id: string;
+  campaign_id: string;
+  session_id: string | null;
+  task_kind: string;
+  visibility_mode: "gm_private" | "public_safe";
+  gm_instruction: string;
+  source_refs: Array<Record<string, unknown>>;
+  rendered_prompt: string;
+  source_ref_hash: string;
+  review_status: "unreviewed" | "reviewed";
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  token_estimate: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LlmRun = {
+  id: string;
+  campaign_id: string;
+  session_id: string | null;
+  provider_profile_id: string | null;
+  context_package_id: string | null;
+  parent_run_id: string | null;
+  task_kind: string;
+  status: "running" | "succeeded" | "failed" | "canceled";
+  error_code: string | null;
+  error_message: string | null;
+  parse_failure_reason: string | null;
+  repair_attempted: boolean;
+  request_metadata: Record<string, unknown>;
+  response_text: string | null;
+  normalized_output: Record<string, unknown> | null;
+  prompt_tokens_estimate: number | null;
+  duration_ms: number | null;
+  cancel_requested_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SessionRecap = {
+  id: string;
+  campaign_id: string;
+  session_id: string;
+  source_llm_run_id: string | null;
+  title: string;
+  body_markdown: string;
+  evidence_refs: Array<Record<string, unknown>>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MemoryCandidate = {
+  id: string;
+  campaign_id: string;
+  session_id: string | null;
+  source_llm_run_id: string | null;
+  source_recap_id: string | null;
+  status: "draft" | "edited" | "accepted" | "rejected";
+  title: string;
+  body: string;
+  claim_strength: "directly_evidenced" | "strong_inference" | "weak_inference" | "gm_review_required";
+  evidence_refs: Array<Record<string, unknown>>;
+  validation_errors: string[];
+  edited_from_candidate_id: string | null;
+  applied_memory_entry_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MemoryCandidatesResponse = {
+  candidates: MemoryCandidate[];
+  updated_at: string;
+};
+
+export type CampaignMemoryEntry = {
+  id: string;
+  campaign_id: string;
+  session_id: string | null;
+  source_candidate_id: string | null;
+  title: string;
+  body: string;
+  evidence_refs: Array<Record<string, unknown>>;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type BuildRecapResult = {
+  run: LlmRun;
+  bundle: {
+    privateRecap?: { title?: string; bodyMarkdown?: string; keyMoments?: Array<Record<string, unknown>> };
+    memoryCandidateDrafts?: Array<Record<string, unknown>>;
+    continuityWarnings?: Array<Record<string, unknown>>;
+    unresolvedThreads?: string[];
+  };
+  candidates: MemoryCandidate[];
+  rejected_drafts: Array<Record<string, unknown>>;
+};
+
+export type EntityAlias = {
+  id: string;
+  campaign_id: string;
+  entity_id: string | null;
+  alias_text: string;
+  normalized_alias: string;
+  language: string | null;
+  source: string;
+  source_ref: Record<string, unknown> | null;
+  confidence: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RecallResult = {
+  query: string;
+  expanded_terms: string[];
+  hits: Array<{
+    source_kind: string;
+    source_id: string;
+    source_revision: string;
+    title: string;
+    excerpt: string;
+    lane: string;
+    visibility: string;
+    score: number;
+  }>;
+};
