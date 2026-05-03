@@ -167,6 +167,97 @@ Roadmap placement:
 - it should probably run before or instead of the currently queued LLM Slice 14 if imported maps/tokens are the next table-facing priority;
 - final slice numbering should be decided during implementation planning.
 
+## Quick NPC Static Seed Catalog Spike
+
+Status: content spike delivered on 2026-05-02. Application UI/API integration is still deferred.
+
+Delivered:
+- bundled static JSON array at `bundled/quick_npc_seeds/quick_npc_seeds.json`;
+- 300 prewritten minor NPC seeds with D&D race/species labels and male/female gender metadata, but no rules or stat mechanics;
+- 25 seeds each for guard/soldier, commoner/villager, merchant/trader, artisan/craftsperson, noble/official/bureaucrat, criminal/spy/smuggler, scholar/scribe/priest, traveler/refugee/pilgrim, wilderness local/guide/hunter, sailor/porter/caravan worker, cultist/zealot/secret believer, and weird/magical stranger;
+- compact fields for race, gender, race/gender-aligned name, role, origin, appearance, voice, mannerism, initial attitude, tiny backstory, reusable hook/secret, portrait/search tags, and use tags.
+
+Integration rule:
+- Quick NPC draw/filter/search should load shipped static content locally with no runtime LLM call;
+- "Use as NPC" should copy the selected seed into an editable GM-owned NPC record or prefilled NPC form;
+- the global bundled seed catalog is app content, not mutable campaign state;
+- portrait tags are search/linking hints only, and no portrait should be required.
+- generated portrait packs are visual enrichment over the seed catalog, mapped by `sourceSeed.id`;
+- the app must still work when only the JSON seed catalog is present.
+
+Explicit deferrals:
+- no Quick NPC browser surface yet;
+- no backend seed-catalog endpoint yet;
+- no NPC-specific schema beyond the existing entity/custom-field foundation yet;
+- no bundled portrait pack dependency.
+
+## Quick NPC Seed Catalog Integration Slice
+
+Goal: make Quick NPC a first-class live-session primitive for drawing, filtering, using, and promoting ordinary NPCs without waiting for a model call.
+
+Product behavior:
+- the GM can open a compact Quick NPC picker from `/gm`, scene tools, or a command;
+- the GM can draw a random seed, filter by broad type/race/gender/use tags, or search by name/role/tags/text;
+- the GM can reroll/refresh quickly during play;
+- the GM can copy/use a seed in notes without creating campaign canon;
+- the GM can pin a seed to the current session as temporary working material;
+- the GM can promote a selected seed into an editable campaign NPC/entity;
+- promoted NPCs become normal private GM-owned records and can later be linked to scenes, notes, tokens, portraits, or public snippets.
+
+Build:
+- bundled catalog loader for `bundled/quick_npc_seeds/quick_npc_seeds.json`;
+- schema validation for the existing 300-seed top-level JSON array;
+- service/query layer for list, filter, search, deterministic random draw, and seed lookup by ID;
+- local API endpoints for bundled quick NPC browse/draw and campaign promotion;
+- campaign promotion service that copies seed fields into `Entity(kind = "npc")` plus private custom fields or private notes;
+- optional scene-linking when promotion happens from an active scene;
+- GM Quick NPC card/picker UI with filters, reroll, copy, pin, and promote actions;
+- tests for catalog schema, distribution, deterministic draw, search/filter behavior, and promotion copy semantics.
+
+Portrait integration rules:
+- portrait generation is an offline/bootstrap pipeline for visual enrichment, not the product primitive;
+- generated files and metadata map back to seeds through `sourceSeed.id`;
+- the expected portrait pack shape is multiple variants per seed, initially 3 variants per seed for the 300-seed v1 catalog;
+- generated portraits must be imported through the existing image asset validation path before linking to NPCs;
+- curation can be manual first and VLM-assisted later;
+- curation status should distinguish accepted, rejected, artifact, and metadata/race/gender mismatch cases;
+- Quick NPC cards must render acceptably with text only when no portrait is available.
+
+Current external generation note:
+- a local ComfyUI run is producing 900 candidate portraits for v1 outside this repository;
+- current output collection path is `/Volumes/External/projects/comfyui/asset_packs/myroll_quick_npc_portraits_v1/arthemy3_dndportrait_solo_gender_trimmed_v2_full_3v`;
+- filenames include type, race, gender, role, name, seed ID, and variant;
+- per-image metadata JSON includes the full `sourceSeed`;
+- the final portrait `manifest.json` is expected after the run completes;
+- do not make Myroll depend on this output path or on the portrait manifest for the base Quick NPC feature.
+
+Core guardrails:
+- no runtime LLM call for drawing a Quick NPC;
+- no mutation of the bundled seed catalog during campaign play;
+- no portrait requirement;
+- no raw generated portrait serving from the external ComfyUI directory;
+- no public/player display mutation from drawing or promoting a Quick NPC;
+- no public visibility for promoted NPC secrets, notes, backstory, or hook fields by default.
+
+Acceptance checkpoint:
+
+```text
+start backend with bundled quick_npc_seeds.json
+  -> catalog schema validation passes
+  -> browse returns 300 seeds
+  -> filter type=guard_soldier returns 25 seeds
+  -> search by role/tag finds matching seeds
+  -> draw with a fixed random seed is deterministic
+  -> reroll can exclude currently visible seed IDs
+  -> GM opens Quick NPC picker from a live session surface
+  -> GM draws a seed and sees a usable text-only NPC card immediately
+  -> GM copies the seed summary into a note without creating an entity
+  -> GM promotes the seed into a private campaign NPC
+  -> promoted NPC contains copied editable fields and sourceSeedId traceability
+  -> editing the promoted NPC does not mutate the bundled seed
+  -> /player receives no new data until an explicit separate publish action
+```
+
 ## Slice 1: Local Backend Foundation
 
 Goal: prove a clean local bootstrap path.
@@ -1046,9 +1137,77 @@ Explicit deferrals:
 - no generic server-path import exposed through the browser API;
 - no automatic token/stat sync from monster art.
 
-## Slice 14: LLM Session Memory And GM Generation Harness
+## Slice 14: LLM Canonization, Recall, And GM Generation Harness
 
-Goal: make a large language model a first-class GM copilot without turning it into the source of truth.
+Goal: make a large language model a first-class GM creative workbench without turning it into the source of truth.
+
+Product decision:
+- Myroll's LLM value is not "AI writes the campaign"; it is campaign-aware GM assistance for NPC roleplay, settlements, politics/factions, quest boards, character-building hooks, creative options, session summaries, and continuity checks.
+- AI output is not campaign truth until the GM commits it.
+- Campaign objects such as NPCs, settlements, factions, quests, and character hooks are manual GM-owned Myroll primitives first; the model may prefill fields, suggest updates, or produce drafts, but it does not own or silently create those objects.
+- Options are ephemeral. Selections become state. Only committed state enters future model context by default.
+- When a prompt asks for options, variants, ideas, complications, hooks, or alternatives, the harness should request structured output with stable option IDs, summaries, and proposed campaign deltas.
+- If the GM selects option 2 from a generated set of options, future context should carry the canonized selected direction, not the entire brainstorm that also contains rejected options.
+- Unselected options remain available in run/proposal history for audit, follow-up, or explicit "what did we reject?" recall, but they must not compete with canon in normal generation context.
+
+Implementation design notes still to document before build:
+- GM task catalog:
+  - first-class tasks such as NPC roleplay, settlement generation, faction/political moves, quest boards, character arc hooks, next-scene complications, session summaries, player-safe recaps, contradiction checks, and exact recall;
+  - for each task, document user job, trigger/UI entry point, required inputs, default context package, output schema, apply/canonization actions, visibility rules, and acceptance behavior.
+- Manual campaign object primitives:
+  - NPCs, settlements, factions, quest board entries, character hooks, and similar campaign objects must be usable, searchable, editable, and recallable without calling a model;
+  - NPC records should reserve an optional portrait/image field for future shipped portrait packs and user-imported portraits;
+  - NPC portraits are never required for continuity; voice, relationships, obligations, secrets, and source evidence remain the durable core;
+  - portrait choices should support filtering bundled/shipped assets as well as selecting GM-imported assets;
+  - any imported or generated portrait must enter Myroll through the existing asset validation/import pipeline before it can be linked to an NPC;
+  - LLM tasks may prefill a new manual object form, suggest field updates, summarize evidence into fields, or draft related roleplay/options;
+  - object creation/update remains a GM action in the Myroll UI, even when fields were suggested by the model;
+  - if a first-class object type does not exist yet, the roadmap should add it before treating the related LLM workflow as more than a draft generator.
+- Quick NPC layer:
+  - live sessions need an instant "give me a usable minor NPC now" flow that does not wait for a model call;
+  - ship Myroll with a curated static Quick NPC library containing several hundred prewritten NPC seeds;
+  - Quick NPC seeds should include at minimum name, role/archetype, short origin, visible trait, voice/mannerism cue, immediate attitude, tiny backstory, and one reusable hook or secret;
+  - seeds should be filterable by broad type such as guard/soldier, commoner, merchant, artisan, noble/official, criminal/spy, scholar/priest, traveler/refugee, wilderness/local guide, sailor/porter, cultist/zealot, and weird/magical stranger;
+  - the UI should support a fast draw/search/filter action from the GM surface and a "Use as NPC" action that creates or prefills a GM-owned NPC record;
+  - drawing a Quick NPC is deterministic local content selection, not LLM generation;
+  - once used, the selected seed should be copied into the campaign as editable NPC state so later continuity does not depend on the global seed catalog;
+  - Quick NPCs may optionally link a portrait from bundled/imported assets, but they must work without a portrait.
+- Memory source taxonomy:
+  - canon campaign facts;
+  - approved session memory;
+  - append-only transcript;
+  - scene/entity/note state;
+  - proposal history;
+  - selected/canonized options;
+  - rejected options;
+  - saved-for-later ideas;
+  - player-safe public facts;
+  - priority order for retrieval and context packaging.
+- Context package strategy:
+  - default context sources per task;
+  - explicit GM-private modes;
+  - public-safe modes;
+  - token budget order and trimming rules;
+  - where exact recall evidence sits relative to structured memory and recent transcript tail;
+  - when proposal/rejection history is allowed or forbidden.
+- Memory inbox contract:
+  - candidate types: new fact, changed NPC/faction relationship, unresolved hook, selected/canonized option, player-safe recap item, contradiction warning;
+  - GM review actions: approve, edit, reject, save for later, link to entity/scene/session;
+  - no candidate enters canon without explicit GM action.
+- Exact recall contract:
+  - SQLite FTS-backed recall first, vector search deferred until scale/quality requires it;
+  - branch/status-aware retrieval;
+  - trigger detection for explicit recall, entity gaps, continuation gaps, and contradiction checks;
+  - bounded cited evidence snippets;
+  - timeout/fallback behavior;
+  - rejected proposal suppression unless explicitly requested.
+- Competitive anti-patterns to avoid:
+  - no SillyTavern-level power-user prompt cockpit in the first version;
+  - no "write the full campaign" magic button;
+  - no autonomous AI DM loop;
+  - no model-managed rules or combat automation;
+  - no raw brainstorm as durable continuity;
+  - no GM secrets sent to a model without explicit context mode and preview.
 
 Build:
 - OpenAI-compatible provider profiles:
@@ -1078,10 +1237,28 @@ Build:
   - response viewer;
   - run history;
   - draft artifact actions.
+- Proposal lifecycle for option-generating tasks:
+  - `proposal_set` records linked to campaign/session/scene/entity context and the originating LLM run;
+  - `proposal_option` records with stable option IDs, title, summary, body, proposed canon delta, visibility, and status;
+  - statuses: proposed, selected, rejected, saved_for_later, superseded, canonized;
+  - "Use", "Edit & use", "Save for later", "Reject", and "Reject set" GM actions;
+  - a selected option produces a canonization draft/state patch rather than becoming durable truth silently.
+- Structured response contracts:
+  - proposal tasks must return machine-readable options where supported by the provider;
+  - each option should include a short GM-facing summary and an explicit `canon_delta` describing new facts, changed entity/relationship/faction state, open hooks, and player-facing recap candidates;
+  - plain-text fallback parsing is allowed, but the persisted artifact must still normalize into proposal/options before apply actions are shown.
+- Canonization and context hygiene:
+  - selected options are normalized into campaign/session/scene memory, notes, entity drafts, faction/location/quest records, or session state patches according to the template;
+  - rejected options are stored as rejected proposal history, not as campaign memory;
+  - saved-for-later options enter an idea bank and are not active canon;
+  - context packages include canonized selections and approved memory first, never raw brainstorm sets by default;
+  - proposal/rejection history is included only when the GM explicitly selects a brainstorm-history or contradiction-checking context mode.
 - Append-only session transcript:
   - DM prompts;
   - assistant responses;
   - LLM runs;
+  - proposal sets and option status transitions;
+  - canonization decisions;
   - accepted draft artifacts;
   - dice/combat events when those domains exist;
   - scene changes;
@@ -1091,6 +1268,12 @@ Build:
   - campaign/session-scoped record in SQLite as source of truth;
   - optional markdown rendering for human inspection;
   - updated through explicit/manual extraction first, and later through safe-point background updates.
+- Exact recall lane:
+  - SQLite FTS-backed lexical recall over transcript, notes, approved memory, proposal history, and canonization decisions;
+  - status-aware retrieval that prefers canonized/approved state over proposals, and suppresses rejected options unless explicitly requested;
+  - trigger patterns for explicit recall ("what did we decide?", "who was this NPC?", "as discussed"), entity lookup gaps, continuation gaps, and contradiction checks;
+  - recall results are injected as bounded evidence snippets with source IDs, not as uncited model "memory";
+  - timeout and fallback behavior must keep GM generation responsive.
 - Default D&D memory sections:
   - session title;
   - current scene;
@@ -1102,7 +1285,7 @@ Build:
   - player decisions;
   - combat/mechanics state;
   - tone and table preferences;
-  - generated content;
+  - canonized generated content and saved-for-later ideas;
   - short chronological worklog.
 - Context compaction pipeline inspired by large coding harness session-memory behavior:
   - compact boundary records;
@@ -1128,9 +1311,17 @@ Build:
   - summarize current session;
   - summarize public-known facts only;
   - summarize GM-only hidden state;
+  - recall exact prior decisions from campaign/session history;
   - extract unresolved hooks;
+  - roleplay an NPC from approved NPC card facts and exact recall evidence;
+  - prefill or suggest updates for a GM-created NPC card;
+  - prefill or suggest updates for settlement records from current campaign context;
+  - prefill or suggest faction/political moves and consequences;
+  - prefill or suggest quest board entries from unresolved hooks;
+  - prefill or suggest character-building hooks and personal arc options;
+  - generate creative alternatives/options with structured proposal output;
   - draft next-scene complications;
-  - generate NPC/entity ideas;
+  - draft NPC/entity ideas for GM-owned records;
   - generate location/item/faction/vehicle ideas;
   - draft player-safe public snippet;
   - draft combat encounter twists without rules automation;
@@ -1138,6 +1329,10 @@ Build:
   - draft character sheets as entity/custom-field drafts;
   - check selected notes for contradictions.
 - Draft artifacts:
+  - proposal set;
+  - proposal option;
+  - canonization state patch;
+  - saved-for-later idea;
   - private note draft;
   - public snippet draft;
   - entity draft;
@@ -1147,9 +1342,13 @@ Build:
   - character sheet draft;
   - session recap draft.
 - Draft apply actions are explicit:
+  - select proposal option;
+  - edit and canonize selected option;
+  - save proposal option for later;
+  - reject proposal option or proposal set;
   - save as private note;
   - create public snippet;
-  - create entity;
+  - create GM-owned entity from reviewed draft;
   - update selected entity fields;
   - create token draft from entity;
   - create image prompt record;
@@ -1168,10 +1367,16 @@ Build:
   - request metadata;
   - response text/JSON;
   - token usage if available;
+  - created proposal sets and current option statuses;
+  - canonization actions produced from selections;
   - created draft artifacts;
   - applied/not-applied status;
   - error state.
 - Observability:
+  - exact recall triggered/skipped/timed out;
+  - recall source count and evidence token estimate;
+  - proposal generated/selected/rejected/canonized;
+  - whether a context package excluded rejected/proposed branches;
   - memory extraction started/completed/failed;
   - why extraction/compact was skipped;
   - token estimates before/after compact;
@@ -1184,6 +1389,9 @@ Core guardrails:
 - LLM is never the durable source of truth.
 - LLM never mutates campaign state directly.
 - LLM output is a draft until the GM explicitly applies it.
+- Generated options are not durable campaign truth until a GM selection/canonization action commits them.
+- Normal future context includes selected/canonized state, not every option the model proposed.
+- Rejected options must not enter normal creative generation context.
 - `/player` never talks to LLM endpoints and never receives private LLM context.
 - Browser transport remains notify-only and carries no LLM prompt, response, or generated payload.
 - Context sent to remote/local models is explicit, previewable, and campaign-scoped.
@@ -1206,10 +1414,17 @@ configure OpenAI-compatible provider
   -> publish only after explicit GM action
   -> force memory extraction
   -> inspect structured session memory
+  -> ask for five next-scene complications
+  -> select option 2
+  -> inspect proposal history showing option 2 selected and other options rejected/unselected
+  -> preview the next context package
+  -> verify only the canonized selected direction enters normal context
+  -> ask "what did we decide for this scene?"
+  -> exact recall returns the selected decision as cited evidence
   -> run compact simulation
   -> compact result preserves current scene, unresolved hooks, NPC state, combat/mechanics state, and recent verbatim tail
   -> generate NPC/character sheet/image prompt drafts
-  -> apply one entity draft and one image prompt draft explicitly
+  -> save one reviewed entity draft as a GM-owned record and one image prompt draft explicitly
   -> refresh browser
   -> provider config, memory, run history, and applied drafts persist from SQLite
 ```
@@ -1217,6 +1432,7 @@ configure OpenAI-compatible provider
 Explicit deferrals:
 - no autonomous agent loop;
 - no automatic campaign mutation;
+- no automatic proposal selection or canonization;
 - no automatic player-display publish;
 - no unsandboxed tool execution by the model;
 - no generic web browsing/search in the first LLM slice;

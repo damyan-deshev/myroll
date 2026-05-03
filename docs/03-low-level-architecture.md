@@ -1446,6 +1446,217 @@ Sanitization rules:
 - include portrait/image URLs only when the referenced asset is `public_displayable`;
 - public blob serving for party assets is active-payload scoped.
 
+### 7.5 Quick NPC Seed Catalog
+
+Quick NPC is a run-mode GM primitive backed by shipped static content. It is not an image dataset and it is not an LLM workflow.
+
+Current v1 bundled catalog:
+
+```text
+bundled/quick_npc_seeds/quick_npc_seeds.json
+```
+
+The current file is a top-level JSON array. Do not change it to an envelope without adding a backwards-compatible loader and updating the schema test.
+
+```ts
+type QuickNpcSeedType =
+  | "guard_soldier"
+  | "commoner_villager"
+  | "merchant_trader"
+  | "artisan_craftsperson"
+  | "noble_official_bureaucrat"
+  | "criminal_spy_smuggler"
+  | "scholar_scribe_priest"
+  | "traveler_refugee_pilgrim"
+  | "wilderness_local_guide_hunter"
+  | "sailor_porter_caravan_worker"
+  | "cultist_zealot_secret_believer"
+  | "weird_magical_stranger";
+
+type QuickNpcSeed = {
+  id: string;
+  type: QuickNpcSeedType;
+  race: string;
+  gender: "female" | "male";
+  name: string;
+  role: string;
+  origin: string;
+  appearance: string;
+  voice: string;
+  mannerism: string;
+  attitude: string;
+  tinyBackstory: string;
+  hookOrSecret: string;
+  portraitTags: string[];
+  useTags: string[];
+};
+```
+
+Backend loader rules:
+- load the bundled JSON once at startup or lazily through a cached service;
+- validate schema before serving any catalog response;
+- reject duplicate seed IDs and duplicate names;
+- require exactly 300 seeds in v1;
+- require exactly 25 seeds for each `QuickNpcSeedType`;
+- require non-empty strings for scalar fields;
+- require non-empty string arrays for `portrait_tags` and `use_tags`;
+- preserve stable IDs exactly as written in the bundled file;
+- expose camelCase API fields while accepting the snake_case bundled file internally;
+- do not mutate the bundled catalog during campaign play.
+
+Selection query:
+
+```ts
+type QuickNpcSeedQuery = {
+  type?: QuickNpcSeedType;
+  race?: string;
+  gender?: "female" | "male";
+  role?: string;
+  useTags?: string[];
+  q?: string;
+  limit?: number;
+  offset?: number;
+  randomSeed?: string;
+  excludeSeedIds?: string[];
+};
+
+type QuickNpcDrawRequest = QuickNpcSeedQuery & {
+  count?: number;
+};
+
+type QuickNpcDrawResponse = {
+  seeds: QuickNpcSeed[];
+  totalMatching: number;
+  randomSeed?: string;
+};
+```
+
+Selection service rules:
+- filtering is exact for `type`, `race`, and `gender`;
+- `role` is case-insensitive substring matching against `role`;
+- `useTags` uses AND semantics by default;
+- `q` searches `name`, `role`, `race`, `origin`, `appearance`, `attitude`, `tiny_backstory`, `hook_or_secret`, `portrait_tags`, and `use_tags`;
+- default browse ordering is stable by file order;
+- random draw shuffles only the already-filtered candidate set;
+- if `randomSeed` is supplied, repeated requests with the same filters and seed must return the same order;
+- `excludeSeedIds` supports rerolling without immediately repeating already shown seeds;
+- the service must return quickly enough for live table use and must not call an LLM provider.
+
+Initial GM API surface:
+
+```text
+GET  /api/bundled/quick-npcs
+GET  /api/bundled/quick-npcs/{seed_id}
+POST /api/bundled/quick-npcs/draw
+POST /api/campaigns/{campaign_id}/quick-npcs/promote
+```
+
+`GET /api/bundled/quick-npcs` accepts query parameters matching `QuickNpcSeedQuery` except `randomSeed`.
+
+Promotion request:
+
+```ts
+type QuickNpcPromotionRequest = {
+  seedId: string;
+  sceneId?: SceneId;
+  name?: string;
+  displayName?: string;
+  portraitAssetId?: AssetId;
+  tags?: string[];
+  note?: string;
+};
+
+type QuickNpcPromotionResponse = {
+  entity: Entity;
+  sourceSeedId: string;
+};
+```
+
+Promotion behavior:
+- promotion is an explicit GM action;
+- promotion creates a new `Entity` with `kind = "npc"` and `visibility = "private"`;
+- the generated entity name defaults to `QuickNpcSeed.name`;
+- `portraitAssetId`, when present, must reference a same-campaign validated image asset;
+- the seed's `type`, `race`, `gender`, `role`, and `useTags` become searchable tags and/or custom fields;
+- the seed's origin, appearance, voice, mannerism, attitude, tiny backstory, and hook/secret are copied into editable campaign state;
+- the campaign entity must not hold a live reference that would change when the bundled catalog changes later;
+- the original `sourceSeedId` should be preserved for traceability and optional portrait matching;
+- promoted NPCs can be linked to the active scene after creation when `sceneId` is supplied.
+
+Recommended field mapping for the first promotion implementation:
+
+```text
+Entity.name                <- seed.name
+Entity.kind                <- npc
+Entity.visibility          <- private
+Entity.tags                <- seed.type, seed.race, seed.gender, seed.role, seed.use_tags
+Entity.notes               <- compact GM-readable seed summary plus optional promotion note
+custom.quick_npc_seed_id   <- seed.id
+custom.quick_npc_type      <- seed.type
+custom.race                <- seed.race
+custom.gender              <- seed.gender
+custom.role                <- seed.role
+custom.origin              <- seed.origin
+custom.appearance          <- seed.appearance
+custom.voice               <- seed.voice
+custom.mannerism           <- seed.mannerism
+custom.attitude            <- seed.attitude
+custom.tiny_backstory      <- seed.tiny_backstory
+custom.hook_or_secret      <- seed.hook_or_secret
+```
+
+If these custom field definitions do not exist for the campaign, the promotion service may create private-by-default definitions lazily. It must not make `hook_or_secret`, notes, or backstory public by default.
+
+GM UI requirements:
+- expose a Quick NPC picker/card from the GM overview and focused session/scene tools;
+- support filter by type, race, gender, role, and use tags;
+- support search by name, role, tags, and seed text;
+- support reroll/refresh without repeating the immediately visible seed when possible;
+- show a compact card with name, race, role, appearance, voice, mannerism, attitude, and hook/secret;
+- provide copy/use-in-note actions that do not create campaign canon;
+- provide pin/save-for-session behavior for temporarily useful seeds;
+- provide "Promote to campaign NPC" as the action that creates durable editable campaign state;
+- after promotion, link to the created NPC card and allow optional scene linking.
+
+Command registry additions for the Quick NPC slice:
+
+```text
+npc.quickPicker
+npc.quickDraw
+npc.promoteQuickSeed
+```
+
+Asset binding is optional and source-seed based:
+
+```ts
+type QuickNpcPortraitCandidate = {
+  id: string;
+  sourceSeedId: string;
+  assetPackId: string;
+  variant: number;
+  assetId?: AssetId;
+  status: "generated" | "pending_review" | "accepted" | "rejected" | "artifact" | "metadata_mismatch";
+  notes?: string;
+  metadata: {
+    sourceSeed: QuickNpcSeed;
+    filename?: string;
+    prompt?: string;
+    model?: string;
+  };
+};
+```
+
+Rules:
+- portrait candidates are not source of truth for NPC identity;
+- the app must remain fully usable when no portrait pack is installed;
+- raw generated portraits are offline/bootstrap output, not campaign assets;
+- a portrait becomes usable in Myroll only after it passes through the existing asset validation/import pipeline;
+- imported portrait assets should keep searchable provenance linking them to `sourceSeed.id`;
+- if multiple variants exist, the UI should prefer a curated `accepted` variant and hide rejected/artifact variants by default;
+- curation may be manual first and VLM-assisted later;
+- curation should track race/gender mismatches, artifacts, malformed anatomy, and species-specific failures such as problematic dragonborn outputs;
+- no Quick NPC portrait is published to `/player` unless the GM explicitly links it to a public-displayable asset and publishes a player-safe display mode.
+
 ## 8. Combat Domain
 
 Combat is manual and rules-light in Slice 11. It stores enough D&D-ish state for live table operation without rules automation.
@@ -1627,6 +1838,7 @@ type WidgetKind =
   | "combat_tracker"
   | "entity_library"
   | "npc_generator"
+  | "quick_npc_picker"
   | "dice_roller"
   | "display_status"
   | "timer"
@@ -1844,6 +2056,8 @@ type MyrollDurableStore = {
   storageHealth: StorageHealthRecord;
 };
 ```
+
+The bundled Quick NPC seed catalog is app content loaded from the repository/package, not durable campaign state. Promoted quick NPCs become normal `entities` records.
 
 Suggested indexes:
 

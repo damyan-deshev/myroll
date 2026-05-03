@@ -18,9 +18,12 @@ Date: 2026-05-02
 - Slice 12 scene orchestration and GM context staging.
 - Slice 13 backup, export, restore, and original public demo hardening.
 - Post-Slice 13 laptop UX rework: docked `/gm` overview, focused GM surfaces, and preserved `/gm/floating` advanced canvas.
+- Quick NPC static seed catalog spike: 300 bundled JSON seeds, 25 per requested broad NPC type, with D&D race/species labels, male/female gender metadata, and aligned names.
 
 ## Near Term
 
+- Wire the bundled Quick NPC seed catalog into a local draw/search/filter GM surface with copy, pin, reroll, and "Promote to campaign NPC" actions.
+- Add Quick NPC portrait-pack import/curation only after the text seed workflow works without images.
 - Follow up the implemented bundled battle-map integration slice:
   - decide later whether immutable packs should move from git to LFS/release artifacts;
   - add richer provenance/curation metadata filters after the core catalog is exercised;
@@ -58,6 +61,13 @@ Date: 2026-05-02
 - Do not publish scene context directly to `/player`; staged scene display must reuse the existing public display sanitizers.
 - Do not turn scene-linked entities, snippets, or notes into implicit public content.
 - Do not let LLM output mutate campaign state directly. It must create drafts that the GM explicitly applies.
+- Do not treat LLM-generated NPCs, settlements, factions, quests, or character hooks as object creation. These are GM-owned primitives; the model may prefill or suggest fields only.
+- Do not make NPC portraits mandatory. Optional shipped/imported/generated portraits must link through the existing validated asset pipeline.
+- Do not make Quick NPC depend on a live model call. It should draw from a shipped static seed catalog and copy selected seeds into GM-owned NPC records.
+- Do not mutate the global bundled Quick NPC seed catalog during campaign play; used seeds become editable campaign NPC state.
+- Do not treat Quick NPC portrait generation as the Quick NPC primitive. Portraits map back to seed IDs and are optional enrichment after validation/curation.
+- Do not require the generated portrait manifest for the base Quick NPC picker, draw, search, or promote workflow.
+- Do not feed every generated option back into normal LLM context after the GM picks one. Canonize the selected option and suppress rejected/proposed branches unless explicitly recalled.
 - Do not send hidden/private campaign context to a model unless the GM selected a GM-private context mode and can preview the payload.
 - Do not expose API keys, absolute paths, or raw prompt payloads through public endpoints, logs, screenshots, `/health`, or `/api/meta`.
 - Do not publish generated snippets/images/maps/party data to `/player` automatically from an LLM response.

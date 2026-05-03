@@ -133,6 +133,8 @@ Critical actions must be one-click or hotkey-driven:
 - hide area;
 - return to previous player display state;
 - toggle initiative projection;
+- draw a quick NPC;
+- promote a quick NPC to campaign state;
 - show NPC portrait;
 - show text reveal;
 - exit reveal/edit mode.
@@ -140,6 +142,41 @@ Critical actions must be one-click or hotkey-driven:
 Asset-heavy prep needs the same standard. A GM with hundreds of maps or token images should be able to batch import, categorize, search, attach, and align assets without turning session prep into file management.
 
 Gridless battle maps are a deliberate asset style. Myroll should treat the source image as stable art and give the GM fast live-grid calibration controls, including grid size changes and four-direction nudges, instead of requiring image edits or baked grid pixels.
+
+### 4.4a Quick NPCs Are Run-Mode Material
+
+Quick NPC is a first-class Myroll primitive for the live-session moment where the GM suddenly needs a believable ordinary person.
+
+The product job is:
+
+```text
+The party talks to someone unexpected.
+The GM draws or filters one usable minor NPC in seconds.
+The GM can run that NPC immediately.
+If the NPC matters, the GM promotes the seed into editable campaign canon.
+```
+
+Quick NPC must not depend on a runtime LLM call. It is backed by a shipped static seed catalog that works offline, loads quickly, and remains deterministic enough for testing and debugging.
+
+A quick NPC seed contains:
+- name;
+- broad type;
+- race/species;
+- gender metadata;
+- role;
+- origin;
+- appearance;
+- voice;
+- mannerism;
+- attitude;
+- tiny backstory;
+- hook or secret;
+- portrait tags;
+- usage tags.
+
+The seed is source material, not campaign state. Drawing a seed does not make it canon. "Promote to campaign NPC" copies the selected seed into a GM-owned editable NPC/entity record. After promotion, continuity comes from the campaign record, not from the global bundled seed catalog.
+
+Portraits are optional enrichment. The app must work with only the JSON seed catalog. Generated portrait packs map back to seeds through `sourceSeed.id`, may contain multiple variants per seed, and should pass through manual or VLM-assisted curation before an accepted portrait is offered as the default visual.
 
 ### 4.5 Safe Reveal Rule
 
@@ -199,7 +236,7 @@ Useful tool primitives:
 - combat tracker;
 - map display;
 - manual fog;
-- NPC generator;
+- Quick NPC picker backed by a static seed catalog;
 - NPC library;
 - bestiary/entity library;
 - session notes viewer;

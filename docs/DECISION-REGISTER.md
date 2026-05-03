@@ -731,3 +731,65 @@ Consequences:
 - Fine/coarse resize, nudge, and numeric controls can share the existing `PATCH /api/maps/{map_id}/grid` behavior.
 - Player grid visibility remains a scene-map setting and does not expose the GM calibration grid unless explicitly enabled.
 - Future pan/framing features must stay separate from tactical grid calibration.
+
+## DR-051: LLM Proposals Are Ephemeral Until Canonized
+
+Decision: LLM-generated options, alternatives, hooks, complications, and creative variants are proposal history until the GM explicitly selects, edits, and canonizes them. Future normal LLM context uses the selected/canonized state, not the full brainstorm set.
+
+Rationale:
+- A GM often asks for multiple options, chooses one, and then runs the scene from that choice.
+- If all generated options remain in model context as equal text, rejected branches can pollute future continuity and cause the assistant to blend incompatible ideas.
+- Myroll's value is campaign-aware assistance under GM control, not model authorship of the campaign.
+- The existing draft/apply boundary is necessary but not specific enough for option-generating workflows; proposal lifecycle and canonization need first-class state.
+
+Consequences:
+- Option-generating prompts should request structured output with stable option IDs and proposed canon deltas where the provider supports it.
+- Proposal sets and options are persisted with statuses such as proposed, selected, rejected, saved_for_later, superseded, and canonized.
+- Selecting an option creates a canonization draft/state patch for explicit GM review and apply.
+- Rejected options are retained for audit and explicit recall, but are excluded from normal creative generation context.
+- Saved-for-later options may enter an idea bank, but they are not active campaign truth.
+- Exact recall and context packaging must prefer canonized/approved state over raw proposal history.
+
+## DR-052: Campaign Objects Are GM-Owned Manual Primitives
+
+Decision: campaign objects such as NPCs, settlements, factions, quests, and character hooks are first-class Myroll records owned by the GM. The LLM may prefill forms, suggest field updates, draft related content, and summarize evidence into those fields, but object creation and updates remain explicit GM UI actions.
+
+Rationale:
+- A GM needs deterministic campaign continuity that is searchable and editable without a model call.
+- NPC continuity depends on concrete facts such as voice, appearance, last interaction, promises, quests given, relationship state, secrets, and source evidence.
+- Treating model output as object creation would blur the boundary between useful assistance and campaign authorship.
+- The product should spare the GM from writing exhaustive notes while still keeping the GM in control of what becomes durable campaign state.
+
+Consequences:
+- NPC cards and similar records must be usable as local primitives before their LLM workflows are considered complete.
+- NPC records may link an optional portrait/image asset, but portraits are not required for continuity.
+- NPC portrait assets may come from shipped/bundled packs or GM import, and imported/generated portraits must pass through the existing asset validation/import pipeline before linking.
+- LLM-generated NPC, settlement, faction, quest, or character hook content is a prefill/suggestion/draft until the GM saves it.
+- Existing object records are the preferred source for future context packages and exact recall.
+- If a first-class object type is missing, the roadmap should add that primitive rather than letting the LLM workflow hide the absence behind prompt text.
+
+## DR-053: Quick NPC Uses A Shipped Static Seed Library
+
+Decision: Myroll should provide a low-latency Quick NPC workflow backed by a curated shipped static library of prewritten minor NPC seeds, not by a runtime model call.
+
+Rationale:
+- During live play, the GM often needs an immediate name, origin, voice cue, and small hook for an unexpected soldier, guard, merchant, villager, or passerby.
+- Waiting for an LLM call during that table moment is too slow and unreliable for a run-mode shortcut.
+- A static library can be filtered, drawn instantly, used offline, and copied into durable campaign state when the GM chooses to keep the NPC.
+- Quick NPCs should reduce improvisation friction without making every throwaway character a large prep task.
+
+Consequences:
+- Quick NPC seeds are app-provided source material until the GM chooses "Use as NPC" or equivalent.
+- Using a seed copies it into a GM-owned NPC record or prefilled NPC form so campaign continuity is local and editable.
+- The global seed catalog is not campaign truth and should not be mutated by normal campaign play.
+- Seeds may carry D&D race/species labels and male/female gender metadata for immediate fantasy-table usability, but they should not include rules mechanics, stat assumptions, or system automation.
+- Quick NPC records should remain useful without portraits, but may optionally link bundled/imported/generated portrait assets through the existing asset pipeline.
+- The library should cover broad reusable NPC types such as guards/soldiers, commoners, merchants, artisans, officials, criminals, scholars, priests, travelers, wilderness locals, sailors, cultists, and weird strangers.
+- Generated portrait packs are enrichment over the seed catalog, not the product source of truth.
+- Portrait candidates map back to seeds through `sourceSeed.id` and may have multiple generated variants per seed.
+- Manual or VLM-assisted curation should select accepted variants and flag artifacts, race/gender mismatches, and species-specific failures before portraits become default UI choices.
+- Myroll must remain fully usable when only the bundled seed JSON exists and no portrait pack has been imported.
+
+2026-05-02 implementation note:
+- Static catalog v1 exists at `bundled/quick_npc_seeds/quick_npc_seeds.json` as a JSON array of 300 compact seeds, with 25 seeds in each requested broad type and race/gender/name alignment baked into every seed.
+- This is content-only delivery; future integration should validate the static schema and preserve the copy-into-GM-owned-NPC boundary.
