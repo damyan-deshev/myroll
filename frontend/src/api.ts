@@ -27,6 +27,7 @@ import type {
   Health,
   MapRecord,
   Meta,
+  BuildBranchResult,
   BuildRecapResult,
   LlmContextPackage,
   LlmProviderProfile,
@@ -40,6 +41,11 @@ import type {
   PublicSnippet,
   PublicSnippetsResponse,
   PartyTrackerConfig,
+  PlanningMarker,
+  PlanningMarkersResponse,
+  ProposalOption,
+  ProposalSetDetail,
+  ProposalSetsResponse,
   SceneMapToken,
   RuntimeState,
   Scene,
@@ -213,7 +219,14 @@ export const api = {
     ),
   createContextPreview: (
     campaignId: string,
-    payload: { session_id: string; task_kind?: string; visibility_mode?: "gm_private" | "public_safe"; gm_instruction?: string }
+    payload: {
+      session_id?: string | null;
+      scene_id?: string | null;
+      task_kind?: string;
+      scope_kind?: "campaign" | "session" | "scene";
+      visibility_mode?: "gm_private" | "public_safe";
+      gm_instruction?: string;
+    }
   ) =>
     request<LlmContextPackage>(`/api/campaigns/${campaignId}/llm/context-preview`, {
       method: "POST",
@@ -229,6 +242,48 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload)
     }),
+  buildBranchDirections: (campaignId: string, payload: { provider_profile_id: string; context_package_id: string }) =>
+    request<BuildBranchResult>(`/api/campaigns/${campaignId}/llm/branch-directions/build`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  proposalSets: (campaignId: string) => request<ProposalSetsResponse>(`/api/campaigns/${campaignId}/proposal-sets`),
+  proposalSet: (proposalSetId: string) => request<ProposalSetDetail>(`/api/proposal-sets/${proposalSetId}`),
+  selectProposalOption: (optionId: string) =>
+    request<ProposalOption>(`/api/proposal-options/${optionId}/select`, { method: "POST" }),
+  rejectProposalOption: (optionId: string) =>
+    request<ProposalOption>(`/api/proposal-options/${optionId}/reject`, { method: "POST" }),
+  saveProposalOptionForLater: (optionId: string) =>
+    request<ProposalOption>(`/api/proposal-options/${optionId}/save-for-later`, { method: "POST" }),
+  createPlanningMarkerFromOption: (
+    optionId: string,
+    payload: {
+      title: string;
+      marker_text: string;
+      scope_kind?: "campaign" | "session" | "scene" | null;
+      session_id?: string | null;
+      scene_id?: string | null;
+      expires_at?: string | null;
+      confirm_warnings?: boolean;
+    }
+  ) =>
+    request<PlanningMarker>(`/api/proposal-options/${optionId}/create-planning-marker`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  planningMarkers: (campaignId: string) => request<PlanningMarkersResponse>(`/api/campaigns/${campaignId}/planning-markers`),
+  patchPlanningMarker: (
+    markerId: string,
+    payload: Partial<Pick<PlanningMarker, "title" | "marker_text" | "expires_at">> & { confirm_warnings?: boolean }
+  ) =>
+    request<PlanningMarker>(`/api/planning-markers/${markerId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    }),
+  expirePlanningMarker: (markerId: string) =>
+    request<PlanningMarker>(`/api/planning-markers/${markerId}/expire`, { method: "POST" }),
+  discardPlanningMarker: (markerId: string) =>
+    request<PlanningMarker>(`/api/planning-markers/${markerId}/discard`, { method: "POST" }),
   saveSessionRecap: (
     campaignId: string,
     payload: { session_id: string; title: string; body_markdown: string; source_llm_run_id?: string | null; evidence_refs?: Array<Record<string, unknown>> }

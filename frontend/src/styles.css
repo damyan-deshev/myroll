@@ -239,6 +239,9 @@ textarea {
 
 .scribe-feed,
 .scribe-memory,
+.scribe-proposals,
+.scribe-proposal-set,
+.scribe-proposal-card,
 .scribe-recall,
 .scribe-inspection,
 .scribe-review-block,
@@ -260,6 +263,7 @@ textarea {
 
 .scribe-feed-row,
 .scribe-candidate,
+.scribe-proposal-card,
 .scribe-hit {
   display: grid;
   gap: 6px;
@@ -281,6 +285,7 @@ textarea {
 
 .scribe-feed-row p,
 .scribe-candidate p,
+.scribe-proposal-card p,
 .scribe-hit p {
   margin: 0;
   color: #d7dee2;
@@ -304,8 +309,31 @@ textarea {
 
 .scribe-instruction textarea,
 .scribe-review-block textarea,
+.scribe-proposals textarea,
 .scribe-inspection textarea {
   min-height: 92px;
+}
+
+.scribe-proposal-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.scribe-proposal-card {
+  background: #111517;
+}
+
+.link-button {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #d7dee2;
+  text-align: left;
+}
+
+.link-button:hover {
+  background: #20272b;
 }
 
 .scribe-inspection {

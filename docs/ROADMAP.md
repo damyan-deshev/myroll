@@ -1143,7 +1143,8 @@ Goal: make a large language model a first-class GM creative workbench without tu
 
 Status as of 2026-05-04:
 - shipped first Scribe spine: compact `/gm` live capture, transcript correction, provider profile/probe, reviewed context preview, backend-owned recap run, editable recap save, targetless Memory Inbox accept, manual aliases, basic recall, and default export redaction for LLM prompt/response payloads;
-- planned next: branch proposals/planning markers and player-safe recap/snippet leak-warning gate;
+- shipped branch proposal/planning marker slice: campaign/session/scene branch context preview, structured proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection;
+- planned next: player-safe recap/snippet leak-warning gate and later proposal canonization;
 - deferred: vectors, streaming, tool calls, audio capture/transcription, and autonomous entity mutation.
 
 Detailed build specification:
@@ -1161,7 +1162,7 @@ Product decision:
 - Campaign objects such as NPCs, settlements, factions, quests, and character hooks are manual GM-owned Myroll primitives first; the model may prefill fields, suggest updates, or produce drafts, but it does not own or silently create those objects.
 - Options are ephemeral. Selections become state. Only committed state enters future model context by default.
 - When a prompt asks for options, variants, ideas, complications, hooks, or alternatives, the harness should request structured output with stable option IDs, summaries, and proposed campaign deltas.
-- If the GM selects option 2 from a generated set of options, future context should carry the canonized selected direction, not the entire brainstorm that also contains rejected options.
+- If the GM adopts option 2 from a generated set of options, future context carries only the active planning marker text, not the selected option body and not the entire brainstorm that also contains rejected options.
 - Unselected options remain available in run/proposal history for audit, follow-up, or explicit "what did we reject?" recall, but they must not compete with canon in normal generation context.
 
 Dedicated implementation areas:
@@ -1254,19 +1255,23 @@ Build:
   - fast trusted preview is allowed when context hash and source classes match the last reviewed preview; stale or changed context forces full preview.
 - Proposal lifecycle for option-generating tasks:
   - `proposal_set` records linked to campaign/session/scene/entity context and the originating LLM run;
-  - `proposal_option` records with stable option IDs, title, summary, body, proposed canon delta, visibility, and status;
+  - `proposal_option` records with stable option IDs, title, summary, body, possible consequences, inspection-only proposed delta, marker draft, visibility, and status;
+  - `planning_marker` records carry the selected GM intent forward as planning context, with scope, expiry, provenance, edit metadata, and lint warnings;
   - statuses: proposed, selected, rejected, saved_for_later, superseded, canonized;
-  - "Use", "Edit & use", "Save for later", "Reject", and "Reject set" GM actions;
-  - a selected option produces a canonization draft/state patch rather than becoming durable truth silently.
+  - shipped actions: "Adopt as Planning Direction", "Save for later", "Reject", "Expire Marker", and "Discard Marker";
+  - selected options without active planning markers do not enter normal future context;
+  - proposal canonization/state patches remain deferred and are not silently created.
 - Structured response contracts:
   - proposal tasks must return machine-readable options where supported by the provider;
-  - each option should include a short GM-facing summary and an explicit `canon_delta` describing new facts, changed entity/relationship/faction state, open hooks, and player-facing recap candidates;
-  - plain-text fallback parsing is allowed, but the persisted artifact must still normalize into proposal/options before apply actions are shown.
+  - each option should include a short GM-facing summary, possible consequences if played, what may be revealed, what remains hidden, and a concise planning marker draft;
+  - one/two valid options are stored as degraded success with visible warnings;
+  - malformed option rows are discarded only with normalization warnings;
+  - malformed output after one schema-repair attempt fails visibly and creates no proposal records.
 - Canonization and context hygiene:
-  - selected options are normalized into campaign/session/scene memory, notes, entity drafts, faction/location/quest records, or session state patches according to the template;
+  - shipped branch proposals create planning markers, not canon memory, notes, entity drafts, faction/location/quest records, or session state patches;
   - rejected options are stored as rejected proposal history, not as campaign memory;
   - saved-for-later options enter an idea bank and are not active canon;
-  - context packages include canonized selections and approved memory first, never raw brainstorm sets by default;
+  - context packages include approved memory and active planning markers, never raw brainstorm sets by default;
   - proposal/rejection history is included only when the GM explicitly selects a brainstorm-history or contradiction-checking context mode.
 - Append-only session transcript:
   - live DM note capture events with backend timestamps and per-session order;
@@ -1361,7 +1366,7 @@ Build:
   - session recap draft.
 - Draft apply actions are explicit:
   - select proposal option;
-  - edit and canonize selected option;
+  - edit and canonize selected option in a future canonization slice;
   - save proposal option for later;
   - reject proposal option or proposal set;
   - save as private note;

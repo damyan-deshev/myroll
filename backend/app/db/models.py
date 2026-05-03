@@ -658,6 +658,10 @@ class LlmContextPackage(Base):
             "review_status in ('unreviewed', 'reviewed')",
             name="ck_llm_context_packages_review_status",
         ),
+        CheckConstraint(
+            "scope_kind in ('campaign', 'session', 'scene')",
+            name="ck_llm_context_packages_scope_kind",
+        ),
     )
 
     id: Mapped[str] = mapped_column(primary_key=True)
@@ -665,12 +669,15 @@ class LlmContextPackage(Base):
         ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
     )
     session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)
+    scene_id: Mapped[str | None] = mapped_column(ForeignKey("scenes.id", ondelete="CASCADE"), index=True)
     task_kind: Mapped[str] = mapped_column(nullable=False)
+    scope_kind: Mapped[str] = mapped_column(default="session", nullable=False)
     visibility_mode: Mapped[str] = mapped_column(default="gm_private", nullable=False)
     gm_instruction: Mapped[str] = mapped_column(Text, default="", nullable=False)
     source_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     rendered_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     source_ref_hash: Mapped[str] = mapped_column(nullable=False, index=True)
+    warnings_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     review_status: Mapped[str] = mapped_column(default="unreviewed", nullable=False)
     reviewed_at: Mapped[str | None] = mapped_column()
     reviewed_by: Mapped[str | None] = mapped_column()
@@ -825,6 +832,99 @@ class ScribeSearchIndex(Base):
     normalized_text: Mapped[str] = mapped_column(Text, nullable=False)
     lane: Mapped[str] = mapped_column(default="canon", nullable=False)
     visibility: Mapped[str] = mapped_column(default="gm_private", nullable=False)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class ProposalSet(Base):
+    __tablename__ = "proposal_sets"
+    __table_args__ = (
+        CheckConstraint(
+            "scope_kind in ('campaign', 'session', 'scene')",
+            name="ck_proposal_sets_scope_kind",
+        ),
+        CheckConstraint(
+            "status in ('proposed', 'partially_used', 'rejected', 'superseded')",
+            name="ck_proposal_sets_status",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="SET NULL"), index=True)
+    scene_id: Mapped[str | None] = mapped_column(ForeignKey("scenes.id", ondelete="SET NULL"), index=True)
+    llm_run_id: Mapped[str | None] = mapped_column(ForeignKey("llm_runs.id", ondelete="SET NULL"), index=True)
+    context_package_id: Mapped[str | None] = mapped_column(ForeignKey("llm_context_packages.id", ondelete="SET NULL"), index=True)
+    task_kind: Mapped[str] = mapped_column(nullable=False)
+    scope_kind: Mapped[str] = mapped_column(nullable=False)
+    title: Mapped[str] = mapped_column(nullable=False)
+    status: Mapped[str] = mapped_column(default="proposed", nullable=False)
+    normalization_warnings_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class ProposalOption(Base):
+    __tablename__ = "proposal_options"
+    __table_args__ = (
+        CheckConstraint(
+            "status in ('proposed', 'selected', 'rejected', 'saved_for_later', 'superseded', 'canonized')",
+            name="ck_proposal_options_status",
+        ),
+        UniqueConstraint("proposal_set_id", "stable_option_key", name="uq_proposal_options_set_key"),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    proposal_set_id: Mapped[str] = mapped_column(ForeignKey("proposal_sets.id", ondelete="CASCADE"), nullable=False, index=True)
+    stable_option_key: Mapped[str] = mapped_column(nullable=False)
+    title: Mapped[str] = mapped_column(nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    consequences: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    reveals: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    stays_hidden: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    proposed_delta_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    planning_marker_text: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(default="proposed", nullable=False)
+    selected_at: Mapped[str | None] = mapped_column()
+    canonized_at: Mapped[str | None] = mapped_column()
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class PlanningMarker(Base):
+    __tablename__ = "planning_markers"
+    __table_args__ = (
+        CheckConstraint(
+            "scope_kind in ('campaign', 'session', 'scene')",
+            name="ck_planning_markers_scope_kind",
+        ),
+        CheckConstraint(
+            "status in ('active', 'expired', 'superseded', 'canonized', 'discarded')",
+            name="ck_planning_markers_status",
+        ),
+        Index("uq_planning_markers_source_option", "source_proposal_option_id", unique=True, sqlite_where=text("source_proposal_option_id IS NOT NULL")),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="SET NULL"), index=True)
+    scene_id: Mapped[str | None] = mapped_column(ForeignKey("scenes.id", ondelete="SET NULL"), index=True)
+    source_proposal_option_id: Mapped[str | None] = mapped_column(ForeignKey("proposal_options.id", ondelete="SET NULL"), index=True)
+    scope_kind: Mapped[str] = mapped_column(nullable=False)
+    status: Mapped[str] = mapped_column(default="active", nullable=False)
+    title: Mapped[str] = mapped_column(nullable=False)
+    marker_text: Mapped[str] = mapped_column(Text, nullable=False)
+    original_marker_text: Mapped[str | None] = mapped_column(Text)
+    lint_warnings_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    provenance_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    edited_at: Mapped[str | None] = mapped_column()
+    edited_from_source: Mapped[bool] = mapped_column(default=False, nullable=False)
+    expires_at: Mapped[str | None] = mapped_column()
     created_at: Mapped[str] = mapped_column(nullable=False)
     updated_at: Mapped[str] = mapped_column(nullable=False)
 

@@ -50,6 +50,7 @@ import type {
   AssetBatchUploadResult,
   AssetKind,
   AssetVisibility,
+  BuildBranchResult,
   BuildRecapResult,
   BundledMap,
   Campaign,
@@ -70,8 +71,12 @@ import type {
   MemoryCandidate,
   Note,
   PlayerDisplayState,
+  PlanningMarker,
   PartyLayout,
   PartyTrackerConfig,
+  ProposalOption,
+  ProposalSetDetail,
+  ProposalSetSummary,
   PublicSnippet,
   PublicMapToken,
   RuntimeState,
@@ -878,6 +883,15 @@ function sourceRefLabel(ref: Record<string, unknown>): string {
   return `${String(ref.kind ?? "source")}:${String(ref.id ?? "").slice(0, 8)} · ${String(ref.lane ?? "lane")}`;
 }
 
+function proposalOptionLabel(status: ProposalOption["status"]): string {
+  if (status === "selected") return "Selected";
+  if (status === "rejected") return "Rejected by GM";
+  if (status === "saved_for_later") return "Saved for later";
+  if (status === "superseded") return "Not chosen in this pass";
+  if (status === "canonized") return "Canonized";
+  return "Proposed";
+}
+
 function ScribeWidget(props: SharedWidgetProps) {
   const queryClient = useQueryClient();
   const [captureBody, setCaptureBody] = useState("");
@@ -898,6 +912,15 @@ function ScribeWidget(props: SharedWidgetProps) {
   const [recallQuery, setRecallQuery] = useState("");
   const [aliasText, setAliasText] = useState("");
   const [inspectionOpen, setInspectionOpen] = useState(false);
+  const [branchScope, setBranchScope] = useState<"campaign" | "session" | "scene">("scene");
+  const [branchInstruction, setBranchInstruction] = useState("");
+  const [branchContextPackage, setBranchContextPackage] = useState<null | Awaited<ReturnType<typeof api.createContextPreview>>>(null);
+  const [branchDraft, setBranchDraft] = useState<BuildBranchResult | null>(null);
+  const [selectedProposalSetId, setSelectedProposalSetId] = useState<string | null>(null);
+  const [adoptOption, setAdoptOption] = useState<ProposalOption | null>(null);
+  const [markerTitle, setMarkerTitle] = useState("");
+  const [markerText, setMarkerText] = useState("");
+  const [markerConfirmWarnings, setMarkerConfirmWarnings] = useState(false);
 
   const transcriptQuery = useQuery({
     queryKey: ["scribe-transcript", props.selectedCampaignId, props.selectedSessionId],
@@ -913,6 +936,21 @@ function ScribeWidget(props: SharedWidgetProps) {
   const aliasesQuery = useQuery({
     queryKey: ["entity-aliases", props.selectedCampaignId],
     queryFn: () => api.entityAliases(props.selectedCampaignId!),
+    enabled: Boolean(props.selectedCampaignId)
+  });
+  const proposalSetsQuery = useQuery({
+    queryKey: ["proposal-sets", props.selectedCampaignId],
+    queryFn: () => api.proposalSets(props.selectedCampaignId!),
+    enabled: Boolean(props.selectedCampaignId)
+  });
+  const proposalDetailQuery = useQuery({
+    queryKey: ["proposal-set", selectedProposalSetId],
+    queryFn: () => api.proposalSet(selectedProposalSetId!),
+    enabled: Boolean(selectedProposalSetId)
+  });
+  const planningMarkersQuery = useQuery({
+    queryKey: ["planning-markers", props.selectedCampaignId],
+    queryFn: () => api.planningMarkers(props.selectedCampaignId!),
     enabled: Boolean(props.selectedCampaignId)
   });
   const recallResult = useMutation({
@@ -944,6 +982,7 @@ function ScribeWidget(props: SharedWidgetProps) {
     onSuccess: () => {
       setCaptureBody("");
       setContextPackage(null);
+      setBranchContextPackage(null);
       setRecapDraft(null);
       void queryClient.invalidateQueries({ queryKey: ["scribe-transcript", props.selectedCampaignId, props.selectedSessionId] });
     }
@@ -954,6 +993,7 @@ function ScribeWidget(props: SharedWidgetProps) {
       setCorrectionTarget(null);
       setCorrectionBody("");
       setContextPackage(null);
+      setBranchContextPackage(null);
       setRecapDraft(null);
       void queryClient.invalidateQueries({ queryKey: ["scribe-transcript", props.selectedCampaignId, props.selectedSessionId] });
     }
@@ -991,9 +1031,28 @@ function ScribeWidget(props: SharedWidgetProps) {
       setInspectionOpen(true);
     }
   });
+  const previewBranchContext = useMutation({
+    mutationFn: () =>
+      api.createContextPreview(props.selectedCampaignId!, {
+        session_id: branchScope === "campaign" ? null : props.selectedSessionId,
+        scene_id: branchScope === "scene" ? props.selectedSceneId : null,
+        task_kind: "scene.branch_directions",
+        scope_kind: branchScope,
+        visibility_mode: "gm_private",
+        gm_instruction: branchInstruction
+      }),
+    onSuccess: (preview) => {
+      setBranchContextPackage(preview);
+      setBranchDraft(null);
+    }
+  });
   const reviewContext = useMutation({
     mutationFn: () => api.reviewContextPackage(contextPackage!.id),
     onSuccess: (preview) => setContextPackage(preview)
+  });
+  const reviewBranchContext = useMutation({
+    mutationFn: () => api.reviewContextPackage(branchContextPackage!.id),
+    onSuccess: (preview) => setBranchContextPackage(preview)
   });
   const buildRecap = useMutation({
     mutationFn: () =>
@@ -1022,6 +1081,19 @@ function ScribeWidget(props: SharedWidgetProps) {
       void queryClient.invalidateQueries({ queryKey: ["memory-candidates", props.selectedCampaignId] });
     }
   });
+  const buildBranch = useMutation({
+    mutationFn: () =>
+      api.buildBranchDirections(props.selectedCampaignId!, {
+        provider_profile_id: selectedProvider!.id,
+        context_package_id: branchContextPackage!.id
+      }),
+    onSuccess: (result) => {
+      setBranchDraft(result);
+      if (result.proposal_set) setSelectedProposalSetId(result.proposal_set.proposal_set.id);
+      void queryClient.invalidateQueries({ queryKey: ["proposal-sets", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["planning-markers", props.selectedCampaignId] });
+    }
+  });
   const acceptCandidate = useMutation({
     mutationFn: (candidateId: string) => api.acceptMemoryCandidate(candidateId),
     onSuccess: () => {
@@ -1039,6 +1111,61 @@ function ScribeWidget(props: SharedWidgetProps) {
       void queryClient.invalidateQueries({ queryKey: ["entity-aliases", props.selectedCampaignId] });
     }
   });
+  const rejectOption = useMutation({
+    mutationFn: (optionId: string) => api.rejectProposalOption(optionId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["proposal-sets", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["proposal-set", selectedProposalSetId] });
+    }
+  });
+  const saveOptionForLater = useMutation({
+    mutationFn: (optionId: string) => api.saveProposalOptionForLater(optionId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["proposal-sets", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["proposal-set", selectedProposalSetId] });
+    }
+  });
+  const createPlanningMarker = useMutation({
+    mutationFn: () =>
+      api.createPlanningMarkerFromOption(adoptOption!.id, {
+        title: markerTitle,
+        marker_text: markerText,
+        scope_kind: branchDraft?.proposal_set?.proposal_set.scope_kind ?? branchScope,
+        session_id: branchScope === "campaign" ? null : props.selectedSessionId,
+        scene_id: branchScope === "scene" ? props.selectedSceneId : null,
+        confirm_warnings: markerConfirmWarnings
+      }),
+    onSuccess: () => {
+      setAdoptOption(null);
+      setMarkerTitle("");
+      setMarkerText("");
+      setMarkerConfirmWarnings(false);
+      void queryClient.invalidateQueries({ queryKey: ["proposal-sets", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["proposal-set", selectedProposalSetId] });
+      void queryClient.invalidateQueries({ queryKey: ["planning-markers", props.selectedCampaignId] });
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.code === "marker_lint_confirmation_required") {
+        setMarkerConfirmWarnings(true);
+      }
+    }
+  });
+  const expireMarker = useMutation({
+    mutationFn: (markerId: string) => api.expirePlanningMarker(markerId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["proposal-sets", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["proposal-set", selectedProposalSetId] });
+      void queryClient.invalidateQueries({ queryKey: ["planning-markers", props.selectedCampaignId] });
+    }
+  });
+  const discardMarker = useMutation({
+    mutationFn: (markerId: string) => api.discardPlanningMarker(markerId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["proposal-sets", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["proposal-set", selectedProposalSetId] });
+      void queryClient.invalidateQueries({ queryKey: ["planning-markers", props.selectedCampaignId] });
+    }
+  });
 
   function submitCapture() {
     if (!props.selectedCampaignId || !props.selectedSessionId || !captureBody.trim()) return;
@@ -1053,21 +1180,39 @@ function ScribeWidget(props: SharedWidgetProps) {
     providersQuery.error ??
     candidatesQuery.error ??
     aliasesQuery.error ??
+    proposalSetsQuery.error ??
+    proposalDetailQuery.error ??
+    planningMarkersQuery.error ??
     capture.error ??
     correct.error ??
     saveProvider.error ??
     testProvider.error ??
     previewContext.error ??
+    previewBranchContext.error ??
     reviewContext.error ??
+    reviewBranchContext.error ??
     buildRecap.error ??
+    buildBranch.error ??
     saveRecap.error ??
     acceptCandidate.error ??
     rejectCandidate.error ??
     createAlias.error ??
+    rejectOption.error ??
+    saveOptionForLater.error ??
+    createPlanningMarker.error ??
+    expireMarker.error ??
+    discardMarker.error ??
     recallResult.error;
 
   const projection = transcriptQuery.data?.projection ?? [];
   const pendingCandidates = (candidatesQuery.data?.candidates ?? []).filter((candidate) => candidate.status !== "accepted" && candidate.status !== "rejected");
+  const proposalSets = proposalSetsQuery.data?.proposal_sets ?? [];
+  const currentProposalDetail = branchDraft?.proposal_set ?? proposalDetailQuery.data ?? null;
+  const activeMarkers = (planningMarkersQuery.data?.planning_markers ?? []).filter((marker) => marker.status === "active");
+  const branchScopeAvailable =
+    branchScope === "campaign" ||
+    (branchScope === "session" && Boolean(props.selectedSessionId)) ||
+    (branchScope === "scene" && Boolean(props.selectedSceneId));
 
   return (
     <div className="scribe-widget">
@@ -1268,6 +1413,213 @@ function ScribeWidget(props: SharedWidgetProps) {
           </button>
         </div>
         {aliasesQuery.data?.length ? <span className="muted">{aliasesQuery.data.length} campaign aliases</span> : null}
+      </div>
+
+      <div className="scribe-proposals" aria-label="Proposal cockpit">
+        <div className="section-heading">
+          <strong>Proposal Cockpit</strong>
+          <span className="muted">Planning, not canon</span>
+        </div>
+        <div className="scribe-provider-grid">
+          <label>
+            <span>Scope</span>
+            <select
+              value={branchScope}
+              onChange={(event) => {
+                setBranchScope(event.target.value as typeof branchScope);
+                setBranchContextPackage(null);
+                setBranchDraft(null);
+              }}
+              aria-label="Branch proposal scope"
+            >
+              <option value="campaign">Campaign-wide</option>
+              <option value="session" disabled={!props.selectedSessionId}>
+                Current session
+              </option>
+              <option value="scene" disabled={!props.selectedSceneId}>
+                Current scene
+              </option>
+            </select>
+          </label>
+          <label>
+            <span>Branch focus</span>
+            <textarea
+              value={branchInstruction}
+              onChange={(event) => {
+                setBranchInstruction(event.target.value);
+                setBranchContextPackage(null);
+                setBranchDraft(null);
+              }}
+              placeholder="What kind of directions should Scribe explore?"
+            />
+          </label>
+        </div>
+        <div className="token-actions">
+          <button onClick={() => previewBranchContext.mutate()} disabled={!branchScopeAvailable || previewBranchContext.isPending}>
+            Preview Branch Context
+          </button>
+          <button
+            onClick={() => reviewBranchContext.mutate()}
+            disabled={!branchContextPackage || branchContextPackage.review_status === "reviewed" || reviewBranchContext.isPending}
+          >
+            Review Branch Context
+          </button>
+          <button
+            onClick={() => buildBranch.mutate()}
+            disabled={!selectedProvider || !branchContextPackage || branchContextPackage.review_status !== "reviewed" || buildBranch.isPending}
+          >
+            Run Branch Directions
+          </button>
+        </div>
+        {!selectedProvider ? <p className="muted-block">Configure a provider before running branch directions.</p> : null}
+        {selectedProvider && !["level_1_json_best_effort", "level_2_json_validated", "level_3_tool_capable"].includes(selectedProvider.conformance_level) ? (
+          <p className="muted-block">Provider must pass structured JSON testing before branch directions.</p>
+        ) : null}
+        {branchContextPackage?.warnings?.length ? (
+          <p className="muted-block">{String(branchContextPackage.warnings[0]?.message ?? "Campaign-wide branch directions work best with a specific focus.")}</p>
+        ) : null}
+
+        {currentProposalDetail ? (
+          <div className="scribe-proposal-set">
+            <div className="section-heading">
+              <strong>{currentProposalDetail.proposal_set.title}</strong>
+              <span className={currentProposalDetail.proposal_set.degraded ? "status-pill warning" : "status-pill"}>
+                {currentProposalDetail.proposal_set.degraded ? `Degraded output: ${currentProposalDetail.proposal_set.option_count} options` : currentProposalDetail.proposal_set.status}
+              </span>
+            </div>
+            {currentProposalDetail.normalization_warnings.length ? (
+              <p className="muted-block">{currentProposalDetail.normalization_warnings.length} normalization warning(s). See Diagnostics.</p>
+            ) : null}
+            <div className="scribe-proposal-grid">
+              {currentProposalDetail.options.map((option: ProposalOption) => (
+                <div key={option.id} className="scribe-proposal-card">
+                  <div className="section-heading">
+                    <strong>{option.title}</strong>
+                    <span className={option.active_planning_marker_id ? "status-pill success" : option.status === "rejected" ? "status-pill danger" : "status-pill"}>
+                      {option.active_planning_marker_id ? "Active planning" : proposalOptionLabel(option.status)}
+                    </span>
+                  </div>
+                  <p>{option.summary}</p>
+                  <InfoRow label="Possible consequences if played" value={option.consequences || "Not specified"} />
+                  <InfoRow label="May reveal" value={option.reveals || "Not specified"} />
+                  <InfoRow label="Stays hidden" value={option.stays_hidden || "Not specified"} />
+                  <details>
+                    <summary>Draft body</summary>
+                    <p>{option.body}</p>
+                  </details>
+                  <div className="muted-block">
+                    <strong>Marker preview</strong>
+                    <p>{option.planning_marker_text}</p>
+                  </div>
+                  <div className="token-actions">
+                    <button
+                      onClick={() => {
+                        setAdoptOption(option);
+                        setMarkerTitle(option.title);
+                        setMarkerText(option.planning_marker_text);
+                        setMarkerConfirmWarnings(false);
+                      }}
+                    >
+                      Adopt as Planning Direction
+                    </button>
+                    <button onClick={() => saveOptionForLater.mutate(option.id)} disabled={saveOptionForLater.isPending || Boolean(option.active_planning_marker_id)}>
+                      Save for later
+                    </button>
+                    <button onClick={() => rejectOption.mutate(option.id)} disabled={rejectOption.isPending || Boolean(option.active_planning_marker_id)}>
+                      Reject
+                    </button>
+                  </div>
+                  {option.active_planning_marker_id ? <span className="muted">Expire or discard the active marker before rejecting or saving this option.</span> : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {adoptOption ? (
+          <div className="scribe-review-block">
+            <strong>Adopt planning marker</strong>
+            <span className="status-pill warning">Planning, not canon</span>
+            <input value={markerTitle} onChange={(event) => setMarkerTitle(event.target.value)} aria-label="Planning marker title" />
+            <textarea value={markerText} onChange={(event) => setMarkerText(event.target.value)} aria-label="Planning marker text" />
+            {markerText !== adoptOption.planning_marker_text ? (
+              <details open>
+                <summary>Edited from proposal</summary>
+                <p>{adoptOption.planning_marker_text}</p>
+              </details>
+            ) : null}
+            {markerText.length > 500 ? <p className="muted-block">Marker is over 500 characters. Keep planning context concise.</p> : null}
+            {markerConfirmWarnings ? <p className="muted-block">Marker wording has planning/canon warnings. Confirm again to adopt anyway.</p> : null}
+            <div className="token-actions">
+              <button onClick={() => createPlanningMarker.mutate()} disabled={!markerTitle.trim() || !markerText.trim() || createPlanningMarker.isPending}>
+                {markerConfirmWarnings ? "Confirm and Adopt" : "Create Planning Marker"}
+              </button>
+              <button onClick={() => setAdoptOption(null)}>Cancel</button>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="scribe-memory">
+          <div className="section-heading">
+            <strong>Active Planning Markers</strong>
+            <span className="muted">{activeMarkers.length} active</span>
+          </div>
+          {activeMarkers.map((marker: PlanningMarker) => (
+            <div key={marker.id} className="scribe-candidate">
+              <div className="section-heading">
+                <strong>{marker.title}</strong>
+                <span className="status-pill success">Active planning</span>
+              </div>
+              <p>{marker.marker_text}</p>
+              {marker.edited_from_source ? <span className="muted">Edited from proposal</span> : null}
+              {marker.lint_warnings.length ? <span className="status-pill warning">{marker.lint_warnings.length} warning(s)</span> : null}
+              <div className="token-actions">
+                <button onClick={() => expireMarker.mutate(marker.id)} disabled={expireMarker.isPending}>
+                  Expire Marker
+                </button>
+                <button onClick={() => discardMarker.mutate(marker.id)} disabled={discardMarker.isPending}>
+                  Discard Marker
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <details className="scribe-details">
+          <summary>Proposal History</summary>
+          {proposalSets.map((proposalSet: ProposalSetSummary) => (
+            <button key={proposalSet.id} className="link-button" onClick={() => setSelectedProposalSetId(proposalSet.id)}>
+              {proposalSet.title} · {proposalSet.scope_kind} · {proposalSet.option_count} options
+              {proposalSet.has_warnings ? ` · ${proposalSet.warning_count} warning(s)` : ""}
+            </button>
+          ))}
+          {!proposalSets.length ? <span className="muted">No proposal sets yet.</span> : null}
+        </details>
+
+        <details className="scribe-details">
+          <summary>Branch Diagnostics</summary>
+          {branchContextPackage ? (
+            <>
+              <InfoRow label="Context" value={`${branchContextPackage.scope_kind} · ${branchContextPackage.review_status} · ${branchContextPackage.token_estimate} est. tokens`} />
+              <InfoRow label="Source classes" value={branchContextPackage.source_classes.join(", ") || "none"} />
+              <div className="scribe-source-list">
+                {branchContextPackage.source_refs.map((ref, index) => (
+                  <span key={`${String(ref.id)}-${index}`}>{sourceRefLabel(ref)}</span>
+                ))}
+              </div>
+              <textarea readOnly value={branchContextPackage.rendered_prompt || "Rendered prompt unavailable."} aria-label="Branch rendered prompt preview" />
+            </>
+          ) : (
+            <span className="muted">Preview branch context to inspect sources and prompt.</span>
+          )}
+          {branchDraft ? (
+            <>
+              <InfoRow label="Run" value={`${branchDraft.run.status} · ${branchDraft.run.duration_ms ?? "-"}ms`} />
+              {branchDraft.run.parse_failure_reason ? <InfoRow label="Parse failure" value={branchDraft.run.parse_failure_reason} /> : null}
+              <textarea readOnly value={JSON.stringify(branchDraft.proposal_set ?? branchDraft.warnings, null, 2)} aria-label="Branch normalized output JSON" />
+            </>
+          ) : null}
+        </details>
       </div>
 
       {inspectionOpen ? (

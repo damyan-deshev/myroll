@@ -670,12 +670,16 @@ export type LlmContextPackage = {
   id: string;
   campaign_id: string;
   session_id: string | null;
+  scene_id: string | null;
   task_kind: string;
+  scope_kind: "campaign" | "session" | "scene";
   visibility_mode: "gm_private" | "public_safe";
   gm_instruction: string;
   source_refs: Array<Record<string, unknown>>;
   rendered_prompt: string;
   source_ref_hash: string;
+  source_classes: string[];
+  warnings: Array<Record<string, unknown>>;
   review_status: "unreviewed" | "reviewed";
   reviewed_at: string | null;
   reviewed_by: string | null;
@@ -765,6 +769,96 @@ export type BuildRecapResult = {
   };
   candidates: MemoryCandidate[];
   rejected_drafts: Array<Record<string, unknown>>;
+};
+
+export type ProposalOption = {
+  id: string;
+  proposal_set_id: string;
+  stable_option_key: string;
+  title: string;
+  summary: string;
+  body: string;
+  consequences: string;
+  reveals: string;
+  stays_hidden: string;
+  proposed_delta: Record<string, unknown>;
+  planning_marker_text: string;
+  status: "proposed" | "selected" | "rejected" | "saved_for_later" | "superseded" | "canonized";
+  selected_at: string | null;
+  canonized_at: string | null;
+  active_planning_marker_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PlanningMarker = {
+  id: string;
+  campaign_id: string;
+  session_id: string | null;
+  scene_id: string | null;
+  source_proposal_option_id: string | null;
+  scope_kind: "campaign" | "session" | "scene";
+  status: "active" | "expired" | "superseded" | "canonized" | "discarded";
+  title: string;
+  marker_text: string;
+  original_marker_text: string | null;
+  lint_warnings: string[];
+  provenance: Record<string, unknown>;
+  edited_at: string | null;
+  edited_from_source: boolean;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProposalSetSummary = {
+  id: string;
+  campaign_id: string;
+  session_id: string | null;
+  scene_id: string | null;
+  llm_run_id: string | null;
+  context_package_id: string | null;
+  task_kind: string;
+  scope_kind: "campaign" | "session" | "scene";
+  title: string;
+  status: string;
+  option_count: number;
+  selected_count: number;
+  active_marker_count: number;
+  rejected_count: number;
+  saved_count: number;
+  has_warnings: boolean;
+  warning_count: number;
+  degraded: boolean;
+  repair_attempted: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProposalSetsResponse = {
+  proposal_sets: ProposalSetSummary[];
+  updated_at: string;
+};
+
+export type ProposalSetDetail = {
+  proposal_set: ProposalSetSummary;
+  options: ProposalOption[];
+  planning_markers: PlanningMarker[];
+  run: LlmRun | null;
+  context_package: LlmContextPackage | null;
+  normalization_warnings: Array<Record<string, unknown>>;
+};
+
+export type BuildBranchResult = {
+  run: LlmRun;
+  proposal_set: ProposalSetDetail | null;
+  rejected_options: Array<Record<string, unknown>>;
+  warnings: Array<Record<string, unknown>>;
+};
+
+export type PlanningMarkersResponse = {
+  planning_markers: PlanningMarker[];
+  updated_at: string;
 };
 
 export type EntityAlias = {

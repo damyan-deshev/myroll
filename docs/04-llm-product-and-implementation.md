@@ -1,7 +1,7 @@
 # Myroll LLM Product And Implementation Spec
 
 Date: 2026-05-04
-Status: First Scribe spine implemented; later creative/public-safe slices remain planned
+Status: First Scribe spine plus branch proposal/planning marker slice implemented; public-safe slice remains planned
 
 This document turns the LLM direction into implementable product slices. It assumes the current Myroll architecture:
 
@@ -35,7 +35,7 @@ Current shipped status:
 - `[shipped]` LLM-0c session recap draft: reviewed context -> provider run -> structured `SessionRecapBundle`, one schema-repair attempt, backend validation of memory-candidate evidence refs against the reviewed context package, validation failures, editable reviewed recap save, and export redaction for prompt/response payloads.
 - `[shipped]` LLM-0d memory inbox: targetless memory candidates, `Accept into Memory` as one atomic apply transaction, idempotent repeated accept, and rejected/weak candidates excluded from accepted memory.
 - `[shipped]` LLM-1 first recall spine: campaign memory entries, reviewed session recaps, live capture search indexing, manual aliases, query expansion, and policy-filtered recall results. This first spine uses basic projection-table search, not the full FTS5 target described later in this document.
-- `[planned]` LLM-2 branch proposals and planning markers.
+- `[shipped]` LLM-2 branch proposals and planning markers: campaign/session/scene branch context preview, structured branch runs, proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection.
 - `[planned]` LLM-3 player-safe recap/snippet drafting and leak warning gate.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
 
@@ -49,7 +49,8 @@ Known limitations in the shipped first spine:
 
 - cancellation is a durable soft cancel: Myroll marks the run canceled and discards late provider responses, but the blocking non-streaming upstream HTTP request may continue until the provider returns or times out;
 - recall currently scans a `scribe_search_index` projection table over live captures, reviewed recaps, and accepted memory entries; it is not yet SQLite FTS5 and does not yet index every notes/entities/public-snippet source promised by the full recall slice;
-- the search projection has upsert behavior for current Scribe writes, but no source-level garbage collection/rebuild command beyond campaign-level cascade cleanup.
+- the search projection has upsert behavior for current Scribe writes, but no source-level garbage collection/rebuild command beyond campaign-level cascade cleanup;
+- branch proposals are planning-only in v1: one active marker can be created per source proposal option, proposed deltas are inspection-only, and there is no proposal canonization/apply endpoint.
 
 ## 1. Product Definition
 
@@ -140,7 +141,7 @@ Allowed context:
 - canon facts;
 - approved memory;
 - active planning markers;
-- selected/canonized proposal outcomes;
+- canonized proposal outcomes when a later canonization slice exists;
 - explicit evidence snippets from exact recall.
 
 Excluded by default:
@@ -244,7 +245,7 @@ Inspection surfaces may include:
 
 Inspection surfaces are GM-private and never available to `/player`.
 
-The shipped `/gm` Scribe panel implements this as an expandable inspection area that shows context source refs, source hash, rendered prompt, run status, parse failure details, and normalized output JSON for the first recap loop.
+The shipped `/gm` Scribe panel implements this as expandable inspection areas that show context source refs, source hash/classes, rendered prompt when retained, run status, parse failure details, normalized output JSON, proposal normalization warnings, and planning marker provenance.
 
 ### 2.10 Correction Loops
 
@@ -278,7 +279,7 @@ Allowed:
 - explicit map-reduce mode with visible budget explanation;
 - explicit fallback task selected by the GM.
 
-The shipped recap path blocks unverified/low-conformance providers, requires reviewed context, rejects stale previews, rejects malformed structured output after one repair attempt, and never partially applies failed output.
+The shipped recap and branch paths block unverified/low-conformance providers, require reviewed context, reject stale previews, reject malformed structured output after one repair attempt, and never partially apply failed output.
 
 ## 3. State Lanes
 
@@ -843,11 +844,18 @@ type ProposalSet = VersionedRecord & {
   campaignId: CampaignId;
   sessionId?: SessionId;
   sceneId?: SceneId;
-  entityId?: EntityId;
   llmRunId: string;
+  contextPackageId: string;
   taskKind: LlmTaskKind;
+  scopeKind: "campaign" | "session" | "scene";
   title: string;
   status: ProposalSetStatus;
+  normalizationWarnings: Array<{
+    code: string;
+    index?: number;
+    reason?: string;
+    discarded?: boolean;
+  }>;
 };
 
 type ProposalOption = VersionedRecord & {
@@ -858,7 +866,11 @@ type ProposalOption = VersionedRecord & {
   summary: string;
   body: string;
   status: ProposalOptionStatus;
-  proposedCanonDelta: CanonDelta;
+  consequences: string;
+  reveals: string;
+  staysHidden: string;
+  proposedDelta: Record<string, unknown>; // inspection-only in v1
+  planningMarkerText: string;
   selectedAt?: IsoDateTime;
   canonizedAt?: IsoDateTime;
 };
@@ -873,7 +885,11 @@ Status rules:
 - each selected option can create its own independent planning marker;
 - selecting an additional superseded sibling must not demote prior selected options;
 - normal context includes selected/canonized summaries only through planning markers or canon records;
-- raw `body` text remains excluded by default;
+- `proposalOption.status` never makes raw `body` text eligible for normal context;
+- selected options without planning markers are excluded from normal branch/recap context;
+- rejected, superseded, saved-for-later, unselected, and selected option bodies are excluded from normal branch and recap prompts;
+- one or two valid options are a degraded success and must surface a visible warning; zero valid options fails with no proposal records;
+- malformed option rows may be discarded only when warnings record row/key, reason, and `discarded: true`;
 - `stableOptionKey` is for deterministic UI/actions inside a proposal set and for later "regenerate/repair this option" workflows; it is not a cross-run identity guarantee.
 - `stableOptionKey` should be generated by the normalizer as a slug of the option title plus a short content hash; when title/body parsing is weak, use a position-based fallback such as `option_1`.
 
@@ -901,11 +917,31 @@ type PlanningMarker = VersionedRecord & {
   status: PlanningMarkerStatus;
   title: string;
   markerText: string;
+  originalMarkerText?: string;
+  lintWarnings: string[];
+  provenance: {
+    proposalSetId?: string;
+    proposalOptionId?: string;
+    llmRunId?: string;
+    contextPackageId?: string;
+  };
+  editedAt?: IsoDateTime;
+  editedFromSource: boolean;
   expiresAt?: IsoDateTime;
 };
 ```
 
 `markerText` must be written as planning intent, not as completed event history.
+
+Shipped LLM-2 marker rules:
+- active marker eligibility checks both `status = "active"` and `expiresAt` being absent or later than the backend UTC clock;
+- generated and edited marker text both run wording lint;
+- lint is a warning/confirmation surface, not a safety proof;
+- context rendering always prefixes marker text as GM intent and labels it planning, not canon;
+- marker text has a hard max of 1000 characters and a soft UI warning above 500 characters;
+- default marker scope is exactly the proposal set scope unless the GM deliberately changes it;
+- reject/save-for-later are blocked with `active_marker_exists` while a source option has an active marker;
+- v1 enforces one marker per source proposal option for idempotency. Same idea with multiple scopes is deferred.
 
 ### 5.7 Canon Deltas And Memory Candidates
 
@@ -1439,28 +1475,31 @@ Cancellation behavior:
 ```text
 GET  /api/campaigns/{campaign_id}/proposal-sets
 GET  /api/proposal-sets/{proposal_set_id}
+POST /api/campaigns/{campaign_id}/llm/branch-directions/build
 POST /api/proposal-options/{option_id}/select
 POST /api/proposal-options/{option_id}/reject
 POST /api/proposal-options/{option_id}/save-for-later
 POST /api/proposal-options/{option_id}/create-planning-marker
-POST /api/proposal-options/{option_id}/create-canonization-draft
 ```
 
-Selecting and canonizing are separate endpoints.
+Selecting/adopting and canonizing are separate concerns. LLM-2 ships planning-marker adoption only; proposal canonization is deferred.
 
 `POST /api/proposal-options/{option_id}/select` should, in the same transaction:
 - set the selected option to `selected`;
 - mark sibling `proposed` options in the same set as `superseded`;
 - leave already-selected siblings selected;
 - allow a previously `superseded` option to become selected without demoting prior selections;
-- create a transcript event for the selection;
 - not create canon memory by itself.
+
+`POST /api/proposal-options/{option_id}/create-planning-marker` wraps select + marker insert/update in one transaction:
+- retry/double click returns the existing marker;
+- if marker creation fails, selection state created by that request rolls back;
+- active markers are the only normal future-context bridge from proposal options.
 
 ### 7.4 Planning Marker APIs
 
 ```text
 GET    /api/campaigns/{campaign_id}/planning-markers
-POST   /api/campaigns/{campaign_id}/planning-markers
 PATCH  /api/planning-markers/{marker_id}
 POST   /api/planning-markers/{marker_id}/expire
 POST   /api/planning-markers/{marker_id}/discard
@@ -2085,26 +2124,36 @@ ask recall question with fuzzy or translated NPC name
 
 ### LLM-2: Branch Proposals And Planning Markers
 
+Status: `[shipped]`
+
 Goal:
 - support the "give me several directions, I choose one" workflow after the Scribe loop works.
 
-Build:
+Shipped build:
 - `scene.branch_directions` template;
 - structured response normalization into proposal sets/options;
 - proposal card API actions;
 - planning marker creation from selected option;
-- context builder integration for active planning markers.
+- context builder integration for active planning markers;
+- scope-aware campaign/session/scene branch context preview;
+- proposal cockpit in `/gm` with preview/review/run, degraded warnings, cards, history, active marker manager, and diagnostics.
 
 Tests:
 - structured response creates proposal set/options;
 - fenced JSON and one schema-repair retry are handled;
 - schema-repair retry creates a child run with `parentRunId`;
 - malformed JSON after retry fails with `parse_failed` and no proposal records;
+- one/two valid options persist as degraded success with visible warnings;
 - selecting option does not canonize;
 - selecting option supersedes sibling options;
 - selecting a superseded sibling later allows multiple selected options and does not demote the first selected option;
+- selected option without marker does not enter future context;
 - planning marker includes selected direction without unplayed events;
-- future normal context includes marker but excludes raw proposal bodies.
+- future normal context includes marker but excludes raw proposal bodies;
+- expired markers are excluded using backend UTC time;
+- recap context renders planning markers under `GM PLANNING CONTEXT, NOT PLAYED EVENTS`;
+- planning-only evidence cannot become an automatic memory candidate;
+- `/player` payload is unchanged after proposal generation, selection, marker adoption, expiry, and discard.
 
 Acceptance:
 
@@ -2117,6 +2166,13 @@ run branch directions for a scene during prep
   -> next context preview includes planning marker
   -> next context preview excludes other proposal bodies
 ```
+
+Shipped v1 limitations:
+- one planning marker per source proposal option;
+- proposed deltas are inspection-only and labeled as possible consequences if played;
+- no proposal canonization/apply endpoint;
+- full FTS5 proposal-history recall remains future work;
+- provider calls remain non-streaming with the same soft-cancel behavior as the recap path.
 
 ### LLM-3: Player-Safe Recaps And Snippet Drafting
 

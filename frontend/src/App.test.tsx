@@ -369,7 +369,7 @@ describe("GM shell widgets", () => {
           return jsonResponse({
             status: "ok",
             db: "ok",
-            schema_version: "20260504_0014",
+            schema_version: "20260504_0015",
             db_path: "data/myroll.dev.sqlite3",
             time: "2026-04-27T00:00:00Z"
           });
@@ -378,7 +378,7 @@ describe("GM shell widgets", () => {
           app: "myroll",
           version: "dev",
           db_path: "data/myroll.dev.sqlite3",
-          schema_version: "20260504_0014",
+          schema_version: "20260504_0015",
           seed_version: "2026-04-27-v12",
           expected_seed_version: "2026-04-27-v12"
         });
@@ -388,7 +388,7 @@ describe("GM shell widgets", () => {
     renderWithClient(<BackendStatusWidget />);
 
     expect(await screen.findByText("myroll")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("20260504_0014")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("20260504_0015")).toBeInTheDocument());
   });
 
   it("renders backend unavailable state", async () => {
@@ -431,7 +431,7 @@ describe("GM shell widgets", () => {
         asset_size_bytes: 2048,
         latest_backup: null,
         latest_export: null,
-        schema_version: "20260504_0014",
+        schema_version: "20260504_0015",
         seed_version: "2026-04-27-v12",
         expected_seed_version: "2026-04-27-v12",
         private_demo_name_map_active: true
@@ -498,13 +498,13 @@ describe("GM shell widgets", () => {
           });
         }
         if (url.endsWith("/health")) {
-          return jsonResponse({ status: "ok", db: "ok", schema_version: "20260504_0014", db_path: "data/db", time: "z" });
+          return jsonResponse({ status: "ok", db: "ok", schema_version: "20260504_0015", db_path: "data/db", time: "z" });
         }
         return jsonResponse({
           app: "myroll",
           version: "dev",
           db_path: "data/db",
-          schema_version: "20260504_0014",
+          schema_version: "20260504_0015",
           seed_version: "2026-04-27-v12",
           expected_seed_version: "2026-04-27-v12"
         });
@@ -516,6 +516,179 @@ describe("GM shell widgets", () => {
     expect(await screen.findByText("Backend Status")).toBeInTheDocument();
     expect(await screen.findByText("Notes")).toBeInTheDocument();
     expect(screen.getByText("Not wired yet")).toBeInTheDocument();
+  });
+
+  it("renders proposal cockpit degraded output and marker confirmation flow", async () => {
+    window.history.pushState({}, "", "/gm/floating");
+    let markerAttempt = 0;
+    const proposalSet = {
+      proposal_set: {
+        id: "ps1",
+        campaign_id: "c1",
+        session_id: "s1",
+        scene_id: "sc1",
+        llm_run_id: "run1",
+        context_package_id: "ctx-branch",
+        task_kind: "scene.branch_directions",
+        scope_kind: "scene",
+        title: "Branch options",
+        status: "proposed",
+        option_count: 2,
+        selected_count: 0,
+        active_marker_count: 0,
+        rejected_count: 0,
+        saved_count: 0,
+        has_warnings: true,
+        warning_count: 1,
+        degraded: true,
+        repair_attempted: false,
+        created_at: "2026-04-27T00:00:00Z",
+        updated_at: "2026-04-27T00:00:00Z"
+      },
+      options: [
+        {
+          id: "opt1",
+          proposal_set_id: "ps1",
+          stable_option_key: "option_1",
+          title: "Political debt",
+          summary: "Make Varos useful but costly.",
+          body: "RAW PROPOSAL BODY: draft-only future.",
+          consequences: "Varos asks for a later favor.",
+          reveals: "Varos has leverage.",
+          stays_hidden: "The patron remains hidden.",
+          proposed_delta: { possible: "debt" },
+          planning_marker_text: "GM is considering developing Varos as a political creditor.",
+          status: "proposed",
+          selected_at: null,
+          canonized_at: null,
+          active_planning_marker_id: null,
+          created_at: "2026-04-27T00:00:00Z",
+          updated_at: "2026-04-27T00:00:00Z"
+        }
+      ],
+      planning_markers: [],
+      run: {
+        id: "run1",
+        campaign_id: "c1",
+        session_id: "s1",
+        provider_profile_id: "p1",
+        context_package_id: "ctx-branch",
+        parent_run_id: null,
+        task_kind: "scene.branch_directions",
+        status: "succeeded",
+        error_code: null,
+        error_message: null,
+        parse_failure_reason: null,
+        repair_attempted: false,
+        request_metadata: {},
+        response_text: null,
+        normalized_output: null,
+        prompt_tokens_estimate: 100,
+        duration_ms: 42,
+        cancel_requested_at: null,
+        created_at: "2026-04-27T00:00:00Z",
+        updated_at: "2026-04-27T00:00:00Z"
+      },
+      context_package: null,
+      normalization_warnings: [{ code: "degraded_option_count", expected: "3-5", accepted: 2 }]
+    };
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/api/workspace/widgets")) return jsonResponse({ updated_at: "z", widgets: [{ ...widget, kind: "scribe", title: "Scribe" }] });
+      if (url.endsWith("/api/campaigns")) return jsonResponse([{ id: "c1", name: "Campaign", description: "", created_at: "z", updated_at: "z" }]);
+      if (url.endsWith("/api/runtime")) {
+        return jsonResponse({
+          active_campaign_id: "c1",
+          active_campaign_name: "Campaign",
+          active_session_id: "s1",
+          active_session_title: "Opening",
+          active_scene_id: "sc1",
+          active_scene_title: "Bridge",
+          updated_at: "z"
+        });
+      }
+      if (url.endsWith("/api/campaigns/c1/sessions")) return jsonResponse([{ id: "s1", campaign_id: "c1", title: "Opening", starts_at: null, ended_at: null, created_at: "z", updated_at: "z" }]);
+      if (url.endsWith("/api/campaigns/c1/scenes")) return jsonResponse([{ id: "sc1", campaign_id: "c1", session_id: "s1", title: "Bridge", summary: "", created_at: "z", updated_at: "z" }]);
+      if (url.includes("/api/campaigns/c1/scribe/transcript-events")) return jsonResponse({ events: [], projection: [], updated_at: "z" });
+      if (url.endsWith("/api/llm/provider-profiles")) {
+        return jsonResponse({
+          profiles: [
+            {
+              id: "p1",
+              label: "Fixture provider",
+              vendor: "custom",
+              base_url: "http://127.0.0.1:9999/v1",
+              model_id: "fixture",
+              key_source: { type: "none", ref: null },
+              conformance_level: "level_2_json_validated",
+              capabilities: {},
+              last_probe_result: null,
+              probed_at: "z",
+              created_at: "z",
+              updated_at: "z"
+            }
+          ],
+          updated_at: "z"
+        });
+      }
+      if (url.endsWith("/api/campaigns/c1/scribe/memory-candidates")) return jsonResponse({ candidates: [], updated_at: "z" });
+      if (url.endsWith("/api/campaigns/c1/scribe/aliases")) return jsonResponse([]);
+      if (url.endsWith("/api/campaigns/c1/proposal-sets")) return jsonResponse({ proposal_sets: [], updated_at: "z" });
+      if (url.endsWith("/api/proposal-sets/ps1")) return jsonResponse(proposalSet);
+      if (url.endsWith("/api/campaigns/c1/planning-markers")) return jsonResponse({ planning_markers: [], updated_at: "z" });
+      if (url.endsWith("/api/campaigns/c1/llm/context-preview")) {
+        return jsonResponse({
+          id: "ctx-branch",
+          campaign_id: "c1",
+          session_id: "s1",
+          scene_id: "sc1",
+          task_kind: "scene.branch_directions",
+          scope_kind: "scene",
+          visibility_mode: "gm_private",
+          gm_instruction: JSON.parse(String(init?.body)).gm_instruction,
+          source_refs: [{ kind: "scene", id: "sc1", sourceClass: "scene", lane: "canon", visibility: "gm_private" }],
+          rendered_prompt: "Rendered branch prompt",
+          source_ref_hash: "hash",
+          source_classes: ["scene"],
+          warnings: [],
+          review_status: "unreviewed",
+          reviewed_at: null,
+          reviewed_by: null,
+          token_estimate: 123,
+          created_at: "z",
+          updated_at: "z"
+        });
+      }
+      if (url.endsWith("/api/llm/context-packages/ctx-branch/review")) return jsonResponse({ ...JSON.parse(JSON.stringify({ id: "ctx-branch" })), campaign_id: "c1", session_id: "s1", scene_id: "sc1", task_kind: "scene.branch_directions", scope_kind: "scene", visibility_mode: "gm_private", gm_instruction: "focus", source_refs: [], rendered_prompt: "Rendered branch prompt", source_ref_hash: "hash", source_classes: ["scene"], warnings: [], review_status: "reviewed", reviewed_at: "z", reviewed_by: "local_gm", token_estimate: 123, created_at: "z", updated_at: "z" });
+      if (url.endsWith("/api/campaigns/c1/llm/branch-directions/build")) return jsonResponse({ run: proposalSet.run, proposal_set: proposalSet, rejected_options: [], warnings: proposalSet.normalization_warnings });
+      if (url.endsWith("/api/proposal-options/opt1/create-planning-marker")) {
+        markerAttempt += 1;
+        if (markerAttempt === 1) return jsonResponse({ error: { code: "marker_lint_confirmation_required", message: "Needs confirmation" } }, false, 409);
+        return jsonResponse({ id: "m1", campaign_id: "c1", session_id: "s1", scene_id: "sc1", source_proposal_option_id: "opt1", scope_kind: "scene", status: "active", title: "Political debt", marker_text: "Varos betrayed the party.", original_marker_text: "GM is considering developing Varos as a political creditor.", lint_warnings: ["canonish_wording"], provenance: {}, edited_at: "z", edited_from_source: true, expires_at: null, created_at: "z", updated_at: "z" });
+      }
+      if (url.endsWith("/health")) return jsonResponse({ status: "ok", db: "ok", schema_version: "20260504_0015", db_path: "data/db", time: "z" });
+      return jsonResponse({ app: "myroll", version: "dev", db_path: "data/db", schema_version: "20260504_0015", seed_version: "seed", expected_seed_version: "seed" });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithClient(<App />);
+
+    expect(await screen.findByText("Proposal Cockpit")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("What kind of directions should Scribe explore?"), { target: { value: "Make Varos political." } });
+    await userEvent.click(screen.getByRole("button", { name: "Preview Branch Context" }));
+    expect(await screen.findByText(/scene · unreviewed/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Review Branch Context" }));
+    expect(await screen.findByText(/scene · reviewed/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Run Branch Directions" }));
+    expect(await screen.findByText("Degraded output: 2 options")).toBeInTheDocument();
+    expect(screen.getByText("Possible consequences if played")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Adopt as Planning Direction" }));
+    fireEvent.change(screen.getByLabelText("Planning marker text"), { target: { value: "Varos betrayed the party." } });
+    await userEvent.click(screen.getByRole("button", { name: "Create Planning Marker" }));
+    expect(await screen.findByText(/Confirm again/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Confirm and Adopt" }));
+
+    await waitFor(() => expect(markerAttempt).toBe(2));
   });
 
   it("keeps local widget position when marking save as failed", () => {
