@@ -1142,7 +1142,7 @@ Explicit deferrals:
 Goal: make a large language model a first-class GM creative workbench without turning it into the source of truth.
 
 Status as of 2026-05-04:
-- shipped first Scribe spine: compact `/gm` live capture, transcript correction, provider profile/probe, reviewed context preview, backend-owned recap run, editable recap save, targetless Memory Inbox accept, manual aliases, exact recall, and default export redaction for LLM prompt/response payloads;
+- shipped first Scribe spine: compact `/gm` live capture, transcript correction, provider profile/probe, reviewed context preview, backend-owned recap run, editable recap save, targetless Memory Inbox accept, manual aliases, basic recall, and default export redaction for LLM prompt/response payloads;
 - planned next: branch proposals/planning markers and player-safe recap/snippet leak-warning gate;
 - deferred: vectors, streaming, tool calls, audio capture/transcription, and autonomous entity mutation.
 

@@ -66,6 +66,7 @@ def test_recap_memory_recall_and_export_redaction(migrated_settings, monkeypatch
         f"/api/campaigns/{campaign_id}/scribe/transcript-events",
         json={"session_id": session_id, "body": "Aureon the goldsmith revealed a sealed coin from Chult."},
     )
+    evidence_source: dict[str, str] = {}
 
     def fake_probe(profile):  # noqa: ANN001
         return "level_2_json_validated", {"json_probe": "ok"}, "Provider returned valid JSON."
@@ -89,7 +90,7 @@ def test_recap_memory_recall_and_export_redaction(migrated_settings, monkeypatch
                             "evidenceRefs": [
                                 {
                                     "kind": "session_transcript_event",
-                                    "id": "fixture",
+                                    "id": evidence_source["id"],
                                     "quote": "Aureon the goldsmith revealed a sealed coin from Chult.",
                                 }
                             ],
@@ -138,6 +139,7 @@ def test_recap_memory_recall_and_export_redaction(migrated_settings, monkeypatch
     assert preview_body["review_status"] == "unreviewed"
     assert preview_body["source_refs"]
     assert "Aureon" in preview_body["rendered_prompt"]
+    evidence_source["id"] = preview_body["source_refs"][0]["id"]
 
     reviewed = client.post(f"/api/llm/context-packages/{preview_body['id']}/review")
     assert reviewed.status_code == 200
@@ -199,3 +201,138 @@ def test_recap_memory_recall_and_export_redaction(migrated_settings, monkeypatch
         )
     finally:
         connection.close()
+
+
+def test_recap_rejects_memory_candidate_with_unknown_evidence_ref(migrated_settings, monkeypatch):
+    from backend.app.api import routes_llm
+
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "Aureon recorded the party's debt."},
+    )
+
+    def fake_probe(profile):  # noqa: ANN001
+        return "level_2_json_validated", {"json_probe": "ok"}, "Provider returned valid JSON."
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        return (
+            json.dumps(
+                {
+                    "privateRecap": {"title": "Debt", "bodyMarkdown": "Aureon recorded the party's debt."},
+                    "memoryCandidateDrafts": [
+                        {
+                            "title": "Aureon recorded a debt",
+                            "body": "Aureon recorded the party's debt.",
+                            "claimStrength": "directly_evidenced",
+                            "evidenceRefs": [
+                                {
+                                    "kind": "session_transcript_event",
+                                    "id": "not-a-real-source",
+                                    "quote": "Aureon recorded the party's debt.",
+                                }
+                            ],
+                        }
+                    ],
+                    "continuityWarnings": [],
+                    "unresolvedThreads": [],
+                }
+            ),
+            {"usage": {"prompt_tokens": 100, "completion_tokens": 80}},
+        )
+
+    monkeypatch.setattr(routes_llm, "_probe_provider", fake_probe)
+    monkeypatch.setattr(routes_llm, "_send_chat", fake_send_chat)
+
+    provider = client.post(
+        "/api/llm/provider-profiles",
+        json={
+            "label": "Fixture provider",
+            "vendor": "custom",
+            "base_url": "http://127.0.0.1:9999/v1",
+            "model_id": "fixture-model",
+            "key_source": {"type": "none"},
+        },
+    )
+    provider_id = provider.json()["id"]
+    assert client.post(f"/api/llm/provider-profiles/{provider_id}/test").status_code == 200
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": ""},
+    ).json()
+    assert client.post(f"/api/llm/context-packages/{preview['id']}/review").status_code == 200
+
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    )
+
+    assert recap.status_code == 200
+    body = recap.json()
+    assert body["candidates"] == []
+    assert body["rejected_drafts"][0]["errors"] == [
+        "evidence_source_missing",
+        "evidence_requires_known_source",
+        "direct_evidence_requires_valid_quote",
+    ]
+
+
+def test_repair_provider_error_finalizes_child_run(migrated_settings, monkeypatch):
+    from backend.app.api import routes_llm
+
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "The party entered the archive."},
+    )
+
+    def fake_probe(profile):  # noqa: ANN001
+        return "level_2_json_validated", {"json_probe": "ok"}, "Provider returned valid JSON."
+
+    calls = {"count": 0}
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return ("not json", {"usage": {"prompt_tokens": 100, "completion_tokens": 20}})
+        raise routes_llm.api_error(504, "provider_timeout", "Provider request timed out")
+
+    monkeypatch.setattr(routes_llm, "_probe_provider", fake_probe)
+    monkeypatch.setattr(routes_llm, "_send_chat", fake_send_chat)
+
+    provider = client.post(
+        "/api/llm/provider-profiles",
+        json={
+            "label": "Fixture provider",
+            "vendor": "custom",
+            "base_url": "http://127.0.0.1:9999/v1",
+            "model_id": "fixture-model",
+            "key_source": {"type": "none"},
+        },
+    )
+    provider_id = provider.json()["id"]
+    assert client.post(f"/api/llm/provider-profiles/{provider_id}/test").status_code == 200
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": ""},
+    ).json()
+    assert client.post(f"/api/llm/context-packages/{preview['id']}/review").status_code == 200
+
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    )
+    assert recap.status_code == 504
+
+    connection = sqlite3.connect(migrated_settings.db_path)
+    try:
+        rows = connection.execute(
+            "SELECT id, task_kind, status, error_code, parent_run_id FROM llm_runs ORDER BY created_at, task_kind"
+        ).fetchall()
+    finally:
+        connection.close()
+    parent_id = rows[0][0]
+    assert rows[0][1:] == ("session.build_recap", "failed", "parse_failed", None)
+    assert rows[1][1:] == ("session.build_recap.repair", "failed", "provider_timeout", parent_id)

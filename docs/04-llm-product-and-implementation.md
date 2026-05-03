@@ -32,9 +32,9 @@ Current shipped status:
 - `[shipped]` PRE-LLM live capture: campaign/session-scoped `live_dm_note` transcript events, backend timestamps, per-session `orderIndex`, correction events, and compact `/gm` capture surface.
 - `[shipped]` LLM-0a provider harness: backend-owned OpenAI-compatible non-streaming provider calls, provider profiles, conformance probe, run history, cancellation state, and no raw key exposure to the browser.
 - `[shipped]` LLM-0b context preview: persisted context packages, canonical source hash, explicit review action, rendered prompt/source inspection, and stale-preview blocking.
-- `[shipped]` LLM-0c session recap draft: reviewed context -> provider run -> structured `SessionRecapBundle`, one schema-repair attempt, validation failures, editable reviewed recap save, and export redaction for prompt/response payloads.
+- `[shipped]` LLM-0c session recap draft: reviewed context -> provider run -> structured `SessionRecapBundle`, one schema-repair attempt, backend validation of memory-candidate evidence refs against the reviewed context package, validation failures, editable reviewed recap save, and export redaction for prompt/response payloads.
 - `[shipped]` LLM-0d memory inbox: targetless memory candidates, `Accept into Memory` as one atomic apply transaction, idempotent repeated accept, and rejected/weak candidates excluded from accepted memory.
-- `[shipped]` LLM-1 first recall spine: campaign memory entries, reviewed session recaps, live capture search indexing, manual aliases, query expansion, and policy-filtered recall results.
+- `[shipped]` LLM-1 first recall spine: campaign memory entries, reviewed session recaps, live capture search indexing, manual aliases, query expansion, and policy-filtered recall results. This first spine uses basic projection-table search, not the full FTS5 target described later in this document.
 - `[planned]` LLM-2 branch proposals and planning markers.
 - `[planned]` LLM-3 player-safe recap/snippet drafting and leak warning gate.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
@@ -44,6 +44,12 @@ Current implementation entry points are intentionally small:
 - `/gm` contains the compact Scribe live surface plus expandable GM-private inspection/review controls.
 - Dedicated backend routes live under `/api/*/scribe/*` and `/api/*/llm/*`.
 - `/player` remains disconnected from all Scribe/LLM APIs.
+
+Known limitations in the shipped first spine:
+
+- cancellation is a durable soft cancel: Myroll marks the run canceled and discards late provider responses, but the blocking non-streaming upstream HTTP request may continue until the provider returns or times out;
+- recall currently scans a `scribe_search_index` projection table over live captures, reviewed recaps, and accepted memory entries; it is not yet SQLite FTS5 and does not yet index every notes/entities/public-snippet source promised by the full recall slice;
+- the search projection has upsert behavior for current Scribe writes, but no source-level garbage collection/rebuild command beyond campaign-level cascade cleanup.
 
 ## 1. Product Definition
 
@@ -809,6 +815,7 @@ Run cancellation rules:
 - `running` runs must be cancellable through the Myroll API;
 - v1 timeout handling is mandatory and must always move the run to a terminal state;
 - cancellation marks `cancelRequestedAt` and best-effort aborts the backend upstream HTTP request when the HTTP client supports abort/timeout cancellation;
+- shipped first-spine behavior is soft cancel with blocking `httpx` provider calls: cancellation updates durable run state immediately, and any provider response that arrives later is discarded instead of being committed as success; the upstream provider may still finish work or bill for the request;
 - canceled runs end with `status = "canceled"` and keep partial metadata but no apply actions;
 - if `cancelRequestedAt` is set before a provider response is committed, cancellation wins; implement with an atomic SQLite update condition or equivalent transaction check before committing `status = "succeeded"`;
 - schema-repair child-run cancellation can be simplified in v1: cancel only the currently visible active run and never apply partial output from a canceled parent/child chain;
@@ -1157,6 +1164,8 @@ type RecapClaimStrength =
 
 `SessionRecapBundle` is the structured output schema for `outputKind = "session_recap_bundle"`. The model returns drafts only: it must not supply `VersionedRecord` fields, `status`, or `targetRevision`. The backend normalizer validates the bundle and persists schema-valid `memoryCandidateDrafts` as pending `MemoryCandidate` rows in the memory inbox.
 
+Memory-candidate `evidenceRefs` are not trusted because the model wrote them. The backend validates each candidate ref against the reviewed `LlmContextPackage.sourceRefs` that fed the run. Unknown `{ kind, id }` refs, fake quotes, and direct-evidence claims without a quote found in the cited source are rejected before a candidate can enter the inbox. This keeps the audit trail tied to what the model actually saw, not to arbitrary IDs it invented.
+
 Memory candidates may be created only for `directly_evidenced` and `strong_inference` recap claims. `strong_inference` candidates must be visually marked in the memory inbox. `weak_inference` and `gm_review_required` claims may appear in the recap draft or continuity warnings, but they must not become candidates without explicit GM rewrite.
 
 Intermediate map-reduce partials should use a stricter shape than prose-only summary:
@@ -1280,7 +1289,7 @@ Naive single-pass trimming is not acceptable for `session.build_recap` when it w
 
 ### 6.4 Retrieval
 
-V1 retrieval:
+Full LLM-1 target retrieval:
 - SQLite FTS over notes, public snippets, entity names/notes, approved memory, session summaries, transcript events, and proposal metadata;
 - lightweight alias expansion before vector retrieval;
 - status-aware ranking that prefers canon and approved records;
@@ -1312,6 +1321,8 @@ candidate search
 ```
 
 Route handlers must not do `FTS query -> feed to model` directly. The policy filter decides whether a found row is eligible for the selected task and visibility mode.
+
+The shipped first recall spine is intentionally narrower: it uses a durable `scribe_search_index` projection table plus normalized substring matching over live captures, reviewed session recaps, and accepted campaign memory. It is enough to prove `Capture -> Recap -> Memory -> Recall`, but it should be treated as a documented limitation until the full FTS5-backed recall slice lands. Creative LLM tasks must not assume this basic search has complete coverage over notes, entities, public snippets, or proposal metadata.
 
 Retrieval policy matrix:
 

@@ -1060,7 +1060,72 @@ def _repair_prompt(original_prompt: str, bad_response: str, reason: str) -> str:
     )
 
 
-def _validate_recap_bundle(bundle: dict[str, object]) -> tuple[dict[str, object], list[dict[str, object]], list[dict[str, object]]]:
+def _exception_code(error: Exception, fallback: str = "provider_error") -> str:
+    detail = getattr(error, "detail", None)
+    if isinstance(detail, dict):
+        code = detail.get("code")
+        if code:
+            return str(code)
+        nested = detail.get("error")
+        if isinstance(nested, dict) and nested.get("code"):
+            return str(nested["code"])
+    return fallback
+
+
+def _exception_message(error: Exception) -> str:
+    detail = getattr(error, "detail", None)
+    if isinstance(detail, dict) and detail.get("message"):
+        return str(detail["message"])
+    return str(error)
+
+
+def _source_lookup(source_refs: list[dict[str, object]]) -> dict[tuple[str, str], dict[str, object]]:
+    lookup: dict[tuple[str, str], dict[str, object]] = {}
+    for ref in source_refs:
+        kind = str(ref.get("kind") or "")
+        source_id = str(ref.get("id") or "")
+        if kind and source_id:
+            lookup[(kind, source_id)] = ref
+    return lookup
+
+
+def _evidence_ref_errors(evidence_refs: list[object], source_refs: list[dict[str, object]], *, requires_direct_quote: bool) -> list[str]:
+    lookup = _source_lookup(source_refs)
+    errors: list[str] = []
+    valid_ref_count = 0
+    valid_quote_count = 0
+    for ref in evidence_refs:
+        if not isinstance(ref, dict):
+            errors.append("evidence_ref_not_object")
+            continue
+        kind = str(ref.get("kind") or "").strip()
+        source_id = str(ref.get("id") or "").strip()
+        quote = str(ref.get("quote") or "").strip()
+        if not kind or not source_id:
+            errors.append("evidence_ref_missing_source")
+            continue
+        source = lookup.get((kind, source_id))
+        if source is None:
+            errors.append("evidence_source_missing")
+            continue
+        valid_ref_count += 1
+        if quote:
+            source_text = str(source.get("body") or source.get("quote") or "")
+            if _normalize_text(quote) not in _normalize_text(source_text):
+                errors.append("evidence_quote_not_found")
+            else:
+                valid_quote_count += 1
+    if not valid_ref_count:
+        errors.append("evidence_requires_known_source")
+    if requires_direct_quote and not valid_quote_count:
+        errors.append("direct_evidence_requires_valid_quote")
+    return errors
+
+
+def _validate_recap_bundle(
+    bundle: dict[str, object],
+    source_refs: list[dict[str, object]],
+) -> tuple[dict[str, object], list[dict[str, object]], list[dict[str, object]]]:
     rejected: list[dict[str, object]] = []
     private_recap = bundle.get("privateRecap")
     if not isinstance(private_recap, dict):
@@ -1089,9 +1154,11 @@ def _validate_recap_bundle(bundle: dict[str, object]) -> tuple[dict[str, object]
         if not isinstance(evidence_refs, list):
             errors.append("missing_evidence_refs")
             evidence_refs = []
-        if strength == "directly_evidenced" and not any(isinstance(ref, dict) and str(ref.get("quote") or "").strip() for ref in evidence_refs):
-            errors.append("direct_evidence_requires_quote")
-        if strength == "strong_inference" and not evidence_refs:
+        if evidence_refs:
+            errors.extend(_evidence_ref_errors(evidence_refs, source_refs, requires_direct_quote=strength == "directly_evidenced"))
+        elif strength == "directly_evidenced":
+            errors.append("direct_evidence_requires_valid_quote")
+        elif strength == "strong_inference":
             errors.append("strong_inference_requires_evidence")
         if strength not in MEMORY_ACCEPT_STRENGTHS:
             errors.append("claim_strength_not_auto_candidate")
@@ -1349,7 +1416,8 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
         response_text, provider_metadata = _send_chat(profile, request_payload, timeout=90.0)
         try:
             parsed = _parse_json_object(response_text)
-            bundle, candidate_drafts, rejected_drafts = _validate_recap_bundle(parsed)
+            source_refs = _json_load(package.source_refs_json, [])
+            bundle, candidate_drafts, rejected_drafts = _validate_recap_bundle(parsed, source_refs)
             with db.begin():
                 run = _require_run(db, run.id)
                 _finalize_run_success(
@@ -1395,10 +1463,24 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
                     prompt_tokens_estimate=_rough_token_estimate(_repair_prompt(package.rendered_prompt, response_text, str(parse_error))),
                 )
             repair_started = time.perf_counter()
-            repair_text, repair_metadata = _send_chat(profile, repair_payload, timeout=90.0)
+            try:
+                repair_text, repair_metadata = _send_chat(profile, repair_payload, timeout=90.0)
+            except Exception as repair_send_error:
+                with db.begin():
+                    child = _require_run(db, child.id)
+                    if child.status == "running":
+                        _finalize_run_failed(
+                            db,
+                            child,
+                            code=_exception_code(repair_send_error),
+                            message=_exception_message(repair_send_error),
+                            duration_ms=int((time.perf_counter() - repair_started) * 1000),
+                        )
+                raise
             try:
                 repaired = _parse_json_object(repair_text)
-                bundle, candidate_drafts, rejected_drafts = _validate_recap_bundle(repaired)
+                source_refs = _json_load(package.source_refs_json, [])
+                bundle, candidate_drafts, rejected_drafts = _validate_recap_bundle(repaired, source_refs)
             except Exception as repair_error:  # noqa: BLE001
                 with db.begin():
                     child = _require_run(db, child.id)
@@ -1432,8 +1514,8 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
                     _finalize_run_failed(
                         db,
                         current,
-                        code=getattr(error, "detail", {}).get("error", {}).get("code", "provider_error") if isinstance(getattr(error, "detail", None), dict) else "provider_error",
-                        message=str(error),
+                        code=_exception_code(error),
+                        message=_exception_message(error),
                         duration_ms=int((time.perf_counter() - started) * 1000),
                     )
             raise
