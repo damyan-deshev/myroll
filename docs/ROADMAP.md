@@ -1141,6 +1141,10 @@ Explicit deferrals:
 
 Goal: make a large language model a first-class GM creative workbench without turning it into the source of truth.
 
+Detailed build specification:
+- `docs/04-llm-product-and-implementation.md` is the implementation-facing spec for this area.
+- Treat this roadmap section as the umbrella and guardrail summary; the detailed LLM-0 through LLM-7 slice breakdown lives in the dedicated LLM document.
+
 Product decision:
 - Myroll's LLM value is not "AI writes the campaign"; it is campaign-aware GM assistance for NPC roleplay, settlements, politics/factions, quest boards, character-building hooks, creative options, session summaries, and continuity checks.
 - AI output is not campaign truth until the GM commits it.
@@ -1150,7 +1154,7 @@ Product decision:
 - If the GM selects option 2 from a generated set of options, future context should carry the canonized selected direction, not the entire brainstorm that also contains rejected options.
 - Unselected options remain available in run/proposal history for audit, follow-up, or explicit "what did we reject?" recall, but they must not compete with canon in normal generation context.
 
-Implementation design notes still to document before build:
+Dedicated implementation areas:
 - GM task catalog:
   - first-class tasks such as NPC roleplay, settlement generation, faction/political moves, quest boards, character arc hooks, next-scene complications, session summaries, player-safe recaps, contradiction checks, and exact recall;
   - for each task, document user job, trigger/UI entry point, required inputs, default context package, output schema, apply/canonization actions, visibility rules, and acceptance behavior.

@@ -259,3 +259,56 @@ Primary files:
 1. Keep the transport channel notification-only; any future content-bearing player display feature should go through the backend public display serializer.
 2. Keep player-display tests focused on sanitized public payloads only.
 3. Avoid turning this into a whole-app modularization project unless a concrete workflow or boundary needs it.
+
+## Post-Followup Hygiene (2026-05-03)
+
+A second-pass review against the post-2026-05-01 state did not find new high-severity issues. The five slices closed the meaningful local-tool risks. The items below are sub-7/10 hygiene tasks that are cheap to do in a slow PR and that prevent the defended invariants from quietly eroding. None of them block other work; do them when the surrounding code is being touched anyway.
+
+### A. The cross-site guard is method-bound; GET handlers are not covered
+
+Source: `backend/app/factory.py` rejects only `POST/PUT/PATCH/DELETE` for cross-site origins. Browsers often omit `Origin` on cross-origin GET, so a state-mutating GET would slip past the guard. DNS rebinding on GET is still blocked by `TrustedHostMiddleware`, and all current mutations use POST/PATCH/DELETE, so this is not an active issue.
+
+The risk is drift: a future "convenience" GET that mutates state would bypass the guard silently.
+
+Slice when convenient:
+
+- Add a comment in `backend/app/factory.py` near the unsafe-method set documenting the invariant: GET handlers must remain side-effect-free.
+- Optionally add a backend test that scans the router for `@router.get(...)` handlers and asserts they do not call session writers (best-effort static check).
+
+### B. `store_image_path` accepts an unbounded `Path` and follows symlinks
+
+Source: `backend/app/asset_store.py:store_image_path` calls `source_path.expanduser().resolve().open("rb")`. Today it is reachable only from the bundled-maps handler, which passes `bundled_map.path` after `_safe_relative` validation against the configured pack root, so it is safe in practice.
+
+The risk is that the helper looks generic and a future caller might pass a less-trusted `Path` and re-open the closed `import-path` attack surface.
+
+Slice when convenient:
+
+- Either inline the open into the bundled-maps handler and remove the generic helper.
+- Or add an explicit `pack_root: Path` argument and assert `source_path` resolves under it; reject `is_symlink()`.
+
+### C. Export archive walk follows symlinks
+
+Source: `backend/app/storage_export.py:_iter_asset_files` uses `Path.rglob("*")`, which follows symlinks by default. Slice 5 stopped writing new symlinks under `data/assets/`, but legacy symlinks left over from earlier runs would still be included in exports.
+
+Slice when convenient:
+
+- Skip symlinked entries in `_iter_asset_files` (`if path.is_symlink(): continue`) before the `is_file()` check.
+- Optional: add a one-shot scan/log on startup to surface any pre-existing symlink under `asset_dir`.
+
+### D. SafeMarkdownRenderer relies on default react-markdown escaping
+
+Source: `frontend/src/SafeMarkdownRenderer.tsx` overrides `<a>` to a plain span, but otherwise depends on `react-markdown`'s default behavior of not rendering raw HTML (no `rehype-raw`, no `rehype-sanitize`). This is safe today.
+
+The risk is that adding a `rehype-raw`-style plugin in a future markdown enrichment PR would silently re-enable raw HTML and create an XSS path through public snippets.
+
+Slice when convenient:
+
+- Add a top-of-file comment in `SafeMarkdownRenderer.tsx` stating the invariant and why no `rehype-raw` / unsanitized HTML plugins may be added.
+- Optional: a small frontend test that renders `<script>alert(1)</script>` as input and asserts the output has no `<script>` element.
+
+## Architectural Debt (Not Security)
+
+These came up during the second pass and are recorded here only so they are not lost. They are not security findings and should not be done as standalone refactors.
+
+- `frontend/src/App.tsx` is still around 4,100 lines and owns asset library, notes, party tracker, combat tracker, fog/map editing, and GM player-display controls. After the player-display extraction, this is no longer a private-state leak risk; it is a maintainability risk only. Split a feature out only when a concrete new workflow lands in that area.
+- `backend/app/api/routes.py` is around 5,000 lines. Same reasoning. A natural split would be per-resource modules (`routes/bundled.py`, `routes/storage.py`), but only when an adjacent change motivates it.

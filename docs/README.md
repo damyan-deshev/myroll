@@ -13,6 +13,9 @@ Start here:
 3. `03-low-level-architecture.md`
    - TypeScript-style data models, display messages, map/fog/token models, storage schema, command registry, sanitizer rules, and milestone acceptance criteria.
 
+4. `04-llm-product-and-implementation.md`
+   - Product definition, lane model, context rules, provider harness, proposal lifecycle, memory inbox, API surface, task catalog, and implementation slices for Myroll Scribe.
+
 Implementation planning:
 
 - `ROADMAP.md`
