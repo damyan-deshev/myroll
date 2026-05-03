@@ -286,7 +286,7 @@ If a file is needed to run the product, it belongs here. If a file only explains
 
 Myroll uses the [Myroll Community No-Resale License 1.0](LICENSE.md).
 
-The intent is simple: the project should be inspectable, reproducible, forkable, modifiable, and useful to the tabletop RPG community, while preventing resale of Myroll or its bundled/static assets as someone else's product.
+This is a source-available / community-use license, not an OSI-approved open-source license. The intent is simple: the project should be inspectable, reproducible, forkable, modifiable, and useful to the tabletop RPG community, while preventing resale of Myroll or its bundled/static assets as someone else's product.
 
 You may use, fork, modify, and redistribute Myroll for free. You may also use Myroll and its bundled assets in paid GM sessions, actual-play streams, recorded games, tutorials, reviews, Patreon/Ko-fi/community posts, support work, installation work, customization work, and campaign preparation work.
 

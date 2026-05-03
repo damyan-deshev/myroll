@@ -1143,10 +1143,15 @@ Goal: make a large language model a first-class GM creative workbench without tu
 
 Detailed build specification:
 - `docs/04-llm-product-and-implementation.md` is the implementation-facing spec for this area.
-- Treat this roadmap section as the umbrella and guardrail summary; the detailed LLM-0 through LLM-7 slice breakdown lives in the dedicated LLM document.
+- Treat this roadmap section as the umbrella and guardrail summary; the detailed PRE-LLM through LLM-5 slice breakdown lives in the dedicated LLM document.
 
 Product decision:
 - Myroll's LLM value is not "AI writes the campaign"; it is campaign-aware GM assistance for NPC roleplay, settlements, politics/factions, quest boards, character-building hooks, creative options, session summaries, and continuity checks.
+- A compact timestamped Live DM Notes capture surface is part of the golden path for useful recaps: it lets the GM type, paste, or dictate short private table events during play.
+- Live play is capture-only in v1; after the session, the GM clicks Build Session Recap to assemble live notes, linked notes, NPC/entity changes, combat/session events, planning markers, and approved memory into a reviewed recap/canonization workflow.
+- First value loop is Scribe-first, not branch-proposal-first: capture what happened, build a reviewed recap, accept memory, recall it later.
+- Branch proposals are primarily prep/review tools after the recap/memory loop works.
+- V1 does not record audio, transcribe audio, summarize live during play, require vectors, require streaming, require tool calls, or auto-update entities from transcripts.
 - AI output is not campaign truth until the GM commits it.
 - Campaign objects such as NPCs, settlements, factions, quests, and character hooks are manual GM-owned Myroll primitives first; the model may prefill fields, suggest updates, or produce drafts, but it does not own or silently create those objects.
 - Options are ephemeral. Selections become state. Only committed state enters future model context by default.
@@ -1224,6 +1229,12 @@ Build:
   - tool-call support flag;
   - image/diffusion harness support flag for later workflows;
   - timeout and retry settings.
+- Provider conformance levels:
+  - text-only;
+  - JSON best effort;
+  - JSON validated;
+  - tool-capable later;
+  - task templates declare the minimum conformance they need.
 - API keys are not stored as raw campaign data in SQLite in the first implementation:
   - prefer environment variables such as `MYROLL_LLM_API_KEY`;
   - allow provider profiles to reference key names/sources;
@@ -1233,14 +1244,9 @@ Build:
   - run a minimal non-streaming health prompt;
   - return safe error envelopes.
 - GM Assistant workspace widget:
-  - provider/model status;
-  - context picker;
-  - prompt template picker;
-  - request preview showing exactly what campaign/session/scene data will be sent;
-  - run button;
-  - response viewer;
-  - run history;
-  - draft artifact actions.
+  - first shippable UI should expose live capture, Build Session Recap, and Memory Inbox;
+  - provider/model status, context preview, run history, branch proposals, and planning markers live behind compact drawers or later tabs;
+  - fast trusted preview is allowed when context hash and source classes match the last reviewed preview; stale or changed context forces full preview.
 - Proposal lifecycle for option-generating tasks:
   - `proposal_set` records linked to campaign/session/scene/entity context and the originating LLM run;
   - `proposal_option` records with stable option IDs, title, summary, body, proposed canon delta, visibility, and status;
@@ -1258,6 +1264,7 @@ Build:
   - context packages include canonized selections and approved memory first, never raw brainstorm sets by default;
   - proposal/rejection history is included only when the GM explicitly selects a brainstorm-history or contradiction-checking context mode.
 - Append-only session transcript:
+  - live DM note capture events with backend timestamps and per-session order;
   - DM prompts;
   - assistant responses;
   - LLM runs;
@@ -1274,6 +1281,8 @@ Build:
   - updated through explicit/manual extraction first, and later through safe-point background updates.
 - Exact recall lane:
   - SQLite FTS-backed lexical recall over transcript, notes, approved memory, proposal history, and canonization decisions;
+  - alias expansion for fantasy names, transliteration, multilingual notes, and dictation mistakes before vector retrieval is considered;
+  - hard retrieval policy filter before any results enter model context;
   - status-aware retrieval that prefers canonized/approved state over proposals, and suppresses rejected options unless explicitly requested;
   - trigger patterns for explicit recall ("what did we decide?", "who was this NPC?", "as discussed"), entity lookup gaps, continuation gaps, and contradiction checks;
   - recall results are injected as bounded evidence snippets with source IDs, not as uncited model "memory";
@@ -1375,7 +1384,8 @@ Build:
   - canonization actions produced from selections;
   - created draft artifacts;
   - applied/not-applied status;
-  - error state.
+  - error state;
+  - retention controls for full prompt/response payloads, with metadata kept after purge/redaction.
 - Observability:
   - exact recall triggered/skipped/timed out;
   - recall source count and evidence token estimate;
@@ -1401,6 +1411,7 @@ Core guardrails:
 - Context sent to remote/local models is explicit, previewable, and campaign-scoped.
 - Private notes, GM secrets, hidden tokens, private entities, and unrevealed clues are sent only when the selected prompt/context mode explicitly includes GM-private context.
 - Public-safe workflows use public-known facts and public snippets/party/map display state only.
+- Public-safe drafts require leak review before snippet creation; deterministic warnings should flag suspicious hidden-fact language and private-only references.
 - Generated public content is not published automatically.
 - Diffusion/image outputs must pass through Slice 5 asset validation before becoming assets.
 - Model/tool errors use the standard API error envelope and do not leak API keys or absolute local paths.
@@ -1410,21 +1421,20 @@ Acceptance checkpoint:
 ```text
 configure OpenAI-compatible provider
   -> test provider/model connection
-  -> select active campaign/scene context
-  -> preview exact context package
-  -> ask for current-session summary
-  -> save response as private note draft
-  -> create a player-safe snippet draft from selected output
-  -> publish only after explicit GM action
-  -> force memory extraction
-  -> inspect structured session memory
-  -> ask for five next-scene complications
-  -> select option 2
-  -> inspect proposal history showing option 2 selected and other options rejected/unselected
-  -> preview the next context package
-  -> verify only the canonized selected direction enters normal context
+  -> capture timestamped live DM notes during a session
+  -> click Build Session Recap after play
+  -> preview exact recap evidence package
+  -> save reviewed private recap
+  -> review memory candidates
+  -> accept selected facts into Memory
   -> ask "what did we decide for this scene?"
-  -> exact recall returns the selected decision as cited evidence
+  -> exact recall returns accepted memory as cited evidence
+  -> run player-safe recap from public-safe context
+  -> leak warnings are shown where relevant
+  -> publish only after explicit GM action
+  -> later ask for five next-scene complications
+  -> select option 2 and create a planning marker
+  -> verify only the selected planning direction enters normal context
   -> run compact simulation
   -> compact result preserves current scene, unresolved hooks, NPC state, combat/mechanics state, and recent verbatim tail
   -> generate NPC/character sheet/image prompt drafts

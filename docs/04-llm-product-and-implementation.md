@@ -58,6 +58,16 @@ Prepare what might happen.
 Canonize only what the GM accepts.
 ```
 
+Feature review rule:
+
+```text
+The LLM may draft.
+The GM operates.
+The product preserves table authority.
+```
+
+Every LLM feature should preserve GM agency and explicit publish/apply boundaries. If it silently operates the campaign, it does not belong in Myroll Scribe.
+
 Primary user assumption:
 - the GM has either a local model or access to an OpenAI-compatible API endpoint;
 - first implementation should target OpenAI-compatible chat completion APIs;
@@ -133,6 +143,13 @@ The preview must include:
 - approximate token estimate;
 - rendered prompt payload without API keys.
 
+The trust invariant is preview-before-run, not "force the GM to read a full drawer every time." The UI may use a fast trusted preview mode when:
+- the GM has already reviewed a full preview for the same task/source policy;
+- the stored `sourceRefHash` still matches;
+- the included source classes have not changed.
+
+Fast trusted preview shows a compact summary such as `Context unchanged since last reviewed preview: current scene, active NPC, 3 memory entries, 2 planning markers`, with `Run` and `Expand preview` actions. Any stale hash or changed source class forces full preview again.
+
 ### 2.6 Local-First Provider Configuration
 
 API keys are not campaign data.
@@ -169,6 +186,21 @@ Rules:
 - provider base URLs and key source names may be visible in GM-private configuration UI, but raw keys are never sent to the browser;
 - all provider HTTP calls are made by backend code;
 - frontend code may initiate a run, poll a run, cancel a run, and render persisted run output, but it must not construct provider HTTP requests.
+
+### 2.8 V1 Product Loop Non-Goals
+
+V1 proves the Scribe loop, not every possible assistant workflow.
+
+V1 does not:
+- record audio;
+- transcribe audio;
+- run live summarization during play;
+- auto-update entities from transcripts;
+- auto-publish public recaps;
+- require vector search;
+- require streaming responses;
+- require tool calls;
+- require user-auth/account infrastructure.
 
 ## 3. State Lanes
 
@@ -344,7 +376,51 @@ Candidate types:
 - player-safe recap item;
 - contradiction warning.
 
-### 4.4 Exact Recall
+### 4.4 Live DM Capture
+
+User story:
+
+```text
+The GM is running the table and wants to capture quick private notes without stopping play.
+The GM may type, paste, or use an external OS-level dictation tool.
+Each submitted snippet becomes a timestamped private event for later recall and recaps.
+```
+
+Current product state:
+- Myroll already has a Notes / Public Snippets surface;
+- that surface is a full note editor with `created_at` and `updated_at`;
+- it is not yet the ideal live-capture surface because repeatedly editing one note collapses many table moments into one mutable blob.
+
+Golden path:
+
+```text
+GM opens a small Live Notes capture surface
+  -> current campaign/session/scene are preselected
+  -> GM types or dictates one short table event
+  -> GM presses Save or Cmd/Ctrl+Enter
+  -> backend creates an append-only timestamped transcript event
+  -> input clears and focus remains in the capture box
+  -> after the session, GM runs Build Session Recap
+  -> recap/canonization tasks consume the ordered event stream
+```
+
+Voice-dictation expectation:
+- Myroll does not bundle or depend on speech-to-text software;
+- it should work well with external tools that type into the focused text field, such as Speak2 or OS-level dictation;
+- product copy may recommend external dictation tools, but the app treats them as ordinary keyboard/text input;
+- no microphone permission is required for v1.
+
+Rules:
+- live capture entries are GM-private by default;
+- each submitted snippet is append-only and independently timestamped;
+- edits should create a correction event linked to the original event, not silently rewrite chronology;
+- backend timestamp is authoritative, not the browser clock;
+- because API timestamps are second-resolution, live capture should also keep a per-session monotonic `orderIndex` for stable ordering when several snippets arrive in the same second;
+- captured text is not canon by itself; it is source evidence for later memory candidates and session recaps.
+
+Live play is capture-first, not summarization-first. Myroll should not continuously rebuild the full session summary during active play in v1. The live surface should stay fast, append-only, and low ceremony; the LLM-heavy step is an explicit post-session `session.build_recap` task.
+
+### 4.5 Exact Recall
 
 User story:
 
@@ -364,7 +440,7 @@ GM asks recall question
 
 First implementation uses SQLite FTS. Vector retrieval is deferred until lexical recall is not enough.
 
-### 4.5 Player-Safe Recap Or Snippet
+### 4.6 Player-Safe Recap Or Snippet
 
 User story:
 
@@ -422,12 +498,19 @@ type LlmCapabilitySource =
   | "manual"
   | "probe";
 
+type LlmProviderConformanceLevel =
+  | "level_0_text_only"
+  | "level_1_json_best_effort"
+  | "level_2_json_validated"
+  | "level_3_tool_capable";
+
 type LlmProviderCapabilities = {
   streaming: boolean;
   jsonMode: boolean;
   toolCalls: boolean;
   embeddings: boolean;
   vision: boolean;
+  conformanceLevel: LlmProviderConformanceLevel;
   source: LlmCapabilitySource;
   probedAt?: IsoDateTime;
 };
@@ -442,6 +525,7 @@ type LlmProviderProbeResult = {
   chatCompletionReachable: boolean;
   jsonModeAccepted: boolean;
   toolCallShapeAccepted: boolean;
+  derivedConformanceLevel: LlmProviderConformanceLevel;
   detectedModelIds: string[];
   sanitizedWarnings: string[];
 };
@@ -461,6 +545,7 @@ type LlmProviderProfile = VersionedRecord & {
   tokenEstimateStrategy: LlmTokenEstimateStrategy;
   lastProbeResult?: LlmProviderProbeResult;
   lastEstimateDriftPct?: number;
+  allowUnverifiedLocalRuns?: boolean;
   enabled: boolean;
 };
 ```
@@ -473,8 +558,15 @@ Rules:
 - `vendor` selects request-shaping defaults for OpenAI-compatible-but-not-identical servers;
 - vendor presets cover model-list route assumptions, chat completion URL, system prompt handling, stop sequence shape, JSON-mode request shape, streaming parser, usage-token field parsing, and known error payload shapes;
 - the capability flags are derived by probe when possible and may be manually overridden only in GM-private settings;
+- conformance levels are derived from probe behavior, not vendor name alone;
+- `level_0_text_only` means chat completions are reachable but structured JSON is not reliable;
+- `level_1_json_best_effort` means the provider can attempt JSON-shaped output, but normalizer fallbacks and repair may be needed;
+- `level_2_json_validated` means a schema-like JSON task succeeded in probe and is suitable for structured tasks by default;
+- `level_3_tool_capable` is reserved for providers with validated tool-call shape support;
 - changing `baseUrl`, `modelId`, `vendor`, or `keySource` invalidates probed capabilities by clearing `probedAt` and `lastProbeResult`; the next provider test must re-probe before the UI treats capabilities as verified;
 - runs against a provider profile with invalidated/unverified capabilities must fail fast with HTTP 412 and `errorCode = "provider_unverified"` until the GM runs provider test again;
+- a GM-private developer override may allow unverified runs only for local unauthenticated endpoints on `localhost`, `127.0.0.1`, `::1`, or private LAN ranges; never allow this override for metered or authenticated remote providers such as OpenAI or OpenRouter;
+- override UI copy must say: `This provider has not been re-tested after configuration changes. Run anyway is allowed only for local unauthenticated endpoints.`;
 - provider test should try `/v1/models` when available, then a minimal chat completion, then a `response_format: {"type":"json_object"}` probe for JSON mode;
 - tool-call probing is optional in v1, but if implemented it must be a small explicit probe, not inferred from vendor name;
 - the GM UI must warn that provider testing sends a real request to the configured endpoint and may incur a billable request;
@@ -490,6 +582,7 @@ Rules:
 ```ts
 type LlmTaskKind =
   | "session.prep_next"
+  | "session.build_recap"
   | "session.extract_canon_candidates"
   | "session.player_safe_recap"
   | "scene.branch_directions"
@@ -515,6 +608,7 @@ type LlmOutputKind =
   | "proposal_set"
   | "memory_candidates"
   | "entity_patch"
+  | "session_recap_bundle"
   | "public_snippet_draft"
   | "private_note_draft"
   | "recall_answer";
@@ -526,6 +620,7 @@ type LlmPromptTemplate = VersionedRecord & {
   description: string;
   visibilityMode: LlmVisibilityMode;
   outputKind: LlmOutputKind;
+  minProviderConformance: LlmProviderConformanceLevel;
   systemText: string;
   userTextTemplate: string;
   outputSchemaJson?: Record<string, unknown>;
@@ -534,6 +629,12 @@ type LlmPromptTemplate = VersionedRecord & {
 ```
 
 Prompt templates should be code-defined first, not GM-authored dynamic prompts. User-editable prompt templates can come later.
+
+Task conformance requirements:
+- `campaign.exact_recall` may run on `level_0_text_only` when it returns cited prose without structured apply actions;
+- `session.build_recap`, `scene.branch_directions`, `session.extract_canon_candidates`, and public draft tasks require at least `level_1_json_best_effort`;
+- `level_2_json_validated` is preferred for all structured tasks and should be the default recommendation in setup UI;
+- tasks requiring future tool calls must require `level_3_tool_capable`.
 
 ### 5.3 Context Packages
 
@@ -577,6 +678,8 @@ type LlmContextPackage = VersionedRecord & {
   renderedMessages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
   tokenEstimate: number;
   excludedReasonSummary: string[];
+  reviewedAt?: IsoDateTime;
+  reviewedBy?: "local_gm";
 };
 ```
 
@@ -585,6 +688,8 @@ type LlmContextPackage = VersionedRecord & {
 `sourceRefHash` is a canonical hash used for stale-preview detection. It is computed from `taskKind`, `visibilityMode`, selected GM instruction text, and included `sourceRefs` sorted by `(kind, id)` with their `revision`, `lane`, and `visibility`. Time-based preview expiry is optional and configurable; source hash drift is authoritative.
 
 `excludedReasonSummary` is an aggregate UI helper, not the source of truth. It should contain unique compact reason codes derived from excluded `sourceRefs`, such as `rejected_proposal`, `expired_marker`, or `public_safe_filter`, so the preview can show "3 sources excluded" badges without parsing every row.
+
+`reviewedAt` and `reviewedBy` are set when the GM explicitly reviews the full preview. Compact trusted previews should reference the reviewed package that made them eligible.
 
 ### 5.4 LLM Runs
 
@@ -630,11 +735,11 @@ Run history is private GM data.
 
 Run cancellation rules:
 - `running` runs must be cancellable through the Myroll API;
-- cancellation aborts the backend upstream HTTP request when the HTTP client supports abort/timeout cancellation;
+- v1 timeout handling is mandatory and must always move the run to a terminal state;
+- cancellation marks `cancelRequestedAt` and best-effort aborts the backend upstream HTTP request when the HTTP client supports abort/timeout cancellation;
 - canceled runs end with `status = "canceled"` and keep partial metadata but no apply actions;
-- if `cancelRequestedAt` is set before the provider response is committed, cancellation wins; discard the successful provider response and finalize the run as `canceled`;
-- the transaction that finalizes a successful provider response must re-read `cancelRequestedAt` inside the transaction, using a row lock or equivalent atomic update condition, before committing `status = "succeeded"`;
-- cancellation of a schema-repair flow targets the currently active child run; canceling the parent after the child is running should surface or redirect to the child run status;
+- if `cancelRequestedAt` is set before a provider response is committed, cancellation wins; implement with an atomic SQLite update condition or equivalent transaction check before committing `status = "succeeded"`;
+- schema-repair child-run cancellation can be simplified in v1: cancel only the currently visible active run and never apply partial output from a canceled parent/child chain;
 - if the backend restarts while runs are `running`, startup cleanup should mark stale runs as `failed` with `errorCode = "backend_restarted"` or `canceled` if a cancel had already been requested.
 
 ### 5.5 Proposal Sets And Options
@@ -740,6 +845,13 @@ type CanonDeltaKind =
   | "public_recap_item"
   | "contradiction_warning";
 
+type LlmSensitivityReason =
+  | "spoiler"
+  | "gm_only_motive"
+  | "unrevealed_clue"
+  | "future_plan"
+  | "private_note";
+
 type CanonDelta = {
   items: Array<{
     kind: CanonDeltaKind;
@@ -748,6 +860,7 @@ type CanonDelta = {
     targetKind?: "campaign" | "session" | "scene" | "entity" | "note";
     targetId?: string;
     publicSafe: boolean;
+    sensitivityReason?: LlmSensitivityReason;
     evidenceRefs: Array<{ kind: LlmContextSourceKind; id: string; quote?: string }>;
   }>;
 };
@@ -770,7 +883,9 @@ type MemoryCandidate = VersionedRecord & {
   kind: CanonDeltaKind;
   title: string;
   body: string;
+  claimStrength?: RecapClaimStrength;
   publicSafe: boolean;
+  sensitivityReason?: LlmSensitivityReason;
   status: MemoryCandidateStatus;
   targetKind?: string;
   targetId?: string;
@@ -784,13 +899,19 @@ Memory candidates are the inbox. They are not canon until approved/applied.
 Candidate targeting rules:
 - each `MemoryCandidate` targets at most one durable record;
 - multi-target effects must be split by the extractor into separate atomic candidates and grouped in the UI by `sourceLlmRunId` and shared evidence;
+- v1 extraction should prefer targetless atomic memory entries; entity/note patches are an explicit second action, not the default output for every fact;
 - targetless candidates create new memory entries or notes and skip target revision checks;
 - when `targetKind` and `targetId` are present, `targetRevision` is the revision of that target as recorded in the `LlmContextPackage.sourceRefs` that fed the LLM run, not the live revision at candidate persist time;
 - this makes OCC protect against GM edits that happen between context preview/run start and apply;
 - if a targeted candidate cannot be matched to a context source ref with a revision, it must not be auto-applicable; persist it as targetless review material or fail normalization for that candidate;
 - the model never supplies `targetRevision`.
 
+Memory inbox UI language should not expose the state machine as the primary user flow. Use actions such as `Accept into Memory`, `Accept and Update NPC`, `Reject`, and `Save for Later`. Internally these may map to approve/apply states, but the GM should not need to reason about `approved` versus `applied` while reviewing session facts.
+
 Apply rules:
+- for targetless memory candidates, `Accept into Memory` approves the candidate and creates the `CampaignMemoryEntry` in one transaction, ending with `status = "applied"`;
+- targetless candidates should not remain in an "accepted but not remembered" state;
+- for targeted patches, review/approve and apply may remain separate because the target write can fail OCC or need extra GM review;
 - `apply` must run target writes and candidate status updates in one database transaction;
 - repeated `apply` on an already-applied candidate must be idempotent and return the applied target state without double-writing;
 - when `targetRevision` is present, apply must enforce optimistic concurrency and reject with HTTP 409 if the target record revision changed since extraction;
@@ -816,7 +937,9 @@ type CampaignMemoryEntry = VersionedRecord & {
   kind: CanonDeltaKind;
   title: string;
   body: string;
+  claimStrength?: RecapClaimStrength;
   publicSafe: boolean;
+  sensitivityReason?: LlmSensitivityReason;
   status: CampaignMemoryEntryStatus;
   tags: string[];
   evidenceRefs: Array<{ kind: LlmContextSourceKind; id: string; quote?: string }>;
@@ -828,12 +951,14 @@ Rules:
 - memory entries are context-eligible when `status = "active"`;
 - superseded/retracted entries remain visible for audit and explicit recall, but are excluded from normal context;
 - public-safe recap tasks may use only entries with `publicSafe = true`;
+- `sensitivityReason` explains why a fact is hidden or risky and feeds public leak review UI;
 - entity-specific memory should link `entityId` when known instead of relying on text search alone.
 
 ### 5.9 Transcript Events
 
 ```ts
 type TranscriptEventKind =
+  | "live_dm_note"
   | "gm_note"
   | "scene_activated"
   | "player_display_published"
@@ -846,20 +971,135 @@ type TranscriptEventKind =
   | "combat_event"
   | "manual";
 
+type TranscriptInputMode =
+  | "typed"
+  | "paste"
+  | "dictation_external"
+  | "imported"
+  | "system";
+
 type SessionTranscriptEvent = VersionedRecord & {
   id: string;
   campaignId: CampaignId;
   sessionId?: SessionId;
   sceneId?: SceneId;
   kind: TranscriptEventKind;
+  inputMode: TranscriptInputMode;
+  orderIndex: number;
   title: string;
   body: string;
   sourceRef?: { kind: string; id: string };
+  correctsEventId?: string;
   publicSafe: boolean;
 };
 ```
 
 Transcript events support exact recall and chronological session reconstruction.
+
+Live DM note event rules:
+- `kind = "live_dm_note"` is the preferred storage for quick during-session capture;
+- `inputMode = "dictation_external"` records that text arrived through an external dictation tool, but Myroll stores only the resulting text;
+- `createdAt` is the backend capture timestamp;
+- `orderIndex` is monotonic within a session and breaks ties for multiple events captured in the same second;
+- `orderIndex` generation must be race-safe; prefer a `session_order_counter` table with an atomic `UPDATE ... RETURNING`, or use `BEGIN IMMEDIATE` around `MAX(order_index) + 1` plus a unique `(session_id, order_index)` constraint;
+- if the implementation relies on a unique constraint for ordering, unique-constraint conflicts must retry the capture transaction with a small bounded retry instead of returning a 500;
+- `publicSafe` defaults to `false` for `live_dm_note`; flipping it requires explicit GM action and is not part of the v1 live capture surface;
+- for `live_dm_note`, `publicSafe = true` only makes the event eligible for public-safe context after explicit GM review; it never makes the raw dictated event publishable;
+- correction events set `correctsEventId` to the original event; the original remains visible in audit history;
+- default recap context prefers the correction event and excludes the corrected original from normal ranking, avoiding duplicate or contradictory recap evidence;
+- `live_dm_note` transcript events rank in the draft lane for recall, below approved memory but above model-generated proposal history; `orderIndex` recency may boost results within the active session;
+- live capture entries are source evidence for LLM recap/canonization, not approved memory by themselves.
+
+For post-session recap assembly, the context builder should normalize the session's mixed source records into a single ordered evidence view:
+
+```ts
+type RecapEvidenceProjection = {
+  sourceKind: LlmContextSourceKind;
+  sourceId: string;
+  eventKind?: TranscriptEventKind;
+  timestamp: IsoDateTime;
+  orderIndex?: number;
+  label: string;
+  actorName?: string;
+  body: string;
+  sourceRevision?: number;
+  visibility: "gm_private" | "public_safe";
+  lane: "canon" | "planning" | "draft";
+  includedInRecap: boolean;
+  excludedReason?: "corrected" | "shadowed_by_memory" | "prior_recap" | "public_safe_filter" | "manual";
+};
+```
+
+`RecapEvidenceProjection` is a recap assembly view, not necessarily a separate durable table. Source records remain owned by their domain tables; the evidence view gives `session.build_recap` a stable timestamp/name/source/revision/visibility/lane shape across live notes, linked notes, entity changes, combat events, public-display actions, planning decisions, and approved memory.
+
+If `RecapEvidenceProjection` is cached later, the cache must be derived, discardable, source-hash-bound, and never authoritative. A source correction, memory application, or visibility change must invalidate the projection cache before recap context can be built.
+
+When an evidence item comes from a transcript row, `sourceKind = "transcript_event"` and `eventKind` carries the concrete event type such as `"live_dm_note"` or `"player_display_published"`. When the evidence item references a public snippet directly, use `sourceKind = "public_snippet"`.
+
+When a live note has already produced an applied memory entry and that memory entry cites the live note in `evidenceRefs`, default recap assembly should include the memory entry and mark the source live note as `includedInRecap = false` with `excludedReason = "shadowed_by_memory"`. The live note remains available for audit and explicit recall. The recap prompt should also instruct the model that source streams can repeat the same fact and that it should deduplicate repeated evidence or flag contradictions.
+
+```ts
+type SessionRecapBundle = {
+  privateRecap: {
+    title: string;
+    bodyMarkdown: string;
+    keyMoments: Array<{
+      orderIndex?: number;
+      timestamp?: IsoDateTime;
+      summary: string;
+      claimStrength: RecapClaimStrength;
+      evidenceRefs: Array<{ kind: LlmContextSourceKind; id: string; quote?: string }>;
+    }>;
+  };
+  memoryCandidateDrafts: Array<{
+    kind: CanonDeltaKind;
+    title: string;
+    body: string;
+    claimStrength: RecapClaimStrength;
+    targetKind?: "campaign" | "session" | "scene" | "entity" | "note";
+    targetId?: string;
+    publicSafe: boolean;
+    sensitivityReason?: LlmSensitivityReason;
+    evidenceRefs: Array<{ kind: LlmContextSourceKind; id: string; quote?: string }>;
+  }>;
+  continuityWarnings: Array<{
+    title: string;
+    body: string;
+    evidenceRefs: Array<{ kind: LlmContextSourceKind; id: string; quote?: string }>;
+  }>;
+  unresolvedThreads: Array<{
+    title: string;
+    body: string;
+    evidenceRefs: Array<{ kind: LlmContextSourceKind; id: string; quote?: string }>;
+  }>;
+};
+```
+
+```ts
+type RecapClaimStrength =
+  | "directly_evidenced"
+  | "strong_inference"
+  | "weak_inference"
+  | "gm_review_required";
+```
+
+`SessionRecapBundle` is the structured output schema for `outputKind = "session_recap_bundle"`. The model returns drafts only: it must not supply `VersionedRecord` fields, `status`, or `targetRevision`. The backend normalizer validates the bundle and persists schema-valid `memoryCandidateDrafts` as pending `MemoryCandidate` rows in the memory inbox.
+
+Memory candidates may be created only for `directly_evidenced` and `strong_inference` recap claims. `strong_inference` candidates must be visually marked in the memory inbox. `weak_inference` and `gm_review_required` claims may appear in the recap draft or continuity warnings, but they must not become candidates without explicit GM rewrite.
+
+Intermediate map-reduce partials should use a stricter shape than prose-only summary:
+
+```ts
+type PartialSessionRecap = {
+  timelineItems: Array<{ orderIndex?: number; summary: string; evidenceRefs: Array<{ kind: LlmContextSourceKind; id: string; quote?: string }> }>;
+  explicitFacts: Array<{ body: string; evidenceRefs: Array<{ kind: LlmContextSourceKind; id: string; quote?: string }> }>;
+  inferredLinks: Array<{ body: string; evidenceRefs: Array<{ kind: LlmContextSourceKind; id: string; quote?: string }> }>;
+  openQuestions: string[];
+  doNotAssume: string[];
+};
+```
+
+The final consolidation prompt must not convert `inferredLinks` into canon facts. Every recap key moment and every memory candidate draft needs evidence refs; claims without evidence stay as GM review notes, not memory.
 
 ## 6. Context Builder
 
@@ -897,9 +1137,10 @@ Default GM-private context order:
 3. Active planning markers scoped to the current task
 4. Exact recall evidence, when triggered or requested
 5. Approved canon memory and session summaries
-6. Relevant entities, notes, snippets, combat/session state
-7. Recent transcript tail
-8. Optional saved-for-later ideas, only for ideation tasks
+6. Live DM note transcript events for the current session, chronological by `orderIndex`
+7. Relevant entities, notes, snippets, combat/session state
+8. Recent transcript tail
+9. Optional saved-for-later ideas, only for ideation tasks
 ```
 
 Public-safe context order:
@@ -913,6 +1154,16 @@ Public-safe context order:
 6. Public-known session summary
 ```
 
+Public-safe generation is two-stage:
+1. build context from public-safe sources only;
+2. run a public leak review before any generated draft can become a `PublicSnippet`.
+
+`publicSafe = true` is an eligibility flag, not a complete leak guarantee. Combination leaks are still possible when individually safe facts imply a hidden motive, clue, or future plan.
+
+Leak review is a warning system, not proof of safety. Only GM review authorizes public text.
+
+The leak review can be assisted by an LLM, but backend policy and GM review are the authority. Deterministic checks should flag suspicious phrases and references such as `secretly`, `unknown to the party`, `plans to`, `will later`, unrevealed entity names, private-only memory refs, or facts tagged with `sensitivityReason`.
+
 ### 6.2 Source Exclusion Rules
 
 Always exclude unless explicitly requested:
@@ -921,6 +1172,9 @@ Always exclude unless explicitly requested:
 - draft artifacts;
 - expired planning markers;
 - private notes in public-safe mode;
+- `live_dm_note` transcript events with `publicSafe = false` in public-safe mode;
+- corrected/superseded live DM note originals in default recap context;
+- prior `session.build_recap` outputs for the same session unless `includePriorRecap = true`;
 - hidden entity fields in public-safe mode;
 - unrevealed clues in public-safe mode;
 - hidden tokens and GM-only combat state in public-safe mode;
@@ -943,13 +1197,65 @@ Budget behavior:
 
 DM notes are usually small enough that whole-note or large-chunk inclusion is acceptable in v1.
 
+`session.build_recap` is the exception where a long session can exceed a small local model's context window. When the assembled `RecapEvidenceProjection[]` cannot fit inside the provider profile's budget, the task may execute as map-reduce:
+- split evidence into chronological `orderIndex` windows that each fit the budget;
+- run private partial recap child runs for each window, producing `PartialSessionRecap` structured output rather than prose-only summaries;
+- run a final consolidation pass over partial timelines, explicit facts, inferred links, continuity warnings, open questions, and `doNotAssume` lists;
+- keep partial recap drafts as intermediate run artifacts only, not session summaries and not canon;
+- expose only the consolidated `SessionRecapBundle` as the user-visible draft.
+
+Naive single-pass trimming is not acceptable for `session.build_recap` when it would drop the middle of the session without telling the GM. The final pass must preserve causal uncertainty: inferred links can inform prose, but they must not become memory candidates unless backed by direct evidence or explicit GM review.
+
 ### 6.4 Retrieval
 
 V1 retrieval:
 - SQLite FTS over notes, public snippets, entity names/notes, approved memory, session summaries, transcript events, and proposal metadata;
+- lightweight alias expansion before vector retrieval;
 - status-aware ranking that prefers canon and approved records;
+- `live_dm_note` events rank in the draft lane for recall, below approved memory but above model-generated proposal/prose history;
+- active-session `orderIndex` recency can boost within live note results;
 - proposal bodies are searchable for explicit recall/history mode only;
 - rejected proposal bodies never appear in normal creative context.
+
+```ts
+type EntityAlias = VersionedRecord & {
+  id: string;
+  campaignId: CampaignId;
+  entityId?: EntityId;
+  aliasText: string;
+  language?: string;
+  confidence: "gm_confirmed" | "observed" | "generated_pending_approval";
+  sourceRef?: { kind: LlmContextSourceKind; id: string };
+};
+```
+
+Alias expansion is the v1 answer to fantasy names, spelling drift, transliteration, multilingual notes, and dictation mistakes. A query such as `златаря` may expand to approved aliases like `Aureon`, `goldsmith`, `златар`, and `cursed goldsmith` before FTS runs. Generated aliases must remain pending until the GM accepts them. `sourceRef` lets recall/debug UI explain where an observed alias came from, such as a transcript event, note, or manual entity edit.
+
+Retrieval must be a two-stage pipeline:
+
+```text
+candidate search
+  -> policy eligibility filter
+  -> context packing
+```
+
+Route handlers must not do `FTS query -> feed to model` directly. The policy filter decides whether a found row is eligible for the selected task and visibility mode.
+
+Retrieval policy matrix:
+
+```text
+canon_only:
+  approved memory, active canon summaries, public-safe sources when requested
+
+canon_and_planning:
+  canon plus active planning marker summaries, never raw proposal bodies
+
+include_proposal_history:
+  proposal history allowed, clearly labeled as draft/history
+
+normal creative task:
+  no raw proposal bodies ever
+```
 
 FTS coherence rules:
 - all writes to FTS-indexed domain records must go through backend services that update the FTS index;
@@ -980,6 +1286,21 @@ Normalization strategy:
 - if parsing still fails, set `LlmRun.status = "failed"`, `errorCode = "parse_failed"`, and keep raw `responseText` visible in private run history;
 - never apply partial/malformed structured output to proposals, memory candidates, or canon.
 
+Rendered prompt structure should keep instructions and data visually and semantically separate:
+
+```text
+SYSTEM:
+  task rules, output schema, visibility/canonization boundaries
+
+USER:
+  GM instruction for this run
+
+CONTEXT:
+  quoted campaign data blocks with source IDs
+```
+
+Every structured task prompt must state that text inside campaign/context blocks is source material, not instructions.
+
 Expected parse failure cases:
 - JSON wrapped in prose;
 - JSON inside a code fence;
@@ -1003,7 +1324,7 @@ POST   /api/llm/provider-profiles/{profile_id}/test
 
 Provider test:
 - makes a minimal non-streaming request;
-- returns provider/model reachability and sanitized errors;
+- returns provider/model reachability, conformance level, capability warnings, and sanitized errors;
 - never returns API key values.
 
 ### 7.2 Context Preview And Runs
@@ -1017,6 +1338,12 @@ GET  /api/campaigns/{campaign_id}/llm/runs
 ```
 
 `POST /api/llm/runs` must require a recent context preview ID. At run time the backend recomputes the canonical `sourceRefHash` from the selected task, visibility mode, GM instruction text, and current included source refs with revisions. If the preview is stale, missing, or the recomputed hash differs from the stored `LlmContextPackage.sourceRefHash`, the backend returns HTTP 409 with `errorCode = "context_preview_stale"` and the UI must force a new preview. Do not silently rebuild and send context the GM did not review.
+
+Before starting the provider request, `POST /api/llm/runs` must verify that the provider profile's conformance level satisfies the selected prompt template's `minProviderConformance`. If not, return HTTP 412 with `errorCode = "provider_conformance_too_low"` and show the task requirement in the UI.
+
+For `session.build_recap`, the context preview request should support explicit evidence include/exclude overrides and `includePriorRecap?: boolean`, defaulting to `false`. The stored context package must show which `RecapEvidenceProjection` rows were included, excluded, or shadowed before the run is allowed.
+
+Context preview responses may include `trustedPreviewMode: "full" | "compact"`, `lastReviewedContextPackageId`, `lastReviewedAt`, and `lastReviewedBy: "local_gm"`. Compact mode is valid only when the backend verifies unchanged source hash and source classes; the frontend must still let the GM expand the full rendered prompt before running. The compact UI should explain why it is trusted, for example: `Full preview was reviewed at 20:14; context hash and source classes are unchanged.`
 
 Cancellation behavior:
 - cancel is best-effort but must update durable run state;
@@ -1073,7 +1400,7 @@ POST /api/memory-entries/{memory_entry_id}/supersede
 POST /api/memory-entries/{memory_entry_id}/retract
 ```
 
-Approve can mark the candidate as approved. Apply performs the durable campaign write. Combining approve and apply is allowed as a UI shortcut, but the backend should keep the state transition explicit.
+Backend endpoints keep the explicit approve/apply state machine for audit and idempotency. UI copy should present `Accept into Memory` for targetless candidates and `Accept and Update ...` only when a reviewed target patch will be applied.
 
 Apply behavior:
 - execute target writes and candidate status updates inside one `db.begin()` transaction;
@@ -1122,11 +1449,20 @@ Primary surface:
 /gm assistant panel
 ```
 
-The first UI should be practical, not chat-first.
+The first UI should be practical, not chat-first. It must also avoid becoming a second cockpit on top of the GM workspace.
+
+First shippable UI:
+- live capture;
+- Build Session Recap;
+- Memory Inbox.
+
+Provider status, run history, branch proposals, planning markers, and full context preview can exist behind drawers or later tabs, but they should not dominate the first view.
 
 Required panels:
 - provider status;
 - task picker;
+- live notes capture;
+- build session recap action;
 - context preview drawer;
 - run output;
 - proposal cards;
@@ -1134,14 +1470,46 @@ Required panels:
 - planning markers;
 - run history.
 
+Task timing guidance:
+- during play: live capture, exact recall, compact NPC cue glance, emergency short complication;
+- before/after play: Build Session Recap, Memory Inbox review, branch directions, prep packets, player-safe recap;
+- branch proposals are primarily prep/review tools, not the default live-table interaction.
+
 Entry points:
 - GM overview assistant panel;
+- persistent compact live notes surface in `/gm`;
+- session surface "Build Session Recap" button after play;
+- scene/session surfaces "Capture note" affordance;
 - scene surface "Develop Scene" / "Prep Next" buttons;
 - entity/NPC card "Roleplay cues" / "Suggest update";
 - notes selection "Summarize" / "Canonize" / "Player-safe recap";
 - command palette.
 
-### 8.1 Proposal Cards
+### 8.1 Live Notes Capture
+
+The live notes capture surface is intentionally smaller than the full Notes / Public Snippets editor.
+
+UI requirements:
+- single focused text area or compact input panel;
+- active campaign/session/scene badges;
+- Save button and explicit keyboard shortcut: Cmd+Enter on macOS, Ctrl+Enter elsewhere;
+- inline empty-state/help text such as `Cmd/Ctrl+Enter to save - Enter for newline`;
+- plain Enter inserts a newline by default, because dictation tools commonly emit newlines while the GM is still speaking;
+- optional "save on Enter, newline with Shift+Enter" mode may exist later, but must be opt-in and not the live-note default;
+- input clears after save and keeps focus;
+- recent captured snippets list with timestamps;
+- source mode indicator such as typed/pasted/dictated when known;
+- no player-display actions;
+- no public snippet creation from this surface in v1.
+
+Speak2 and similar tools:
+- the input should accept text generated by external dictation tools as normal keyboard input;
+- no browser speech API integration is required;
+- onboarding/help copy may say "Works well with external push-to-talk dictation tools such as Speak2.";
+- onboarding/help copy should also say that the explicit Save shortcut avoids accidental saves from dictated newlines;
+- v2 may inhibit saves after rapid Enter sequences, but v1 should rely on explicit Save/Cmd+Enter/Ctrl+Enter.
+
+### 8.2 Proposal Cards
 
 Proposal card content:
 - title;
@@ -1159,7 +1527,7 @@ Actions:
 - Reject;
 - Create canonization draft.
 
-### 8.2 Memory Inbox
+### 8.3 Memory Inbox
 
 Memory inbox card content:
 - candidate type;
@@ -1170,16 +1538,45 @@ Memory inbox card content:
 - actions.
 
 Actions:
-- Approve;
-- Edit and approve;
+- Accept into Memory;
+- Edit and Accept;
+- Accept and Update NPC/entity when a target patch is available;
 - Reject;
 - Save for later;
 - Link to entity/scene/session;
-- Apply now.
+- Apply target change only after explicit GM review.
+
+### 8.4 Build Session Recap
+
+The Build Session Recap surface is a post-session review workflow, not a live-play panel.
+
+UI requirements:
+- entry point on the session/GM surface after play;
+- evidence preview listing the `RecapEvidenceProjection[]` that will be sent, with timestamp/order, label, lane, visibility, and exclusion reason;
+- toggles for explicit includes/excludes and an explicit `include prior recap` option, off by default;
+- visible context-budget state, including whether the run will use single-pass or chunked map-reduce;
+- Run button that creates a context preview before provider execution;
+- recap draft editor for the returned private markdown recap;
+- memory candidate review area linked to the Memory Inbox;
+- Save Recap action that stores the reviewed private recap as the session summary/private note;
+- separate action to run `session.player_safe_recap` after the private recap is accepted.
+
+Default flow:
+
+```text
+GM opens ended or active session
+  -> clicks Build Session Recap
+  -> reviews ordered evidence and exclusions
+  -> runs recap
+  -> edits private recap draft
+  -> reviews proposed memory candidates
+  -> saves recap and applies selected candidates
+  -> optionally runs Player-Safe Recap as a separate public-safe task
+```
 
 ## 9. Task Catalog
 
-The first task catalog should be small enough to implement and broad enough to prove the product loop.
+The first task catalog should be small enough to implement and broad enough to prove the product loop. The order below groups user jobs; it is not the implementation order. Build order is defined in Section 10.
 
 ### 9.1 `scene.branch_directions`
 
@@ -1226,10 +1623,16 @@ Apply:
 ### 9.3 `session.extract_canon_candidates`
 
 Job:
-- turn rough GM notes/transcript into memory candidates.
+- turn a selected note/transcript fragment into memory candidates.
+
+Scope:
+- targeted extraction tool for selected text only;
+- not the primary full-session recap workflow;
+- useful when the GM wants to canonize one note, one transcript excerpt, or one correction without rebuilding the whole session recap.
 
 Inputs:
 - selected note/transcript text;
+- live DM note transcript events from the active session, in `orderIndex` order;
 - current session/scene;
 - existing canon memory for contradiction checks.
 
@@ -1241,7 +1644,45 @@ Apply:
 - approve/edit/reject;
 - write approved candidates into notes/entities/session memory.
 
-### 9.4 `campaign.exact_recall`
+### 9.4 `session.build_recap`
+
+Job:
+- build an authoritative private session recap after play, from the evidence accumulated during the session.
+
+Scope:
+- primary post-session workflow for session notes;
+- returns recap plus memory candidate drafts;
+- should be the default action when the GM asks Myroll to process a whole session.
+
+Inputs:
+- `RecapEvidenceProjection[]` assembled for the session, sorted by timestamp and `orderIndex`;
+- live DM note transcript events from the active session;
+- notes linked to the session/scene;
+- NPC/entity changes and notable interactions during the session;
+- combat/session state events;
+- public-display publish events;
+- selected planning markers and canon decisions;
+- existing canon memory for continuity checks.
+
+Output:
+- structured `session_recap_bundle` with a private session recap draft;
+- proposed memory candidate drafts for canon facts discovered during recap;
+- continuity warnings and unresolved threads.
+
+Apply:
+- save the private recap as a session summary/private note after GM review;
+- place canon candidates in the memory inbox;
+- optionally run `session.player_safe_recap` afterward as a separate public-safe task.
+
+Rules:
+- this is a post-session button, not a live continuous summarizer;
+- corrected live capture events replace their originals in default recap context;
+- prior `session.build_recap` outputs for the same session are excluded by default, including saved session summaries produced by earlier recap runs;
+- the GM may explicitly enable `include prior recap` for revision/diff workflows, but the default is fresh re-derivation from source evidence;
+- when evidence exceeds the provider context budget, use chronological map-reduce rather than silently dropping the middle of the session;
+- draft/planning evidence may inform the recap, but only GM-approved apply actions create canon.
+
+### 9.5 `campaign.exact_recall`
 
 Job:
 - answer a factual recall question with cited evidence.
@@ -1259,7 +1700,7 @@ Apply:
 - none by default;
 - optional save answer as private note.
 
-### 9.5 `session.player_safe_recap`
+### 9.6 `session.player_safe_recap`
 
 Job:
 - draft a player-facing recap without hidden GM facts.
@@ -1268,16 +1709,18 @@ Inputs:
 - public-safe context only;
 - player-safe memory items;
 - public snippets;
-- public-known entities.
+- public-known entities;
+- optional reviewed private recap as a source only after public-safe filtering.
 
 Output:
-- public snippet draft.
+- public snippet draft;
+- leak review warnings.
 
 Apply:
-- create `PublicSnippet`;
+- create `PublicSnippet` only after GM review;
 - publish only through existing display action.
 
-### 9.6 `npc.roleplay_cues`
+### 9.7 `npc.roleplay_cues`
 
 Job:
 - help the GM run an NPC consistently.
@@ -1298,7 +1741,7 @@ Apply:
 - create proposal/planning marker;
 - create entity patch draft if GM requests.
 
-### 9.7 `npc.suggest_patch`
+### 9.8 `npc.suggest_patch`
 
 Job:
 - propose updates to an NPC after play.
@@ -1315,7 +1758,7 @@ Output:
 Apply:
 - update entity after GM review.
 
-### 9.8 `campaign.contradiction_check`
+### 9.9 `campaign.contradiction_check`
 
 Job:
 - find likely continuity conflicts.
@@ -1336,61 +1779,72 @@ Apply:
 
 The LLM work should not land as one huge slice. Build it in narrow, verifiable steps.
 
-### LLM-0: Data Foundations And Static Task Registry
+### PRE-LLM: Timestamped Live DM Capture
 
 Goal:
-- create the durable tables and static task definitions without making external model calls yet.
+- create the small private capture surface that feeds future LLM recap and canonization workflows.
 
 Build:
-- Alembic migration for provider profiles, prompt templates, context packages, LLM runs, proposal sets/options, planning markers, memory candidates, campaign memory entries, and transcript events;
-- static task registry in backend code;
-- Pydantic request/response models;
-- seed default prompt templates or load them from code;
-- basic list/read APIs for task registry.
+- `session_transcript_events` or equivalent durable table if not already added by the LLM data migration;
+- create/list APIs for live DM notes scoped to campaign/session/scene;
+- backend-generated `createdAt` timestamp and race-safe per-session monotonic `orderIndex`;
+- correction API/action that creates a new event with `correctsEventId` instead of mutating the original event body;
+- compact `/gm` live notes capture panel;
+- explicit Save/Cmd+Enter/Ctrl+Enter submission; plain Enter inserts newline by default;
+- recent captured snippets list in chronological order;
+- input mode metadata for typed, paste, and external dictation;
+- no provider calls and no LLM dependency.
 
 Tests:
-- migration creates tables and constraints;
-- provider profile does not store raw key value;
-- proposal statuses validate;
-- planning markers require scope;
-- memory candidates stay pending until explicit action.
+- each capture creates a separate append-only event;
+- events captured in the same second remain stably ordered by `orderIndex`;
+- concurrent captures cannot receive the same `orderIndex`;
+- unique-order conflicts retry instead of surfacing a 500;
+- active session/scene are attached by default when present;
+- editing one full note does not rewrite live capture chronology;
+- correcting an event keeps the original in audit history but only the corrected version reaches default recap context;
+- `/player` receives no live capture text.
 
 Acceptance:
 
 ```text
-fresh dev DB migrates
-  -> task registry lists built-in tasks
-  -> provider profile can be saved with env key reference
-  -> proposal/memory/planning records can be created in tests
-  -> no provider call is made
+open /gm during active session
+  -> focus Live Notes input
+  -> dictate or type one sentence
+  -> press Cmd/Ctrl+Enter or click Save
+  -> input clears and stays focused
+  -> event appears with backend timestamp and order index
+  -> repeat 50 times during a session
+  -> session recap task can see the ordered private event stream
 ```
 
-### LLM-1: Provider Profiles And Run Harness
+### LLM-0a: Minimal Provider Harness And Run History
 
 Goal:
-- run a minimal OpenAI-compatible request and persist safe run history.
+- make one backend-owned model call safely, with durable metadata and no campaign mutation.
 
 Build:
+- provider profiles and `llm_runs` tables only;
+- static task registry with a minimal `draft.private_note` or provider smoke task;
+- code-defined prompt templates;
 - OpenAI-compatible client wrapper;
 - provider test endpoint;
-- vendor presets and capability probing for OpenAI, Ollama, LM Studio, KoboldCpp, OpenRouter, vLLM, and custom endpoints;
+- vendor presets and conformance probing for OpenAI, Ollama, LM Studio, KoboldCpp, OpenRouter, vLLM, and custom endpoints;
 - non-streaming run endpoint;
-- cancel endpoint with upstream HTTP abort where supported;
-- request timeout and sanitized error mapping;
-- run history persistence;
+- timeout and best-effort cancellation;
 - token estimate and actual token drift tracking;
-- storage/export setting for LLM history inclusion;
-- no draft apply behavior yet.
+- storage/export and retention settings for LLM history;
+- no proposals, no memory candidates, no context packages beyond a minimal smoke-run payload.
 
 Tests:
+- provider profile does not store raw key value;
 - mocked provider success;
-- mocked timeout;
-- mocked cancellation;
-- cancel-vs-completion race finalizes as canceled when cancel was requested before response commit;
+- mocked timeout and best-effort cancellation;
 - mocked 401/500 sanitized errors;
-- mocked JSON-mode capability probe accepted/rejected;
+- mocked JSON-mode and conformance probe accepted/rejected;
 - changing provider `baseUrl`, `modelId`, `vendor`, or `keySource` invalidates probed capabilities;
-- runs against invalidated provider capabilities return HTTP 412 `provider_unverified`;
+- remote/metered invalidated providers return HTTP 412 `provider_unverified`;
+- local unauthenticated override is allowed only for localhost/private LAN endpoints;
 - API key never appears in response/log-shaped payloads.
 
 Acceptance:
@@ -1399,56 +1853,157 @@ Acceptance:
 configure provider from env key
   -> UI warns provider test may make a billable request
   -> test provider
-  -> probe detects available model list and JSON mode support where available
-  -> change model ID
-  -> capabilities are marked unverified until provider test runs again
-  -> running before re-test returns provider_unverified
-  -> run minimal prompt
-  -> cancel a long mocked run
-  -> inspect run history
-  -> inspect estimated vs actual token count when provider reports usage
+  -> probe assigns conformance level
+  -> run minimal backend-owned prompt
+  -> inspect run metadata
   -> export with "include LLM history" off omits request/response payloads
   -> key is absent from DB responses and logs
 ```
 
-### LLM-2: Context Preview And FTS Recall
+### LLM-0b: Context Packages And Trusted Preview
 
 Goal:
-- build previewable, scoped context packages before generation.
+- build previewable, hash-checked context packages without yet implementing every downstream task.
 
 Build:
+- `llm_context_packages` table;
 - context builder;
 - context preview API;
-- SQLite FTS indexes for notes/entities/public snippets/session transcript/memory candidates where appropriate;
-- FTS update triggers or service-level index writes with trigger safety net;
-- recall API;
-- token estimate utility;
-- public-safe and GM-private context modes.
+- compact trusted preview state;
+- source revisions and canonical `sourceRefHash`;
+- public-safe and GM-private context modes;
+- policy eligibility filter before context packing.
 
 Tests:
 - public-safe mode excludes private notes/entity fields;
+- public-safe mode excludes `live_dm_note` transcript events unless explicitly marked `publicSafe = true`;
 - normal mode excludes raw proposals and rejected options;
+- default recap context excludes corrected live-note originals when a correction event exists;
 - active planning markers are included as planning text;
 - expired markers are excluded;
 - context preview stores source revisions and a canonical sourceRefHash;
 - source revision/hash drift returns HTTP 409 instead of silently rebuilding context;
+- fast trusted preview is available only when source hash and source classes match the last reviewed preview.
+- compact trusted preview includes `lastReviewedContextPackageId`, `lastReviewedAt`, and `lastReviewedBy`.
+
+Acceptance:
+
+```text
+select session and recap task
+  -> full preview shows included/excluded sources
+  -> rerun with unchanged source policy shows compact trusted preview
+  -> changing source set forces full preview again
+```
+
+### LLM-0c: Session Build Recap Draft
+
+Goal:
+- prove the first useful Scribe loop: captured session evidence becomes a reviewed private recap draft.
+
+Build:
+- `session.build_recap` task;
+- `RecapEvidenceProjection` assembly;
+- `SessionRecapBundle` response schema;
+- structured response normalization for recap bundle;
+- long-session chronological map-reduce;
+- Save Recap action to store reviewed private recap/session summary;
+- no entity patching and no branch proposals yet.
+
+Tests:
+- build recap assembles live notes, linked notes, entity/session events, planning markers, and approved memory into ordered evidence;
+- build recap uses live DM notes in `orderIndex` order;
+- corrected live-note events replace originals in recap context while preserving audit history;
+- applied memory entries shadow their source live notes in default recap context;
+- regenerating recap excludes prior recap output from default context;
+- long-session recap uses map-reduce when source evidence exceeds provider context budget;
+- partial recap outputs preserve explicit facts, inferred links, open questions, and `doNotAssume`;
+- memory candidate drafts require evidence refs and claim strength.
+
+Acceptance:
+
+```text
+capture notes during a session
+  -> click Build Session Recap after play
+  -> review evidence preview
+  -> run recap
+  -> edit private recap draft
+  -> save reviewed recap
+  -> future context can include the saved recap
+```
+
+### LLM-0d: Memory Inbox And Canon Entries
+
+Goal:
+- turn reviewed recap facts into explicit campaign memory without forcing entity mutation.
+
+Build:
+- memory candidate table/actions;
+- campaign memory entries table;
+- `session.extract_canon_candidates` task;
+- memory candidate list/actions using `Accept into Memory` UI language;
+- targetless atomic memory entries as the v1 default;
+- optional second action to link candidate to an entity or create an entity patch draft;
+- backend target revision capture only for explicit target patches;
+- transcript event writes for accepted/rejected/applied memory.
+
+Tests:
+- multi-target output is split into atomic candidates;
+- targetless candidates skip OCC and create new memory entries/notes;
+- targetless `Accept into Memory` approves and applies in one transaction;
+- targeted candidates copy target revision from the context package source ref that fed the model;
+- candidates whose target was not in the model context are not auto-applicable target patches;
+- pending candidates do not appear as canon;
+- accepting into memory writes durable memory state;
+- target apply is idempotent in one transaction;
+- stale target revision returns HTTP 409 instead of clobbering newer GM edits;
+- rejected candidates are excluded from normal context.
+
+Acceptance:
+
+```text
+open recap memory drafts
+  -> accept one fact into Memory
+  -> optionally link it to an NPC
+  -> future context includes accepted memory
+  -> rejected candidate stays out of context
+```
+
+### LLM-1: Exact Recall And Alias Layer
+
+Goal:
+- retrieve campaign facts reliably enough to answer "what happened?" before adding flashy generation.
+
+Build:
+- SQLite FTS indexes for notes/entities/public snippets/session transcript/memory entries/proposal metadata where appropriate;
+- FTS update triggers or service-level index writes with trigger safety net;
+- `EntityAlias` table and manual alias UI/API;
+- alias expansion before FTS;
+- recall API;
+- retrieval policy matrix.
+
+Tests:
 - recall prefers canon/approved records over draft/proposal records;
+- alias expansion handles multilingual/fantasy spelling variants;
+- alias records can explain their `sourceRef` in recall/debug UI;
+- `canon_only` excludes proposals;
+- `canon_and_planning` includes planning summaries but excludes raw proposals;
+- `include_proposal_history` labels proposal history as draft/history;
+- normal creative tasks never receive raw proposal bodies;
 - FTS create/update/delete stays coherent for indexed records.
 
 Acceptance:
 
 ```text
-select scene and task
-  -> preview shows included/excluded sources
-  -> public-safe preview excludes GM-only data
-  -> recall question returns cited snippets
-  -> rejected proposal is absent unless include_proposal_history mode is selected
+ask recall question with fuzzy or translated NPC name
+  -> alias expansion finds the entity/memory
+  -> answer cites source snippets
+  -> rejected proposal history stays out unless explicitly requested
 ```
 
-### LLM-3: Branch Proposals And Planning Markers
+### LLM-2: Branch Proposals And Planning Markers
 
 Goal:
-- support the "give me several directions, I choose one" workflow.
+- support the "give me several directions, I choose one" workflow after the Scribe loop works.
 
 Build:
 - `scene.branch_directions` template;
@@ -1471,7 +2026,7 @@ Tests:
 Acceptance:
 
 ```text
-run branch directions for a scene
+run branch directions for a scene during prep
   -> receive 3-5 proposal options
   -> adopt option 2
   -> sibling options are marked superseded
@@ -1480,90 +2035,22 @@ run branch directions for a scene
   -> next context preview excludes other proposal bodies
 ```
 
-### LLM-4: Memory Inbox And Canonization
+### LLM-3: Player-Safe Recaps And Snippet Drafting
 
 Goal:
-- turn played events into approved campaign memory.
-
-Build:
-- `session.extract_canon_candidates` task;
-- memory candidate list/actions;
-- backend target revision capture when candidates are persisted;
-- apply behavior for session summary/private note/entity patch where minimal target support exists;
-- transcript event writes for approvals/applications;
-- canonization draft from selected proposal.
-
-Tests:
-- multi-target output is split into atomic candidates;
-- targetless candidates skip OCC and create new memory entries/notes;
-- targeted candidates copy target revision from the context package source ref that fed the model;
-- candidates whose target was not in the model context are not auto-applicable target patches;
-- pending candidates do not appear as canon;
-- approve/apply writes durable target state;
-- apply is idempotent in one transaction;
-- stale target revision returns HTTP 409 instead of clobbering newer GM edits;
-- rejected candidates are excluded from normal context;
-- canonized selected proposal appears as canon/approved state.
-
-Acceptance:
-
-```text
-submit rough session notes
-  -> model returns memory candidates
-  -> GM approves one NPC relationship update
-  -> entity/note/session memory updates after apply
-  -> future context includes approved update
-  -> rejected candidate stays out of context
-```
-
-### LLM-5: GM Assistant UI
-
-Goal:
-- make the workflow usable from `/gm`.
-
-Build:
-- assistant panel;
-- task picker;
-- provider status;
-- context preview drawer;
-- run button/output viewer;
-- proposal cards;
-- planning marker list;
-- memory inbox;
-- run history.
-
-Tests:
-- frontend unit tests for API calls and state transitions;
-- e2e with mocked provider showing branch proposal/adopt/context-preview flow;
-- e2e public-safe recap draft does not publish automatically.
-
-Acceptance:
-
-```text
-GM opens assistant panel
-  -> sees provider status
-  -> previews context
-  -> runs branch proposal task
-  -> adopts one option
-  -> sees planning marker
-  -> runs canonization task
-  -> approves memory candidate
-  -> /player remains unchanged throughout
-```
-
-### LLM-6: Player-Safe Recaps And Snippet Drafting
-
-Goal:
-- produce public-safe drafts that still require explicit publish.
+- produce public-safe drafts that still require leak review and explicit publish.
 
 Build:
 - `session.player_safe_recap` task;
 - `draft.public_snippet` task;
 - public-safe context enforcement;
+- deterministic leak warning pass;
 - create `PublicSnippet` from reviewed draft.
 
 Tests:
 - public-safe context excludes private notes and hidden fields;
+- sensitivity reasons keep private motives/clues out of public-safe context;
+- leak warning flags suspicious phrases and private-only references;
 - draft creation does not mutate player display;
 - publish still goes through existing `show-snippet`/scene publish APIs.
 
@@ -1572,12 +2059,43 @@ Acceptance:
 ```text
 run player-safe recap
   -> preview contains public-safe sources only
-  -> draft is created
+  -> draft is created with leak warnings where relevant
   -> GM creates PublicSnippet
   -> /player changes only after explicit publish
 ```
 
-### LLM-7: Vector Retrieval And Embeddings
+### LLM-4: GM Assistant UI Hardening
+
+Goal:
+- make the minimal Scribe loop usable from `/gm` without turning it into a cockpit inside the cockpit.
+
+Build:
+- live capture surface;
+- post-session Build Session Recap action;
+- Memory Inbox;
+- provider status and run history behind compact drawers;
+- full context preview drawer and fast trusted preview;
+- later tabs for branch proposals and planning markers.
+
+Tests:
+- frontend unit tests for API calls and state transitions;
+- e2e with mocked provider showing Build Session Recap evidence preview, recap draft edit, memory candidate review, and save;
+- e2e with mocked provider showing exact recall with aliases;
+- e2e public-safe recap draft does not publish automatically;
+- e2e branch proposal/adopt/context-preview flow after the core Scribe loop is stable.
+
+Acceptance:
+
+```text
+GM opens /gm
+  -> captures notes
+  -> builds recap
+  -> accepts memory
+  -> recalls accepted memory later
+  -> /player remains unchanged throughout
+```
+
+### LLM-5: Vector Retrieval And Embeddings
 
 Status:
 - deferred.
@@ -1591,7 +2109,7 @@ Build later:
 - hybrid retrieval;
 - chunk strategy.
 
-Do not block LLM-1 through LLM-6 on this.
+Do not block PRE-LLM through LLM-4 on this.
 
 ## 11. Backend Placement
 
@@ -1602,13 +2120,17 @@ backend/app/llm/
   __init__.py
   provider_profiles.py
   client.py
+  conformance.py
   context_builder.py
   recall.py
+  aliases.py
   task_registry.py
   response_normalizer.py
+  recap.py
   proposals.py
   planning_markers.py
   memory_inbox.py
+  public_safety.py
 ```
 
 LLM routes should start in a separate route module:
@@ -1639,21 +2161,32 @@ If the frontend stays flat for now, keep components small and API calls centrali
 Backend unit/API tests:
 - provider profile validation;
 - provider test success/failure with mocked HTTP;
+- provider conformance level gating by task;
 - context builder public/private filtering;
+- retrieval policy matrix;
+- alias expansion;
+- recap evidence projection assembly;
+- public-safe leak review warnings;
 - proposal lifecycle transitions;
 - planning marker context eligibility;
 - memory candidate approve/apply/reject transitions;
 - recall ranking and status filtering;
+- retention payload purge keeps metadata and removes prompt/response bodies;
 - API key redaction.
 
 Frontend tests:
 - task picker renders task registry;
+- compact trusted preview expands to full preview;
 - context preview shows included/excluded sources;
+- Build Session Recap evidence review flow;
 - proposal card actions call correct APIs;
 - memory inbox action flow;
+- public-safe leak warnings are visible before snippet creation;
 - no player-display publish after LLM draft generation.
 
 E2E tests:
+- live capture to recap to accepted memory;
+- exact recall with alias expansion;
 - mocked provider branch proposal/adopt flow;
 - mocked provider canonization flow;
 - public-safe recap draft to public snippet;
@@ -1668,9 +2201,11 @@ Before accepting any LLM slice:
 - no LLM endpoints consumed by `/player`;
 - no prompt payloads sent over display transport;
 - no private context in public-safe mode;
+- public-safe drafts pass leak review before snippet creation;
 - no model output applied without explicit GM action;
 - no generated public content published automatically;
 - no rejected/raw proposals in normal context;
+- retrieval results pass policy filtering before context packing;
 - sanitized error envelope for provider errors;
 - all run history is campaign-scoped private GM data.
 
@@ -1684,6 +2219,16 @@ Export behavior:
 - default should be off;
 - when off, exports keep metadata such as run ID, task kind, provider profile label, model ID, timestamps, status, token counts, and duration, but omit or redact `requestJson`, rendered prompt messages, `responseText`, and `responseJson`;
 - when on, the UI must warn that LLM history can contain inline private notes, entity secrets, GM prompts, and provider responses.
+- campaign export may include provider profile labels, vendor names, and model IDs referenced by historical runs;
+- importing a campaign must not activate runnable provider profiles from the export automatically;
+- after import, the GM must explicitly map historical provider references to local provider profiles before new runs can use them.
+
+Retention controls:
+- default should keep run metadata even when full payload retention is disabled;
+- GM setting: `Keep full prompt/response payloads` off by default for new campaigns after the first LLM slice unless the GM opts in;
+- optional retention window: delete full payloads older than 30 days, 90 days, or never;
+- manual purge action: delete prompt/response bodies for a campaign while keeping audit metadata;
+- purge/export redaction must preserve enough metadata for debugging task kind, status, provider profile label, model ID, timing, token counts, and error code.
 
 ## 14. Open Decisions
 
@@ -1710,25 +2255,32 @@ Export behavior:
 Build the smallest useful vertical path:
 
 ```text
-LLM-0 data foundations
-  -> LLM-1 provider harness
-  -> LLM-2 context preview for selected scene
-  -> LLM-3 branch proposals and planning marker
+PRE-LLM live capture
+  -> LLM-0a minimal provider harness
+  -> LLM-0b context preview
+  -> LLM-0c Build Session Recap
+  -> LLM-0d Memory Inbox
+  -> LLM-1 Exact Recall
 ```
 
 This proves the product's differentiating loop:
 
 ```text
-Ask for several possible directions.
-Choose one.
-Carry only that selected planning direction forward.
-Do not pollute canon or future context with rejected branches.
+Capture what happened.
+Build a private recap.
+Review candidate facts.
+Accept memory.
+Recall it later with citations.
 ```
 
-Then add canonization:
+Then add creative planning:
 
 ```text
-LLM-4 memory inbox
-  -> approve played facts
-  -> future context uses approved canon
+LLM-2 branch proposals and planning markers
+  -> ask for several possible directions
+  -> choose one
+  -> carry only that selected planning direction forward
+  -> do not pollute canon or future context with rejected branches
 ```
+
+Do not let `LLM-2` branch proposals leapfrog `LLM-0c` and `LLM-0d`. The first useful product proof is memory, then recall; creative branching comes after the Scribe spine works.
