@@ -115,6 +115,14 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5173 MYROLL_E2E_API_BASE=http://127.0.0.1:8
 
 Playwright screenshots are written to `artifacts/playwright/`, including GM cockpit, player display, image display, map display, fog reveal states, token visibility states, public snippet text reveal states, party card projection states, initiative projection states, and scene context staging/publish states.
 
+The real provider Scribe recap journey is opt-in because it calls a local/LAN OpenAI-compatible model:
+
+```bash
+scripts/run_scribe_recap_real_llm_e2e.sh
+```
+
+By default the runner uses `http://192.168.1.117:1234/v1` with model `Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q8_K_P`. Override with `MYROLL_E2E_LLM_BASE_URL` and `MYROLL_E2E_LLM_MODEL` when needed.
+
 Core product invariant:
 
 ```text
