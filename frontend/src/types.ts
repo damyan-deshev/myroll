@@ -752,6 +752,7 @@ export type MemoryCandidate = {
   evidence_refs: Array<Record<string, unknown>>;
   validation_errors: string[];
   normalization_warnings: string[];
+  normalization_warning_details: Array<Record<string, unknown>>;
   edited_from_candidate_id: string | null;
   applied_memory_entry_id: string | null;
   created_at: string;

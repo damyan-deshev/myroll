@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "description": "Language-specific uncertainty/planning phrase hints for recap evidence review. These rules are review warnings, not proof of safety or truth.",
+  "directEvidenceReviewWarnings": [
+    {
+      "code": "direct_evidence_quote_has_uncertainty_language",
+      "severity": "medium",
+      "languages": ["en"],
+      "phrases": [
+        "if played",
+        "possible consequence",
+        "may",
+        "could",
+        "might",
+        "must choose",
+        "would",
+        "GM is considering"
+      ]
+    },
+    {
+      "code": "direct_evidence_quote_has_uncertainty_language",
+      "severity": "medium",
+      "languages": ["bg"],
+      "phrases": [
+        "ако се изиграе",
+        "ако бъде изиграно",
+        "възможна последица",
+        "може",
+        "би могъл",
+        "би могла",
+        "би могло",
+        "би могли",
+        "би",
+        "евентуално",
+        "възможно е",
+        "GM обмисля",
+        "ДМ обмисля"
+      ]
+    }
+  ]
+}

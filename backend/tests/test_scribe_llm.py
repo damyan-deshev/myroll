@@ -412,7 +412,7 @@ def test_recap_accepts_canonical_evidence_ref_alias_keys(migrated_settings, monk
     assert recap.json()["rejected_drafts"] == []
 
 
-def test_recap_rejects_bulgarian_speculative_direct_evidence(migrated_settings, monkeypatch):
+def test_recap_warns_on_bulgarian_uncertainty_language_in_direct_evidence(migrated_settings, monkeypatch):
     client = _client(migrated_settings)
     campaign_id, session_id = _campaign_session(client)
     event = client.post(
@@ -449,7 +449,7 @@ def test_recap_rejects_bulgarian_speculative_direct_evidence(migrated_settings, 
     provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
     preview = client.post(
         f"/api/campaigns/{campaign_id}/llm/context-preview",
-        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Reject speculative claims."},
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Review uncertain claims."},
     ).json()
     assert client.post(f"/api/llm/context-packages/{preview['id']}/review").status_code == 200
     recap = client.post(
@@ -458,8 +458,98 @@ def test_recap_rejects_bulgarian_speculative_direct_evidence(migrated_settings, 
     )
     assert recap.status_code == 200
     body = recap.json()
-    assert body["candidates"] == []
-    assert "speculative_evidence_for_direct_claim" in body["rejected_drafts"][0]["errors"]
+    assert body["rejected_drafts"] == []
+    assert len(body["candidates"]) == 1
+    assert "direct_evidence_quote_has_uncertainty_language" in body["candidates"][0]["normalization_warnings"]
+    assert body["candidates"][0]["normalization_warning_details"][0]["matchedPhrase"] == "възможно е"
+
+
+def test_evidence_hard_contract_is_independent_from_rule_pack(monkeypatch):
+    from backend.app.api import routes_llm
+
+    source_refs = [
+        {
+            "kind": "planning_marker",
+            "id": "marker-1",
+            "lane": "planning",
+            "body": "GM is considering a future betrayal.",
+        },
+        {
+            "kind": "session_transcript_event",
+            "id": "event-1",
+            "lane": "draft",
+            "body": "Aureon returned the moon-silver coin at dawn.",
+        },
+    ]
+
+    for rule_pack in (
+        (),
+        ({"code": "direct_evidence_quote_has_uncertainty_language", "severity": "medium", "phrase": "Aureon returned"},),
+    ):
+        monkeypatch.setattr(routes_llm, "DIRECT_EVIDENCE_REVIEW_WARNING_PHRASES", rule_pack)
+        planning_analysis = routes_llm._evidence_ref_analysis(
+            [{"kind": "planning_marker", "id": "marker-1", "quote": "GM is considering a future betrayal."}],
+            source_refs,
+            requires_direct_quote=True,
+        )
+        missing_source_analysis = routes_llm._evidence_ref_analysis(
+            [{"kind": "session_transcript_event", "id": "missing-event", "quote": "Aureon returned the moon-silver coin at dawn."}],
+            source_refs,
+            requires_direct_quote=True,
+        )
+        missing_quote_analysis = routes_llm._evidence_ref_analysis(
+            [{"kind": "session_transcript_event", "id": "event-1", "quote": "Aureon betrayed Mira at dawn."}],
+            source_refs,
+            requires_direct_quote=True,
+        )
+
+        assert "speculative_evidence_for_direct_claim" in planning_analysis["errors"]
+        assert "planning_evidence_cannot_create_memory" in planning_analysis["errors"]
+        assert "evidence_source_missing" in missing_source_analysis["errors"]
+        assert "evidence_quote_not_found" in missing_quote_analysis["errors"]
+
+
+def test_rule_pack_language_phrases_are_advisory_warnings(monkeypatch):
+    from backend.app.api import routes_llm
+
+    monkeypatch.setattr(
+        routes_llm,
+        "DIRECT_EVIDENCE_REVIEW_WARNING_PHRASES",
+        (
+            {"code": "direct_evidence_quote_has_uncertainty_language", "severity": "medium", "phrase": "may"},
+            {"code": "direct_evidence_quote_has_uncertainty_language", "severity": "medium", "phrase": "възможно е"},
+        ),
+    )
+    source_refs = [
+        {
+            "kind": "session_transcript_event",
+            "id": "event-1",
+            "lane": "draft",
+            "body": "Възможно е монетата да е прокълната. The goldsmith may know more.",
+        }
+    ]
+
+    bg_analysis = routes_llm._evidence_ref_analysis(
+        [{"kind": "session_transcript_event", "id": "event-1", "quote": "Възможно е монетата да е прокълната."}],
+        source_refs,
+        requires_direct_quote=True,
+    )
+    en_analysis = routes_llm._evidence_ref_analysis(
+        [{"kind": "session_transcript_event", "id": "event-1", "quote": "The goldsmith may know more."}],
+        source_refs,
+        requires_direct_quote=True,
+    )
+    clean_analysis = routes_llm._evidence_ref_analysis(
+        [{"kind": "session_transcript_event", "id": "event-1", "quote": "монетата да е прокълната"}],
+        source_refs,
+        requires_direct_quote=True,
+    )
+
+    assert bg_analysis["errors"] == []
+    assert en_analysis["errors"] == []
+    assert clean_analysis["warnings"] == []
+    assert bg_analysis["warnings"][0]["matchedPhrase"] == "възможно е"
+    assert en_analysis["warnings"][0]["matchedPhrase"] == "may"
 
 
 def _proposal_fixture(option_count: int = 3) -> dict[str, object]:

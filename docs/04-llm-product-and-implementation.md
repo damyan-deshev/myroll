@@ -1242,7 +1242,11 @@ The model must use those exact values in `evidenceRefs`. Display metadata such a
 
 Memory candidates may be created only for `directly_evidenced` and `strong_inference` recap claims. `strong_inference` candidates must be visually marked in the memory inbox. `weak_inference` and `gm_review_required` claims may appear in the recap draft or continuity warnings, but they must not become candidates without explicit GM rewrite.
 
-Direct-evidence candidates may not cite speculative wording as proof. If an exact quote contains planning/conditional language such as `if played`, `possible consequence`, `may`, `could`, `must choose`, or `GM is considering`, the backend rejects the candidate with `speculative_evidence_for_direct_claim`. The model may still mention that material in the recap as uncertainty or GM review context, but it must not become accepted memory without GM rewrite.
+Direct-evidence candidates may not cite planning/proposal sources as proof. That hard rule is language-independent: marker/proposal source lanes are provenance and GM intent, not played evidence, so citing them for a direct canon claim is rejected with `speculative_evidence_for_direct_claim`. Language-specific uncertainty phrases in otherwise valid played evidence, such as `may`, `if played`, `възможно е`, or `би могъл`, are review hints rather than proof of semantic speculation. They are loaded from `backend/app/llm_review_rules/speculative_language.json` and persisted as visible memory-candidate normalization warnings such as `direct_evidence_quote_has_uncertainty_language`. The rule pack is deliberately bounded to phrase data matched after Unicode normalization/casefolding; it is not arbitrary executable code or a semantic parser. GM review remains the authority; the phrase pack is editable product data, not a truth engine.
+
+Tests for this boundary live in two layers:
+- hard contract tests assert structural invariants with an empty rule pack and with a counterfactual rule pack: planning/proposal lanes never become memory evidence, unknown source refs reject, and quotes must be found in the cited source;
+- rule-pack content tests assert only that bundled phrases match or do not match sample text. Updating language hints should not weaken or rewrite hard safety tests.
 
 Intermediate map-reduce partials should use a stricter shape than prose-only summary:
 
@@ -2335,6 +2339,7 @@ Shipped v1 limitations:
 - one marker can be canonized by at most one memory entry;
 - manual relinking is deferred;
 - entity patching and proposal-body canonization remain deferred;
+- language-specific recap evidence phrase checks are bounded warning rules loaded from `backend/app/llm_review_rules/speculative_language.json`; hard evidence rejection depends on source lane and quote validity, not on English/Bulgarian phrase confidence;
 - `candidate_body_resembles_planning_marker` is a conservative exact/substring warning after normalization, not semantic paraphrase detection; GM review remains the authority for whether a candidate describes played events rather than planning intent;
 - hard delete may sever marker/option provenance because new provenance FKs use `ON DELETE SET NULL`.
 

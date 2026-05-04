@@ -18,6 +18,7 @@ const reportJsonPath = process.env.MYROLL_E2E_REPORT_JSON_PATH ?? path.join(arti
 const baselineReportJsonPath =
   process.env.MYROLL_E2E_BASELINE_REPORT_JSON ??
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../artifacts/e2e/scribe-campaign-real-baseline/before-tightening-report.json");
+const journeyLanguage = process.env.MYROLL_E2E_LANGUAGE === "bg" ? "bg" : "en";
 
 test.skip(!enabled, "Set MYROLL_E2E_REAL_LLM=1 to run the real llama.cpp campaign Scribe journey.");
 
@@ -80,6 +81,7 @@ type BuildRecapResult = {
     source_planning_marker_id?: string | null;
     source_proposal_option_id?: string | null;
     normalization_warnings?: string[];
+    normalization_warning_details?: JsonObject[];
   }>;
   rejected_drafts: JsonObject[];
 };
@@ -127,6 +129,146 @@ type JourneyReport = {
   screenshots: string[];
 };
 
+type JourneyScenario = {
+  language: "en" | "bg";
+  campaignNamePrefix: string;
+  campaignDescription: string;
+  sessionTitlePrefix: string;
+  sceneTitlePrefix: string;
+  sceneSummary: string;
+  labels: { opening: string; pressure: string; mistaken: string; correction: string; playedBranch: string; resolution: string };
+  notes: {
+    opening: string;
+    pressure: string;
+    mistaken: string;
+    correction: string;
+    playedBranch: (chosenTitle: string) => string;
+    resolution: string;
+  };
+  branchInstruction: string;
+  selectedWithoutMarkerInstruction: string;
+  futureMarkerInstruction: string;
+  recapInstruction: string;
+  postAcceptInstruction: string;
+  recapFallbackTitle: string;
+  recallQuery: string;
+  option2Anchor: string;
+  option2Patterns: RegExp[];
+  recapCoreAnchors: string[];
+  chosenPlayedPatterns: RegExp[];
+  blueFlamePatterns: RegExp[];
+  correctedMistakeForbidden: string[];
+};
+
+const scenarios: Record<"en" | "bg", JourneyScenario> = {
+  en: {
+    language: "en",
+    campaignNamePrefix: "Real Campaign Journey",
+    campaignDescription: "A dark-fairytale campaign arc around Aureon, Mira, Captain Varos, and the Moon Gate.",
+    sessionTitlePrefix: "Moon Gate Session",
+    sceneTitlePrefix: "Moon Gate Courtyard",
+    sceneSummary: "A dawn-bound gate, a goldsmith patron, and a watch captain who wants leverage.",
+    labels: {
+      opening: "opening",
+      pressure: "pressure",
+      mistaken: "mistaken detail",
+      correction: "correction",
+      playedBranch: "played branch",
+      resolution: "resolution",
+    },
+    notes: {
+      opening:
+        "[Campaign clock 19:05] Aureon the goldsmith gives Mira a moon-silver coin and says the Moon Gate opens only at dawn. Mira promises to return the coin after the dawn ritual.",
+      pressure:
+        "[Campaign clock 19:40] Captain Varos arrives with city guards. He wants political leverage over the gate ritual but has not yet betrayed anyone.",
+      mistaken: "[Campaign clock 20:05] Dictation mistake: Mira gives Aureon a silver ring before the gate opens.",
+      correction:
+        "[Campaign clock 20:07 correction] Mira does not give a ring; she keeps Aureon's moon-silver coin as the ritual key.",
+      playedBranch: (chosenTitle) =>
+        `[Campaign clock 21:10] Played event: the table follows option 2, "${chosenTitle}". In actual play, Captain Varos recognizes that Aureon's moon-silver coin is also a seal tied to royal authority. Varos offers to let the dawn ritual proceed if Mira allows the city to inspect the coin after the gate opens. Mira refuses to surrender the coin before dawn but agrees to parley afterward, and Aureon warns again that the moon-silver coin must be returned at dawn.`,
+      resolution:
+        "[Campaign clock 21:45] At dawn the Moon Gate opens. The party sees a blue-flame map beyond the gate, and Mira still holds the moon-silver coin.",
+    },
+    branchInstruction: [
+      "The party is stalled at the Moon Gate with Aureon, Mira, and Captain Varos.",
+      "Give exactly three distinct branch directions.",
+      "Option 2 should be a political negotiation complication around Captain Varos and the dawn ritual.",
+      "All options are speculative planning, not played history. Keep planning marker text concise.",
+    ].join("\n"),
+    selectedWithoutMarkerInstruction: "Follow up after selecting an option but before adopting a marker.",
+    futureMarkerInstruction: "What follows from the adopted planning marker?",
+    recapInstruction: [
+      "Build a private session recap from the played evidence.",
+      "Planning markers are GM intent only; do not report them as events unless a later live capture supports them.",
+      "Create memoryCandidateDrafts only for directly evidenced or strong-inference facts.",
+      "Expected anchors: Aureon, Mira, moon-silver coin, dawn ritual, Captain Varos political negotiation, blue-flame map.",
+    ].join("\n"),
+    postAcceptInstruction: "Check canonized planning bridge context after memory accept.",
+    recapFallbackTitle: "Moon Gate recap",
+    recallQuery: "Aureon Mira moon-silver coin Varos dawn",
+    option2Anchor: "Varos",
+    option2Patterns: [/\bpolitic/i, /\bnegotiat/i, /\bleverage/i, /\btithe/i, /\btoll/i, /\bcity\b/i, /\bcrown\b/i, /\bguard/i],
+    recapCoreAnchors: ["Aureon", "Mira", "moon-silver coin", "dawn", "Varos"],
+    chosenPlayedPatterns: [/Dawn Complication/i, /royal authority/i, /inspect the coin/i],
+    blueFlamePatterns: [/blue-flame/i],
+    correctedMistakeForbidden: ["silver ring"],
+  },
+  bg: {
+    language: "bg",
+    campaignNamePrefix: "Истински Scribe тест",
+    campaignDescription: "Мрачна приказна кампания около Ауреон, Мира, капитан Варос и Лунната порта.",
+    sessionTitlePrefix: "Сесия при Лунната порта",
+    sceneTitlePrefix: "Дворът на Лунната порта",
+    sceneSummary: "Порта, която се отваря на разсъмване, златар-покровител и капитан на стражата, който търси влияние.",
+    labels: {
+      opening: "откриване",
+      pressure: "натиск",
+      mistaken: "грешна диктовка",
+      correction: "корекция",
+      playedBranch: "изигран избор",
+      resolution: "развръзка",
+    },
+    notes: {
+      opening:
+        "[Кампанейски час 19:05] Ауреон златарят дава на Мира лунно-сребърна монета и казва, че Лунната порта се отваря само на разсъмване. Мира обещава да върне монетата след ритуала на разсъмване.",
+      pressure:
+        "[Кампанейски час 19:40] Капитан Варос пристига с градската стража. Той иска политическо влияние върху ритуала при портата, но още не е предал никого.",
+      mistaken:
+        "[Кампанейски час 20:05] Грешка от диктовка: Мира дава на Ауреон сребърен пръстен преди портата да се отвори.",
+      correction:
+        "[Кампанейски час 20:07 корекция] Мира не дава пръстен; тя пази лунно-сребърната монета на Ауреон като ключ за ритуала.",
+      playedBranch: (chosenTitle) =>
+        `[Кампанейски час 21:10] Изиграно събитие: масата следва вариант 2, "${chosenTitle}". В реалната игра капитан Варос разбира, че лунно-сребърната монета на Ауреон е и печат, свързан с царска власт. Варос предлага да позволи ритуалът на разсъмване да продължи, ако Мира позволи на града да провери монетата след отварянето на портата. Мира отказва да предаде монетата преди разсъмване, но се съгласява на преговори след това, а Ауреон отново предупреждава, че лунно-сребърната монета трябва да бъде върната на разсъмване.`,
+      resolution:
+        "[Кампанейски час 21:45] На разсъмване Лунната порта се отваря. Групата вижда синьо-пламенна карта отвъд портата, а Мира все още държи лунно-сребърната монета.",
+    },
+    branchInstruction: [
+      "Групата е блокирана при Лунната порта с Ауреон, Мира и капитан Варос.",
+      "Отговори на български. Дай точно три различни посоки за развитие.",
+      "Вариант 2 трябва да бъде политическо усложнение за преговори около капитан Варос и ритуала на разсъмване.",
+      "Всички варианти са спекулативно планиране, не изиграна история. Дръж текста за planning marker кратък.",
+    ].join("\n"),
+    selectedWithoutMarkerInstruction: "Продължи след избран вариант, но преди да има приет planning marker.",
+    futureMarkerInstruction: "Какво следва от приетия planning marker? Отговори на български.",
+    recapInstruction: [
+      "Изгради частно резюме на сесията от изиграните доказателства. Отговори на български.",
+      "Planning marker-ите са само намерение на ДМ; не ги описвай като събития, освен ако по-късен live capture не ги подкрепя.",
+      "Създай memoryCandidateDrafts само за директно доказани факти или силни изводи.",
+      "Очаквани котви: Ауреон, Мира, лунно-сребърна монета, ритуал на разсъмване, политически преговори с капитан Варос, синьо-пламенна карта.",
+    ].join("\n"),
+    postAcceptInstruction: "Провери контекста след canonization bridge и приемането в memory. Отговори на български.",
+    recapFallbackTitle: "Резюме при Лунната порта",
+    recallQuery: "Ауреон Мира лунно-сребърна монета Варос разсъмване",
+    option2Anchor: "Варос",
+    option2Patterns: [/полит/i, /преговор/i, /влияние/i, /натиск/i, /страж/i, /град/i, /царск/i, /власт/i],
+    recapCoreAnchors: ["Ауреон", "Мира", "лунно-сребър", "разсъм", "Варос"],
+    chosenPlayedPatterns: [/царск/i, /власт/i, /провери монет/i, /преговор/i],
+    blueFlamePatterns: [/синьо-пламен/i, /син пламък/i, /синя.*карта/i],
+    correctedMistakeForbidden: ["сребърен пръстен", "silver ring"],
+  },
+};
+const scenario = scenarios[journeyLanguage];
+
 function ensureDir(filePath: string): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
 }
@@ -167,7 +309,21 @@ function containsAnyPattern(value: string, patterns: RegExp[]): boolean {
 }
 
 function hasSpeculativeLanguage(value: string): boolean {
-  return containsAnyPattern(value, [/\bif played\b/i, /\bpossible consequence/i, /\bmust choose\b/i, /\bGM is considering\b/i]);
+  return containsAnyPattern(value, [
+    /\bif played\b/i,
+    /\bpossible consequence/i,
+    /\bmust choose\b/i,
+    /\bGM is considering\b/i,
+    /\bако се изиграе\b/i,
+    /\bако бъде изиграно\b/i,
+    /\bвъзможна последица\b/i,
+    /\bможе\b/i,
+    /\bби мог(ъл|ла|ло|ли)\b/i,
+    /\bевентуално\b/i,
+    /\bвъзможно е\b/i,
+    /\bДМ обмисля\b/i,
+    /\bGM обмисля\b/i,
+  ]);
 }
 
 function promptContains(prompt: string, value: string): boolean {
@@ -241,24 +397,24 @@ async function setupCampaign(request: APIRequestContext, runId: number): Promise
     request,
     "/api/campaigns",
     {
-      name: `Real Campaign Journey ${runId}`,
-      description: "A dark-fairytale campaign arc around Aureon, Mira, Captain Varos, and the Moon Gate.",
+      name: `${scenario.campaignNamePrefix} ${runId}`,
+      description: scenario.campaignDescription,
     },
     "create campaign",
   );
   const session = await apiPost<Session>(
     request,
     `/api/campaigns/${campaign.id}/sessions`,
-    { title: `Moon Gate Session ${runId}` },
+    { title: `${scenario.sessionTitlePrefix} ${runId}` },
     "create session",
   );
   const scene = await apiPost<Scene>(
     request,
     `/api/campaigns/${campaign.id}/scenes`,
     {
-      title: `Moon Gate Courtyard ${runId}`,
+      title: `${scenario.sceneTitlePrefix} ${runId}`,
       session_id: session.id,
-      summary: "A dawn-bound gate, a goldsmith patron, and a watch captain who wants leverage.",
+      summary: scenario.sceneSummary,
     },
     "create scene",
   );
@@ -423,9 +579,9 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       campaign.id,
       session.id,
       scene.id,
-      "opening",
+      scenario.labels.opening,
       "2026-05-04T19:05:00Z",
-      "[Campaign clock 19:05] Aureon the goldsmith gives Mira a moon-silver coin and says the Moon Gate opens only at dawn. Mira promises to return the coin after the dawn ritual.",
+      scenario.notes.opening,
     );
     await createTimedCapture(
       request,
@@ -433,9 +589,9 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       campaign.id,
       session.id,
       scene.id,
-      "pressure",
+      scenario.labels.pressure,
       "2026-05-04T19:40:00Z",
-      "[Campaign clock 19:40] Captain Varos arrives with city guards. He wants political leverage over the gate ritual but has not yet betrayed anyone.",
+      scenario.notes.pressure,
     );
     const mistaken = await createTimedCapture(
       request,
@@ -443,31 +599,26 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       campaign.id,
       session.id,
       scene.id,
-      "mistaken detail",
+      scenario.labels.mistaken,
       "2026-05-04T20:05:00Z",
-      "[Campaign clock 20:05] Dictation mistake: Mira gives Aureon a silver ring before the gate opens.",
+      scenario.notes.mistaken,
     );
     const correction = await apiPost<TranscriptEvent>(
       request,
       `/api/scribe/transcript-events/${mistaken.id}/correct`,
-      { body: "[Campaign clock 20:07 correction] Mira does not give a ring; she keeps Aureon's moon-silver coin as the ritual key." },
+      { body: scenario.notes.correction },
       "correct mistaken capture",
     );
     stampTranscriptEvent(correction.id, "2026-05-04T20:07:00Z");
     report.notes.push({
-      label: "correction",
+      label: scenario.labels.correction,
       campaignClock: "2026-05-04T20:07:00Z",
       eventId: correction.id,
       orderIndex: correction.order_index,
-      body: "[Campaign clock 20:07 correction] Mira does not give a ring; she keeps Aureon's moon-silver coin as the ritual key.",
+      body: scenario.notes.correction,
     });
 
-    const branchInstruction = [
-      "The party is stalled at the Moon Gate with Aureon, Mira, and Captain Varos.",
-      "Give exactly three distinct branch directions.",
-      "Option 2 should be a political negotiation complication around Captain Varos and the dawn ritual.",
-      "All options are speculative planning, not played history. Keep planning marker text concise.",
-    ].join("\n");
+    const branchInstruction = scenario.branchInstruction;
     report.branch.instruction = branchInstruction;
     const branchContext = await reviewedContext(
       request,
@@ -509,17 +660,8 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       name: "Option 2 matches requested political Varos direction",
       pass:
         Boolean(branchDetail.options[1]) &&
-        containsAll(`${branchDetail.options[1].title} ${branchDetail.options[1].summary} ${branchDetail.options[1].body}`, ["Varos"]) &&
-        containsAnyPattern(`${branchDetail.options[1].title} ${branchDetail.options[1].summary} ${branchDetail.options[1].body}`, [
-          /\bpolitic/i,
-          /\bnegotiat/i,
-          /\bleverage/i,
-          /\btithe/i,
-          /\btoll/i,
-          /\bcity\b/i,
-          /\bcrown\b/i,
-          /\bguard/i,
-        ]),
+        containsAll(`${branchDetail.options[1].title} ${branchDetail.options[1].summary} ${branchDetail.options[1].body}`, [scenario.option2Anchor]) &&
+        containsAnyPattern(`${branchDetail.options[1].title} ${branchDetail.options[1].summary} ${branchDetail.options[1].body}`, scenario.option2Patterns),
       details: branchDetail.options[1]?.summary ?? "No option 2.",
     });
 
@@ -535,7 +677,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
         task_kind: "scene.branch_directions",
         scope_kind: "scene",
         visibility_mode: "gm_private",
-        gm_instruction: "Follow up after selecting an option but before adopting a marker.",
+        gm_instruction: scenario.selectedWithoutMarkerInstruction,
       },
       "selected without marker branch",
     );
@@ -585,7 +727,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
         task_kind: "scene.branch_directions",
         scope_kind: "scene",
         visibility_mode: "gm_private",
-        gm_instruction: "What follows from the adopted planning marker?",
+        gm_instruction: scenario.futureMarkerInstruction,
       },
       "future branch with marker",
     );
@@ -609,9 +751,9 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       campaign.id,
       session.id,
       scene.id,
-      "played branch",
+      scenario.labels.playedBranch,
       "2026-05-04T21:10:00Z",
-      `[Campaign clock 21:10] Played event: the table follows option 2, "${chosen.title}". In actual play, Captain Varos recognizes that Aureon's moon-silver coin is also a seal tied to royal authority. Varos offers to let the dawn ritual proceed if Mira allows the city to inspect the coin after the gate opens. Mira refuses to surrender the coin before dawn but agrees to parley afterward, and Aureon warns again that the moon-silver coin must be returned at dawn.`,
+      scenario.notes.playedBranch(chosen.title),
     );
     await createTimedCapture(
       request,
@@ -619,17 +761,12 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       campaign.id,
       session.id,
       scene.id,
-      "resolution",
+      scenario.labels.resolution,
       "2026-05-04T21:45:00Z",
-      "[Campaign clock 21:45] At dawn the Moon Gate opens. The party sees a blue-flame map beyond the gate, and Mira still holds the moon-silver coin.",
+      scenario.notes.resolution,
     );
 
-    const recapInstruction = [
-      "Build a private session recap from the played evidence.",
-      "Planning markers are GM intent only; do not report them as events unless a later live capture supports them.",
-      "Create memoryCandidateDrafts only for directly evidenced or strong-inference facts.",
-      "Expected anchors: Aureon, Mira, moon-silver coin, dawn ritual, Captain Varos political negotiation, blue-flame map.",
-    ].join("\n");
+    const recapInstruction = scenario.recapInstruction;
     const recapContext = await reviewedContext(
       request,
       campaign.id,
@@ -654,7 +791,9 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     });
     addCheck(report, {
       name: "Corrected capture replaces mistaken original in recap context",
-      pass: recapContext.rendered_prompt.includes("Mira does not give a ring") && !recapContext.rendered_prompt.includes("Mira gives Aureon a silver ring"),
+      pass:
+        recapContext.rendered_prompt.includes(scenario.notes.correction) &&
+        !recapContext.rendered_prompt.includes(scenario.notes.mistaken),
       severity: "critical",
       details: "Checked rendered prompt projection for correction behavior.",
     });
@@ -673,23 +812,21 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     const recapText = `${report.recap.title ?? ""}\n${report.recap.bodyMarkdown ?? ""}`;
     addCheck(report, {
       name: "Recap includes core played anchors",
-      pass: containsAll(recapText, ["Aureon", "Mira", "moon-silver coin", "dawn", "Varos"]),
-      details: "Expected anchors: Aureon, Mira, moon-silver coin, dawn/dawn ritual, Varos.",
+      pass: containsAll(recapText, scenario.recapCoreAnchors),
+      details: `Expected anchors: ${scenario.recapCoreAnchors.join(", ")}.`,
     });
     addCheck(report, {
       name: "Recap reflects the chosen option after DM records it as played",
       pass:
         containsAnyPattern(recapText, [
-          /Dawn Complication/i,
-          /royal authority/i,
-          /inspect the coin/i,
+          ...scenario.chosenPlayedPatterns,
           new RegExp(chosen.title.replace(/^The\s+/i, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
         ]) || containsAll(recapText, chosen.summary.split(/\s+/).filter((word) => word.length > 5).slice(0, 2)),
       details: `Chosen option was "${chosen.title}" with summary "${chosen.summary}"; played note used royal-authority/coin-inspection facts instead of copying proposal consequences.`,
     });
     addCheck(report, {
       name: "Recap includes played blue-flame resolution",
-      pass: containsAll(recapText, ["blue-flame"]),
+      pass: containsAnyPattern(recapText, scenario.blueFlamePatterns),
       details: "Expected the 21:45 played resolution to appear in the recap.",
     });
     addCheck(report, {
@@ -699,7 +836,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     });
     addCheck(report, {
       name: "Recap does not repeat corrected ring mistake",
-      pass: !normalizeText(recapText).includes("silver ring"),
+      pass: scenario.correctedMistakeForbidden.every((value) => !normalizeText(recapText).includes(normalizeText(value))),
       severity: "critical",
       details: "The original mistaken capture should not survive projection.",
     });
@@ -732,7 +869,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       `/api/campaigns/${campaign.id}/scribe/session-recaps`,
       {
         session_id: session.id,
-        title: report.recap.title ?? "Moon Gate recap",
+        title: report.recap.title ?? scenario.recapFallbackTitle,
         body_markdown: report.recap.bodyMarkdown ?? "No recap body returned.",
         source_llm_run_id: recapBuild.run.id,
         evidence_refs: recapContext.source_refs,
@@ -788,7 +925,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
         task_kind: "scene.branch_directions",
         scope_kind: "scene",
         visibility_mode: "gm_private",
-        gm_instruction: "Check canonized planning bridge context after memory accept.",
+        gm_instruction: scenario.postAcceptInstruction,
       },
       "post-accept branch context",
     );
@@ -811,7 +948,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     const recall = await apiPost<RecallResult>(
       request,
       `/api/campaigns/${campaign.id}/scribe/recall`,
-      { query: "Aureon Mira moon-silver coin Varos dawn", include_draft: false },
+      { query: scenario.recallQuery, include_draft: false },
       "recall accepted memory",
     );
     report.recap.recall = recall;
@@ -840,7 +977,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
 
     await page.goto("/gm");
     await expect(page.getByText("Scribe", { exact: true })).toBeVisible();
-    const screenshot = screenshotPath("scribe-campaign-real-final.png");
+    const screenshot = screenshotPath(`scribe-campaign-real-${scenario.language}-final.png`);
     await page.screenshot({ path: screenshot, fullPage: true });
     report.screenshots.push(screenshot);
   } finally {

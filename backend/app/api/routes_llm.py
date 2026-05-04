@@ -7,6 +7,7 @@ import re
 import time
 import unicodedata
 import uuid
+from pathlib import Path
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -67,41 +68,6 @@ SCOPE_KINDS = {"campaign", "session", "scene"}
 SOURCE_CLASSES = {"campaign", "session", "scene", "note", "memory_entry", "planning_marker", "transcript_event", "manual", "public_snippet", "entity"}
 PROPOSAL_OPTION_STATUSES = {"proposed", "selected", "rejected", "saved_for_later", "superseded", "canonized"}
 PLANNING_MARKER_STATUSES = {"active", "expired", "superseded", "canonized", "discarded"}
-SPECULATIVE_EVIDENCE_PATTERNS = (
-    r"\bif played\b",
-    r"\bpossible consequence",
-    r"\bmay\b",
-    r"\bcould\b",
-    r"\bmight\b",
-    r"\bmust choose\b",
-    r"\bwould\b",
-    r"\bGM is considering\b",
-    r"\bако се изиграе\b",
-    r"\bако бъде изиграно\b",
-    r"\bвъзможна последица\b",
-    r"\bможе\b",
-    r"\bби мог(ъл|ла|ло|ли)\b",
-    r"\bби\b",
-    r"\bевентуално\b",
-    r"\bвъзможно е\b",
-    r"\bGM обмисля\b",
-    r"\bДМ обмисля\b",
-)
-DIRECT_SPECULATIVE_EVIDENCE_PATTERNS = (
-    r"\bif played\b",
-    r"\bpossible consequence",
-    r"\bGM is considering\b",
-    r"\bако се изиграе\b",
-    r"\bако бъде изиграно\b",
-    r"\bвъзможна последица\b",
-    r"\bможе\b",
-    r"\bби мог(ъл|ла|ло|ли)\b",
-    r"\bби\b",
-    r"\bевентуално\b",
-    r"\bвъзможно е\b",
-    r"\bGM обмисля\b",
-    r"\bДМ обмисля\b",
-)
 CANONISH_MARKER_PATTERNS = (
     r"\bhappened\b",
     r"\bwas\b",
@@ -112,6 +78,29 @@ CANONISH_MARKER_PATTERNS = (
     r"\bdied\b",
     r"\bmurdered\b",
 )
+
+
+def _load_direct_evidence_review_phrases() -> tuple[dict[str, str], ...]:
+    rules_path = Path(__file__).resolve().parents[1] / "llm_review_rules" / "speculative_language.json"
+    try:
+        payload = json.loads(rules_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ()
+    phrases: list[dict[str, str]] = []
+    for rule in payload.get("directEvidenceReviewWarnings", []):
+        if not isinstance(rule, dict):
+            continue
+        code = str(rule.get("code") or "").strip()
+        if code != "direct_evidence_quote_has_uncertainty_language":
+            continue
+        severity = str(rule.get("severity") or "medium").strip() or "medium"
+        for phrase in rule.get("phrases", []):
+            if isinstance(phrase, str) and phrase.strip():
+                phrases.append({"code": code, "severity": severity, "phrase": phrase.strip()})
+    return tuple(phrases)
+
+
+DIRECT_EVIDENCE_REVIEW_WARNING_PHRASES = _load_direct_evidence_review_phrases()
 
 
 def get_db(request: Request):
@@ -149,6 +138,24 @@ def _json_load(value: str | None, fallback: Any) -> Any:
         return json.loads(value or "")
     except (TypeError, json.JSONDecodeError):
         return fallback
+
+
+def _warning_code(item: object) -> str:
+    if isinstance(item, dict):
+        return str(item.get("code") or "").strip()
+    return str(item)
+
+
+def _dedupe_warning_items(items: list[object]) -> list[object]:
+    deduped: list[object] = []
+    seen: set[str] = set()
+    for item in items:
+        key = _json_dump(item) if isinstance(item, dict) else str(item)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
 
 
 def _normalize_text(value: str) -> str:
@@ -518,6 +525,7 @@ class MemoryCandidateOut(BaseModel):
     evidence_refs: list[dict[str, object]]
     validation_errors: list[str]
     normalization_warnings: list[str]
+    normalization_warning_details: list[dict[str, object]]
     edited_from_candidate_id: str | None
     applied_memory_entry_id: str | None
     created_at: str
@@ -782,6 +790,12 @@ def _event_out(event: SessionTranscriptEvent, corrected_by: str | None = None) -
 
 
 def _candidate_out(candidate: MemoryCandidate) -> MemoryCandidateOut:
+    raw_warnings = _json_load(candidate.normalization_warnings_json, [])
+    warning_details = [
+        item
+        for item in raw_warnings
+        if isinstance(item, dict) and isinstance(item.get("code"), str)
+    ]
     return MemoryCandidateOut(
         id=candidate.id,
         campaign_id=candidate.campaign_id,
@@ -796,7 +810,8 @@ def _candidate_out(candidate: MemoryCandidate) -> MemoryCandidateOut:
         claim_strength=candidate.claim_strength,
         evidence_refs=_json_load(candidate.evidence_refs_json, []),
         validation_errors=[str(item) for item in _json_load(candidate.validation_errors_json, [])],
-        normalization_warnings=[str(item) for item in _json_load(candidate.normalization_warnings_json, [])],
+        normalization_warnings=[code for code in (_warning_code(item) for item in raw_warnings) if code],
+        normalization_warning_details=warning_details,
         edited_from_candidate_id=candidate.edited_from_candidate_id,
         applied_memory_entry_id=candidate.applied_memory_entry_id,
         created_at=candidate.created_at,
@@ -2079,10 +2094,6 @@ def _source_lookup(source_refs: list[dict[str, object]]) -> dict[tuple[str, str]
     return lookup
 
 
-def _has_speculative_language(value: str) -> bool:
-    return any(re.search(pattern, value, flags=re.IGNORECASE) for pattern in SPECULATIVE_EVIDENCE_PATTERNS)
-
-
 def _normalized_quote_text(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value)
     normalized = re.sub(r"`([^`]*)`", r"\1", normalized)
@@ -2099,9 +2110,30 @@ def _quote_matches_source(quote: str, source_text: str) -> bool:
     return normalized_quote in _normalized_quote_text(source_text)
 
 
+def _direct_evidence_review_warning_matches(value: str) -> list[dict[str, str]]:
+    normalized_value = f" {_normalized_quote_text(value)} "
+    matches: list[dict[str, str]] = []
+    for rule in DIRECT_EVIDENCE_REVIEW_WARNING_PHRASES:
+        phrase = str(rule.get("phrase") or "").strip()
+        normalized_phrase = _normalized_quote_text(phrase)
+        if not normalized_phrase:
+            continue
+        if f" {normalized_phrase} " in normalized_value:
+            matches.append(
+                {
+                    "code": str(rule.get("code") or "direct_evidence_quote_has_uncertainty_language"),
+                    "severity": str(rule.get("severity") or "medium"),
+                    "matchedPhrase": phrase,
+                    "source": "speculative_language_rule_pack",
+                }
+            )
+    return matches
+
+
 def _evidence_ref_analysis(evidence_refs: list[object], source_refs: list[dict[str, object]], *, requires_direct_quote: bool) -> dict[str, object]:
     lookup = _source_lookup(source_refs)
     errors: list[str] = []
+    warnings: list[object] = []
     valid_ref_count = 0
     valid_quote_count = 0
     valid_non_planning_quote_count = 0
@@ -2135,13 +2167,10 @@ def _evidence_ref_analysis(evidence_refs: list[object], source_refs: list[dict[s
                 valid_quote_count += 1
                 if not source_is_planning:
                     valid_non_planning_quote_count += 1
-                if requires_direct_quote and source_is_planning and _has_speculative_language(quote):
+                if requires_direct_quote and source_is_planning:
                     errors.append("speculative_evidence_for_direct_claim")
-                elif requires_direct_quote and not source_is_planning and _has_speculative_language(quote):
-                    for pattern in DIRECT_SPECULATIVE_EVIDENCE_PATTERNS:
-                        if re.search(pattern, quote, flags=re.IGNORECASE):
-                            errors.append("speculative_evidence_for_direct_claim")
-                            break
+                elif requires_direct_quote and not source_is_planning:
+                    warnings.extend(_direct_evidence_review_warning_matches(quote))
     if not valid_ref_count:
         errors.append("evidence_requires_known_source")
     elif not non_planning_ref_count:
@@ -2150,6 +2179,7 @@ def _evidence_ref_analysis(evidence_refs: list[object], source_refs: list[dict[s
         errors.append("direct_evidence_requires_valid_quote")
     return {
         "errors": errors,
+        "warnings": _dedupe_warning_items(warnings),
         "valid_ref_count": valid_ref_count,
         "valid_quote_count": valid_quote_count,
         "valid_non_planning_quote_count": valid_non_planning_quote_count,
@@ -2222,7 +2252,7 @@ def _validate_recap_bundle(
         strength = str(raw.get("claimStrength") or "")
         evidence_refs = raw.get("evidenceRefs")
         errors: list[str] = []
-        normalization_warnings: list[str] = []
+        normalization_warnings: list[object] = []
         related_marker_id = str(raw.get("relatedPlanningMarkerId") or raw.get("related_planning_marker_id") or "").strip()
         related_marker: PlanningMarker | None = None
         if strength not in CLAIM_STRENGTHS:
@@ -2241,6 +2271,7 @@ def _validate_recap_bundle(
         }
         if evidence_refs:
             errors.extend(str(item) for item in evidence_analysis["errors"])
+            normalization_warnings.extend(item for item in evidence_analysis.get("warnings", []))
         elif strength == "directly_evidenced":
             errors.append("direct_evidence_requires_valid_quote")
         elif strength == "strong_inference":
@@ -2270,7 +2301,7 @@ def _validate_recap_bundle(
             raw["sourceProposalOptionId"] = related_marker.source_proposal_option_id
         elif "relatedPlanningMarkerId" in raw:
             raw.pop("relatedPlanningMarkerId", None)
-        raw["normalizationWarnings"] = normalization_warnings
+        raw["normalizationWarnings"] = _dedupe_warning_items(normalization_warnings)
         accepted_candidates.append(raw)
     return bundle, accepted_candidates, rejected
 

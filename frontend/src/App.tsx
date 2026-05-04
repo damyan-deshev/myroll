@@ -116,6 +116,20 @@ function errorMessage(error: unknown): string {
   return "Unknown error";
 }
 
+function memoryCandidateWarningLabel(candidate: MemoryCandidate, warning: string): string {
+  if (warning === "candidate_body_resembles_planning_marker") {
+    return "Candidate wording resembles planning marker";
+  }
+  if (warning === "direct_evidence_quote_has_uncertainty_language") {
+    const detail = candidate.normalization_warning_details.find((item) => item.code === warning);
+    const phrase = typeof detail?.matchedPhrase === "string" ? detail.matchedPhrase : null;
+    return phrase
+      ? `Evidence quote uses uncertainty language: ${phrase}`
+      : "Evidence quote uses uncertainty language";
+  }
+  return warning;
+}
+
 export function App() {
   const path = window.location.pathname;
   if (path === "/player") return <PlayerDisplayApp />;
@@ -1558,7 +1572,7 @@ function ScribeWidget(props: SharedWidgetProps) {
                   .filter((warning) => warning !== "planning_marker_link_ignored")
                   .map((warning) => (
                     <span key={warning} className="status-pill warning">
-                      {warning === "candidate_body_resembles_planning_marker" ? "Candidate wording resembles planning marker" : warning}
+                      {memoryCandidateWarningLabel(candidate, warning)}
                     </span>
                   ))}
               </div>
