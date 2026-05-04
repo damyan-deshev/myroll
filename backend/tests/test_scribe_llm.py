@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import tarfile
 import uuid
@@ -1493,6 +1494,144 @@ def test_linked_recap_candidate_accept_canonizes_marker_option_and_context(migra
     assert recall.json()["hits"][0]["source_kind"] == "campaign_memory_entry"
 
 
+def test_corpus_context_bundle_metadata_and_prompt_sections(migrated_settings):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    played_phrase = "PLAYED_EVIDENCE_CORPUS_5B_ALLOWED"
+    scoped_note_phrase = "SCOPED_NOTE_CORPUS_5B_ALLOWED"
+    private_note_phrase = "PRIVATE_PREP_NOTE_CORPUS_5B_FORBIDDEN"
+    memory_phrase = "ACCEPTED_MEMORY_CORPUS_5B_ALLOWED"
+    recap_phrase = "REVIEWED_RECAP_CORPUS_5B_ALLOWED"
+    marker_phrase = "PLANNING_MARKER_CORPUS_5B_PLANNING_ONLY"
+    proposal_phrase = "PROPOSAL_BODY_CORPUS_5B_FORBIDDEN"
+    now = "2026-05-04T12:00:00Z"
+
+    client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": played_phrase},
+    )
+    scoped_note = client.post(
+        f"/api/campaigns/{campaign_id}/notes",
+        json={"session_id": session_id, "title": "Scoped note", "private_body": scoped_note_phrase},
+    ).json()
+    assert client.patch(f"/api/notes/{scoped_note['id']}", json={"recall_status": "scoped_recall_eligible"}).status_code == 200
+    assert client.post(
+        f"/api/campaigns/{campaign_id}/notes",
+        json={"session_id": session_id, "title": "Private prep", "private_body": private_note_phrase},
+    ).status_code == 201
+    previous_session = client.post(f"/api/campaigns/{campaign_id}/sessions", json={"title": "Earlier"}).json()
+    client.post(
+        f"/api/campaigns/{campaign_id}/scribe/session-recaps",
+        json={"session_id": previous_session["id"], "title": "Earlier recap", "body_markdown": recap_phrase},
+    )
+
+    with sqlite3.connect(migrated_settings.db_path) as connection:
+        connection.execute(
+            """
+            INSERT INTO campaign_memory_entries
+                (id, campaign_id, session_id, source_candidate_id, title, body, evidence_refs_json, tags_json, public_safe, sensitivity_reason, created_at, updated_at)
+            VALUES ('corpus-5b-memory', ?, NULL, NULL, 'Corpus memory', ?, '[]', '[]', 0, NULL, ?, ?)
+            """,
+            (campaign_id, memory_phrase, now, now),
+        )
+        connection.execute(
+            """
+            INSERT INTO proposal_sets
+                (id, campaign_id, session_id, scene_id, llm_run_id, context_package_id, task_kind, scope_kind, title, status, normalization_warnings_json, created_at, updated_at)
+            VALUES ('corpus-5b-proposal-set', ?, ?, NULL, NULL, NULL, 'scene.branch_directions', 'session', 'Proposal', 'proposed', '[]', ?, ?)
+            """,
+            (campaign_id, session_id, now, now),
+        )
+        connection.execute(
+            """
+            INSERT INTO proposal_options
+                (id, proposal_set_id, stable_option_key, title, summary, body, consequences, reveals, stays_hidden, proposed_delta_json, planning_marker_text, status, selected_at, canonized_at, created_at, updated_at)
+            VALUES ('corpus-5b-option', 'corpus-5b-proposal-set', 'opt', 'Option', 'Summary', ?, '', '', '', '{}', ?, 'selected', ?, NULL, ?, ?)
+            """,
+            (proposal_phrase, marker_phrase, now, now, now),
+        )
+        connection.execute(
+            """
+            INSERT INTO planning_markers
+                (id, campaign_id, session_id, scene_id, source_proposal_option_id, scope_kind, status, title, marker_text, original_marker_text, lint_warnings_json, provenance_json, edited_at, edited_from_source, expires_at, created_at, updated_at)
+            VALUES ('corpus-5b-marker', ?, ?, NULL, 'corpus-5b-option', 'session', 'active', 'Planning', ?, NULL, '[]', '{}', NULL, 0, NULL, ?, ?)
+            """,
+            (campaign_id, session_id, marker_phrase, now, now),
+        )
+
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Build from admissible corpus evidence."},
+    )
+    assert preview.status_code == 201
+    body = preview.json()
+    rendered = body["rendered_prompt"]
+    assert body["context_options"]["corpusBundle"]["version"] == "llm5b_corpus_context_v1"
+    assert body["context_options"]["corpusBundle"]["assembly"]
+    dynamic_refs = [ref for ref in body["source_refs"] if not ref.get("isSyntheticScopeRef")]
+    assert dynamic_refs
+    assert all(ref.get("cardId") and ref.get("sourceHash") and ref.get("claimRole") for ref in dynamic_refs)
+    assert any(ref.get("isSyntheticScopeRef") and ref.get("claimRole") == "scope_context" for ref in body["source_refs"])
+    assert played_phrase in rendered
+    assert scoped_note_phrase in rendered
+    assert memory_phrase in rendered
+    assert recap_phrase in rendered
+    assert marker_phrase in rendered
+    assert private_note_phrase not in json.dumps(body, ensure_ascii=False)
+    assert proposal_phrase not in json.dumps(body, ensure_ascii=False)
+    assert rendered.index("PLAYED EVIDENCE") < rendered.index(played_phrase)
+    assert rendered.index("SCOPED GM NOTES ELIGIBLE FOR RECALL") < rendered.index(scoped_note_phrase)
+    assert rendered.index("ACCEPTED CANON MEMORY") < rendered.index(memory_phrase)
+    assert rendered.index("REVIEWED SESSION SUMMARIES") < rendered.index(recap_phrase)
+    assert rendered.index("GM PLANNING INTENT, NOT PLAYED EVIDENCE") < rendered.index(marker_phrase)
+
+
+def test_synthetic_scope_refs_cannot_create_memory_candidates(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "The council adjourned peacefully."},
+    )
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        content = "\n".join(message["content"] for message in payload["messages"])
+        campaign_match = re.search(r"### campaign:([0-9a-f-]+)", content)
+        assert campaign_match
+        return (
+            json.dumps(
+                {
+                    "privateRecap": {"title": "Scope misuse", "bodyMarkdown": "The model tried to cite scope framing."},
+                    "memoryCandidateDrafts": [
+                        {
+                            "title": "Invalid scope memory",
+                            "body": "The campaign scope was misused as evidence.",
+                            "claimStrength": "directly_evidenced",
+                            "evidenceRefs": [{"kind": "campaign", "id": campaign_match.group(1), "quote": "Scribe Campaign"}],
+                        }
+                    ],
+                    "continuityWarnings": [],
+                    "unresolvedThreads": [],
+                }
+            ),
+            {"usage": {"prompt_tokens": 80, "completion_tokens": 40}},
+        )
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Reject synthetic evidence."},
+    ).json()
+    assert client.post(f"/api/llm/context-packages/{preview['id']}/review").status_code == 200
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    )
+    assert recap.status_code == 200
+    assert recap.json()["candidates"] == []
+    assert "synthetic_scope_ref_cannot_create_memory" in recap.json()["rejected_drafts"][0]["errors"]
+
+
 def test_invalid_related_marker_link_drops_to_unlinked_candidate_with_warning(migrated_settings, monkeypatch):
     client = _client(migrated_settings)
     campaign_id, session_id = _campaign_session(client)
@@ -1718,11 +1857,32 @@ def test_player_safe_context_excludes_private_sources_and_stales_on_curation_cha
     assert live_phrase not in rendered
     assert unshown_snippet_phrase not in rendered
     assert "public_snippet" in preview["source_classes"]
+    preview_payload = json.dumps(preview, ensure_ascii=False)
+    assert private_recap_phrase not in preview_payload
+    assert private_memory_phrase not in preview_payload
+    assert planning_phrase not in preview_payload
+    assert proposal_phrase not in preview_payload
+    assert live_phrase not in preview_payload
+    assert "private-memory-1" not in preview_payload
+    assert "planning-marker-private" not in preview_payload
+    assert "proposal-option-private" not in preview_payload
+    assert preview["context_options"]["corpusBundle"]["version"] == "llm5b_corpus_context_v1"
+    assert preview["context_options"]["corpusBundle"]["trace"]["traceVisibility"] == "safe"
 
     def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
         return json.dumps({"publicSnippetDraft": {"title": "Safe", "bodyMarkdown": "Safe public draft."}}), {}
 
     provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    unrelated_private_note = client.post(
+        f"/api/campaigns/{campaign_id}/notes",
+        json={"session_id": session_id, "title": "Unrelated private note", "private_body": "PRIVATE_NOTE_AFTER_PREVIEW_DOES_NOT_STALE_PUBLIC_SAFE"},
+    )
+    assert unrelated_private_note.status_code == 201
+    still_fresh = client.post(
+        f"/api/campaigns/{campaign_id}/llm/player-safe-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    )
+    assert still_fresh.status_code == 200
     changed = client.patch(
         f"/api/scribe/session-recaps/{safe_recap['id']}/public-safety",
         json={"campaign_id": campaign_id, "public_safe": False, "sensitivity_reason": "private_note"},
@@ -1734,6 +1894,7 @@ def test_player_safe_context_excludes_private_sources_and_stales_on_curation_cha
     )
     assert stale.status_code == 409
     assert stale.json()["error"]["code"] == "context_preview_stale"
+    assert stale.json()["error"]["details"][0]["reasonCode"] == "public_safe_sources_changed"
     assert client.get("/api/player-display").json() == player_before
     assert private_recap["public_safe"] is False
 

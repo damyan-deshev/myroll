@@ -39,6 +39,7 @@ Current shipped status:
 - `[shipped]` LLM-3 player-safe recap/snippet drafting and leak warning gate: public-safe source curation, reviewed public-safe context packages, deterministic warning scan, player-safe structured draft runs, LLM-sourced `PublicSnippet` creation with scan/ack gating, dedicated player-display snippet serialization, publication tracking, and default export redaction of LLM snippet provenance/warnings.
 - `[shipped]` LLM-4 proposal canonization bridge: `session.build_recap` may link a memory candidate to one active planning marker when later played evidence confirms it; `Accept into Memory` atomically creates accepted memory, canonizes the marker/source option, and keeps future canon context carried by the memory entry rather than marker/proposal text.
 - `[shipped]` LLM-5a campaign corpus cards + FTS5 recall: selected campaign source rows compile into derived, rebuildable Scribe corpus cards; SQLite FTS5 recall now runs inside mode-aware admissibility policy; responses expose evidence coverage, match strategy, safe/GM-private trace shape, and compact Evidence Board-ready card payloads.
+- `[shipped]` LLM-5b corpus-backed context packages: Scribe context preview, reviewed context packages, and actual rendered provider prompts now use the same corpus-backed admissibility bundle. Dynamic evidence/history/planning refs come from corpus cards, synthetic scope refs are framing only, prompt sections preserve claim-role boundaries, and public-safe bundle metadata is safe by construction.
 - `[shipped]` Real-provider Scribe journey verification: opt-in Playwright runners exercise a LAN/OpenAI-compatible model through live capture, branch proposals, planning-marker adoption, played-event capture, session recap, memory accept, recall, and `/player` payload boundary checks. Reports are written under ignored `artifacts/e2e/*` paths for human review and split checks into backend contract, product quality, and model behavior sections. A synthetic Bulgarian scenario matrix now broadens this from one scripted journey to multiple campaign shapes.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
 
@@ -1405,6 +1406,8 @@ Route handlers must not do `FTS query -> feed to model` directly. The policy fil
 
 The shipped LLM-5a recall substrate replaces the first spine for Scribe recall. It is still not semantic memory or GraphRAG: it is a policy-aware admissibility layer over derived cards and SQLite FTS5.
 
+The shipped LLM-5b context package substrate extends that same admissibility layer into Scribe LLM execution. Context preview, review, freshness checks, and rendered provider prompts now share one corpus-backed bundle. Dynamic evidence/history/planning refs come from `scribe_corpus_cards`; synthetic campaign/session/scene refs are scope framing only and cannot be cited as memory-candidate evidence.
+
 Current recall direction:
 
 The next recall slice should be framed as evidence admissibility before semantic retrieval. Myroll is not merely trying to find something similar; it is trying to find source material that is allowed to participate in the requested lane, with inspectable provenance, without confusing canon, reviewed recap, played evidence, planning intent, drafts/proposals, and public-safe material.
@@ -1470,6 +1473,13 @@ FTS coherence rules:
 - tests should continue to use poisoned unique phrases to catch lane contamination across recall, trace, context preview, and rendered provider payloads.
 
 Recall and context preview must share the same backend retrieval function. A preview that says a proposal body or planning marker was excluded must be describing the exact bundle that the later LLM run will receive. Route-local context assembly is forbidden for Scribe LLM tasks once this substrate exists.
+
+LLM context package rules:
+- `source_refs_json.body` and `quote` are derived only from admissible compiled card text or synthetic scope framing text;
+- prompt renderers section sources by claim role instead of flattening mixed evidence into generic context;
+- planning marker text may appear only under planning-intent headings and remains non-evidence;
+- public-safe `context_options_json.corpusBundle` is allowlist-built and must not contain private excluded source IDs, titles, excerpts, marker bodies, proposal bodies, private note refs, or private edge labels;
+- `source_ref_hash` includes task/scope/visibility/instruction/options plus each included source's `kind/id/revision/cardId/sourceHash/cardVariant/lane/visibility`.
 
 The recall/context-preview response should also expose a GM-private trace projection suitable for a visual inspector. This trace is not a graph reasoning engine; it is an explanation of the retrieval result that already happened.
 

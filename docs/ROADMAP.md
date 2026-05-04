@@ -1146,8 +1146,9 @@ Status as of 2026-05-04:
 - shipped branch proposal/planning marker slice: campaign/session/scene branch context preview, structured proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection;
 - shipped player-safe recap/snippet leak-warning gate: public-safe curation, public-safe context preview, structured player-safe draft run, deterministic warning scan, exact-content ack for risky drafts, LLM snippet provenance, and player-display publication tracking;
 - shipped proposal canonization bridge: `session.build_recap` can link a memory candidate to one active planning marker when later played evidence confirms it, and `Accept into Memory` atomically creates canon memory while marking the marker/source option `canonized`;
+- shipped corpus-backed recall/context packages: selected campaign sources compile into derived Scribe corpus cards, SQLite FTS5 recall runs under admissibility policy, and Scribe LLM context previews/provider prompts use the same corpus-backed evidence bundle;
 - shipped real-provider Scribe journey hardening: opt-in Playwright runners now exercise the local/LAN model through live capture, branch proposals, planning-marker adoption, played-event recap, memory accept, recall, and `/player` boundary checks. The recap prompt now renders transcript chronology and canonical evidence-ref IDs explicitly, and direct-evidence memory candidates reject speculative proposal wording as proof;
-- planned next: broader Scribe hardening, full FTS recall, and deferred entity/object patch workflows;
+- planned next: broader Scribe hardening, deferred entity/object patch workflows, and a separate Evidence Board/UX spike for the visual card-based inspection surface;
 - deferred: vectors, streaming, tool calls, audio capture/transcription, and autonomous entity mutation.
 
 Detailed build specification:

@@ -873,3 +873,19 @@ Consequences:
 - Parsed model string values normalize common double-quote glyphs (`„`, `“`, `”`, `«`, `»`, and related variants) to ASCII `"`. Single quotes and apostrophes are left alone.
 - The repaired result still goes through the same schema, evidence-ref, lane, and canon/public-safety validation. Local syntax repair never authorizes partial output.
 - Default payload retention remains metadata-only. Debug payload retention can be enabled explicitly for local forensic runs.
+
+## DR-059: Scribe Context Packages Use Corpus-Backed Admissible Evidence
+
+Decision: Scribe LLM context preview, reviewed context packages, freshness checks, and rendered provider prompts use the same corpus-backed admissibility bundle.
+
+Rationale:
+- LLM-5a made recall policy-aware, but route-local context builders could still assemble dynamic evidence through separate policy paths.
+- The real contract surface is the rendered provider prompt, not only the preview UI or `source_refs_json`.
+- A future Evidence Board should visualize the actual evidence pipeline, not a parallel inspection model.
+
+Consequences:
+- Dynamic Scribe evidence/history/planning refs come from derived `scribe_corpus_cards`.
+- Synthetic campaign/session/scene refs are scope framing only and cannot be cited as memory-candidate evidence.
+- Prompt renderers section sources by claim role so canon memory, reviewed summaries, played evidence, GM notes, planning intent, and public artifacts stay distinct.
+- Public-safe context metadata is allowlist-built and must not expose private excluded source details.
+- Full Evidence Board UX, vectors, embeddings, and semantic graph edges remain deferred.

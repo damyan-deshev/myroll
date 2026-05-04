@@ -50,10 +50,11 @@ from backend.app.review_rule_packs import PhraseRule, load_phrase_rules
 from backend.app.scribe_corpus import (
     DEFAULT_LIMIT as RECALL_DEFAULT_LIMIT,
     MAX_LIMIT as RECALL_MAX_LIMIT,
+    build_scribe_context_bundle,
+    ensure_campaign_corpus_cards_current,
     CorpusUnavailableError,
     RecallPolicyError,
     recall_campaign_corpus,
-    rebuild_campaign_corpus,
 )
 from backend.app.time import utc_now_z
 
@@ -1781,14 +1782,25 @@ def _canonical_source_hash(
     scene_id: str | None = None,
     context_options: dict[str, object] | None = None,
 ) -> str:
+    hash_context_options = {
+        "includeUnshownPublicSnippets": bool((context_options or {}).get("includeUnshownPublicSnippets")),
+        "excludedSourceRefs": sorted(str(item) for item in (context_options or {}).get("excludedSourceRefs", [])),
+        "corpusBundleVersion": ((context_options or {}).get("corpusBundle") or {}).get("version") if isinstance((context_options or {}).get("corpusBundle"), dict) else None,
+    }
     canonical_refs = [
         {
             "kind": ref.get("kind"),
             "sourceClass": ref.get("sourceClass"),
             "id": ref.get("id"),
             "revision": ref.get("revision"),
+            "cardId": ref.get("cardId"),
+            "sourceHash": ref.get("sourceHash"),
+            "cardVariant": ref.get("cardVariant"),
             "lane": ref.get("lane"),
             "visibility": ref.get("visibility"),
+            "claimRole": ref.get("claimRole"),
+            "sourceStatus": ref.get("sourceStatus"),
+            "isSyntheticScopeRef": bool(ref.get("isSyntheticScopeRef")),
         }
         for ref in sorted(source_refs, key=lambda item: (str(item.get("kind")), str(item.get("id"))))
     ]
@@ -1799,7 +1811,7 @@ def _canonical_source_hash(
         "sessionId": session_id,
         "sceneId": scene_id,
         "gmInstruction": gm_instruction,
-        "contextOptions": context_options or {},
+        "contextOptions": hash_context_options,
         "sourceClasses": _source_classes(source_refs),
         "sourceRefs": canonical_refs,
     }
@@ -1812,6 +1824,8 @@ def _render_source_block(ref: dict[str, object]) -> str:
     metadata = [
         f"title: {ref.get('title')}",
         f"visibility: {ref.get('visibility')}",
+        f"claimRole: {ref.get('claimRole')}",
+        f"sourceStatus: {ref.get('sourceStatus')}",
         f"evidenceRefKind: {ref.get('kind')}",
         f"evidenceRefId: {ref.get('id')}",
     ]
@@ -1825,6 +1839,10 @@ def _render_source_block(ref: dict[str, object]) -> str:
         ("scopeKind", "scopeKind"),
         ("sourceProposalOptionId", "sourceProposalOptionId"),
         ("relatedPlanningMarkerId", "relatedPlanningMarkerId"),
+        ("cardId", "cardId"),
+        ("sourceHash", "sourceHash"),
+        ("cardVariant", "cardVariant"),
+        ("isSyntheticScopeRef", "isSyntheticScopeRef"),
     ):
         value = ref.get(key)
         if value is not None:
@@ -1832,15 +1850,44 @@ def _render_source_block(ref: dict[str, object]) -> str:
     return f"{header}\n" + "\n".join(metadata) + f"\nText:\n{body}"
 
 
+def _sectioned_source_text(source_refs: list[dict[str, object]], sections: list[tuple[str, Any]]) -> str:
+    rendered_sections: list[str] = []
+    used: set[int] = set()
+    for heading, predicate in sections:
+        blocks: list[str] = []
+        for index, ref in enumerate(source_refs):
+            if index in used:
+                continue
+            if predicate(ref):
+                blocks.append(_render_source_block(ref))
+                used.add(index)
+        if blocks:
+            rendered_sections.append(f"{heading}:\n" + "\n\n".join(blocks))
+    remaining = [
+        _render_source_block(ref)
+        for index, ref in enumerate(source_refs)
+        if index not in used
+    ]
+    if remaining:
+        rendered_sections.append("OTHER ADMISSIBLE CONTEXT:\n" + "\n\n".join(remaining))
+    return "\n\n".join(rendered_sections)
+
+
 def _render_recap_prompt(source_refs: list[dict[str, object]], gm_instruction: str) -> str:
-    evidence_lines = []
-    planning_lines = []
-    for ref in sorted(source_refs, key=lambda item: (int(item.get("orderIndex", 100000)), str(item.get("kind")), str(item.get("id")))):
-        line = _render_source_block(ref)
-        if ref.get("lane") == "planning":
-            planning_lines.append(line)
-        else:
-            evidence_lines.append(line)
+    section_text = _sectioned_source_text(
+        source_refs,
+        [
+            ("SCOPE CONTEXT, NOT EVIDENCE", lambda ref: bool(ref.get("isSyntheticScopeRef"))),
+            ("ACCEPTED CANON MEMORY", lambda ref: ref.get("claimRole") == "canon_claim"),
+            ("REVIEWED SESSION SUMMARIES, NOT ATOMIC CANON", lambda ref: ref.get("claimRole") == "reviewed_summary"),
+            ("PLAYED EVIDENCE", lambda ref: ref.get("lane") == "played_evidence"),
+            ("SCOPED GM NOTES ELIGIBLE FOR RECALL", lambda ref: ref.get("lane") == "gm_note"),
+            (
+                "GM PLANNING INTENT, NOT PLAYED EVIDENCE (GM PLANNING CONTEXT, NOT PLAYED EVENTS)",
+                lambda ref: ref.get("claimRole") == "planning_intent" or ref.get("lane") == "planning",
+            ),
+        ],
+    )
     instruction = gm_instruction.strip() or "Build a private GM session recap from the evidence."
     schema = {
         "privateRecap": {"title": "string", "bodyMarkdown": "string", "keyMoments": [{"orderIndex": 0, "summary": "string", "evidenceRefs": []}]},
@@ -1898,9 +1945,8 @@ def _render_recap_prompt(source_refs: list[dict[str, object]], gm_instruction: s
         f"{json.dumps(schema, ensure_ascii=False, indent=2)}\n\n"
         "CANONICAL FINAL JSON EXAMPLE (shape only; do not copy example content or ids):\n"
         f"{json.dumps(example, ensure_ascii=False, indent=2)}\n\n"
-        "CONTEXT EVIDENCE:\n"
-        + "\n\n".join(evidence_lines)
-        + ("\n\nGM PLANNING CONTEXT, NOT PLAYED EVENTS:\n" + "\n\n".join(planning_lines) if planning_lines else "")
+        "CONTEXT EVIDENCE BUNDLE:\n"
+        + section_text
     )
 
 
@@ -1909,14 +1955,20 @@ def _render_recap_verification_prompt(
     bundle: dict[str, object],
     rejected_drafts: list[dict[str, object]],
 ) -> str:
-    evidence_lines = []
-    planning_lines = []
-    for ref in sorted(source_refs, key=lambda item: (int(item.get("orderIndex", 100000)), str(item.get("kind")), str(item.get("id")))):
-        line = _render_source_block(ref)
-        if ref.get("lane") == "planning":
-            planning_lines.append(line)
-        else:
-            evidence_lines.append(line)
+    section_text = _sectioned_source_text(
+        source_refs,
+        [
+            ("SCOPE CONTEXT, NOT EVIDENCE", lambda ref: bool(ref.get("isSyntheticScopeRef"))),
+            ("ACCEPTED CANON MEMORY", lambda ref: ref.get("claimRole") == "canon_claim"),
+            ("REVIEWED SESSION SUMMARIES, NOT ATOMIC CANON", lambda ref: ref.get("claimRole") == "reviewed_summary"),
+            ("PLAYED EVIDENCE", lambda ref: ref.get("lane") == "played_evidence"),
+            ("SCOPED GM NOTES ELIGIBLE FOR RECALL", lambda ref: ref.get("lane") == "gm_note"),
+            (
+                "GM PLANNING INTENT, NOT PLAYED EVIDENCE (GM PLANNING CONTEXT, NOT PLAYED EVENTS)",
+                lambda ref: ref.get("claimRole") == "planning_intent" or ref.get("lane") == "planning",
+            ),
+        ],
+    )
     schema = {
         "verdict": "pass|warnings|fail",
         "findings": [
@@ -1943,9 +1995,8 @@ def _render_recap_verification_prompt(
         f"{json.dumps(bundle, ensure_ascii=False, indent=2)}\n\n"
         "BACKEND REJECTED DRAFTS / VALIDATION NOTES:\n"
         f"{json.dumps(rejected_drafts, ensure_ascii=False, indent=2)}\n\n"
-        "CONTEXT EVIDENCE:\n"
-        + "\n\n".join(evidence_lines)
-        + ("\n\nGM PLANNING CONTEXT, NOT PLAYED EVENTS:\n" + "\n\n".join(planning_lines) if planning_lines else "")
+        "CONTEXT EVIDENCE BUNDLE:\n"
+        + section_text
     )
 
 
@@ -1983,14 +2034,20 @@ def _validate_recap_verification(raw: dict[str, object]) -> dict[str, object]:
 
 
 def _render_branch_prompt(source_refs: list[dict[str, object]], gm_instruction: str, *, scope_kind: str, warnings: list[dict[str, object]]) -> str:
-    planning_lines = []
-    context_lines = []
-    for ref in source_refs:
-        line = _render_source_block(ref)
-        if ref.get("lane") == "planning":
-            planning_lines.append(line)
-        else:
-            context_lines.append(line)
+    section_text = _sectioned_source_text(
+        source_refs,
+        [
+            ("SCOPE CONTEXT, NOT EVIDENCE", lambda ref: bool(ref.get("isSyntheticScopeRef"))),
+            ("ACCEPTED CANON MEMORY", lambda ref: ref.get("claimRole") == "canon_claim"),
+            ("REVIEWED SESSION SUMMARIES, NOT ATOMIC CANON", lambda ref: ref.get("claimRole") == "reviewed_summary"),
+            ("RECENT PLAYED EVIDENCE", lambda ref: ref.get("lane") == "played_evidence"),
+            ("SCOPED GM NOTES ELIGIBLE FOR RECALL", lambda ref: ref.get("lane") == "gm_note"),
+            (
+                "ACTIVE GM PLANNING INTENT, NOT PLAYED EVIDENCE (GM PLANNING CONTEXT, NOT PLAYED EVENTS)",
+                lambda ref: ref.get("claimRole") == "planning_intent" or ref.get("lane") == "planning",
+            ),
+        ],
+    )
     schema = {
         "title": "string",
         "proposalOptions": [
@@ -2057,9 +2114,8 @@ def _render_branch_prompt(source_refs: list[dict[str, object]], gm_instruction: 
         f"{json.dumps(schema, ensure_ascii=False, indent=2)}\n\n"
         "CANONICAL FINAL JSON EXAMPLE (shape only; do not copy example content):\n"
         f"{json.dumps(example, ensure_ascii=False, indent=2)}\n\n"
-        "CANON/DRAFT CONTEXT:\n"
-        + "\n\n".join(context_lines)
-        + ("\n\nGM PLANNING CONTEXT, NOT PLAYED EVENTS:\n" + "\n\n".join(planning_lines) if planning_lines else "")
+        "ADMISSIBLE CONTEXT BUNDLE:\n"
+        + section_text
     )
 
 
@@ -2101,17 +2157,22 @@ def _create_context_package(db: Session, *, campaign_id: str, payload: ContextPr
     session_id = str(payload.session_id) if payload.session_id else None
     scene_id = str(payload.scene_id) if payload.scene_id else None
     excluded_keys = {str(item) for item in payload.excluded_source_refs if str(item).strip()}
-    context_options: dict[str, object] = {}
+    context_options: dict[str, object] = {
+        "includeUnshownPublicSnippets": payload.include_unshown_public_snippets,
+        "excludedSourceRefs": sorted(excluded_keys),
+    }
     if payload.task_kind == "session.build_recap":
+        if payload.visibility_mode != "gm_private":
+            raise api_error(400, "invalid_visibility_mode", "Session recap requires gm_private visibility")
         if session_id is None:
             raise api_error(400, "missing_session_scope", "Session recap requires a session")
         session = _require_session(db, session_id)
         _validate_session_campaign(session, campaign_id)
-        source_refs = _source_refs_for_session(db, campaign_id, session.id, payload.visibility_mode)
-        rendered_prompt = _render_recap_prompt(source_refs, payload.gm_instruction)
         scope_kind = "session"
         scene_id = None
     elif payload.task_kind == "scene.branch_directions":
+        if payload.visibility_mode != "gm_private":
+            raise api_error(400, "unsupported_visibility_mode", "Branch directions are GM-private in this slice")
         scope_kind = payload.scope_kind
         if scope_kind == "session" and session_id is None:
             raise api_error(400, "missing_session_scope", "Session branch directions require a session")
@@ -2123,15 +2184,6 @@ def _create_context_package(db: Session, *, campaign_id: str, payload: ContextPr
         if scene_id is not None:
             scene_id = _validate_scene_campaign(db, scene_id, campaign_id, session_id)
         warnings = _scope_warning(scope_kind, payload.gm_instruction)
-        source_refs = _source_refs_for_branch(
-            db,
-            campaign_id,
-            scope_kind=scope_kind,
-            session_id=session_id,
-            scene_id=scene_id,
-            visibility_mode=payload.visibility_mode,
-        )
-        rendered_prompt = _render_branch_prompt(source_refs, payload.gm_instruction, scope_kind=scope_kind, warnings=warnings)
     elif payload.task_kind == "session.player_safe_recap":
         if payload.visibility_mode != "public_safe":
             raise api_error(400, "invalid_visibility_mode", "Player-safe recap requires public_safe visibility")
@@ -2139,30 +2191,39 @@ def _create_context_package(db: Session, *, campaign_id: str, payload: ContextPr
             raise api_error(400, "missing_session_scope", "Player-safe recap requires a session")
         scope_kind = "session"
         scene_id = None
-        source_refs, warnings = _source_refs_for_player_safe(
-            db,
-            campaign_id,
-            session_id=session_id,
-            include_unshown_public_snippets=payload.include_unshown_public_snippets,
-        )
-        source_refs = _filter_excluded_refs(source_refs, excluded_keys)
-        context_options = {
-            "includeUnshownPublicSnippets": payload.include_unshown_public_snippets,
-            "excludedSourceRefs": sorted(excluded_keys),
-        }
-        if not source_refs:
-            if len(payload.gm_instruction.strip()) < 40:
-                raise api_error(400, "public_safe_context_empty", "Mark reviewed recaps or memory as public-safe, or provide a stronger instruction")
-            warnings.append(
-                {
-                    "code": "instruction_only_public_safe_draft",
-                    "severity": "medium",
-                    "message": "No curated public-safe sources are included; draft must rely only on GM instruction.",
-                }
-            )
-        rendered_prompt = _render_player_safe_prompt(source_refs, payload.gm_instruction, warnings=warnings)
     else:
         raise api_error(400, "unsupported_task", "Unsupported LLM task")
+    bundle = build_scribe_context_bundle(
+        db,
+        campaign_id=campaign_id,
+        task_kind=payload.task_kind,
+        scope_kind=scope_kind,
+        session_id=session_id,
+        scene_id=scene_id,
+        visibility_mode=payload.visibility_mode,
+        gm_instruction=payload.gm_instruction,
+        include_unshown_public_snippets=payload.include_unshown_public_snippets,
+        excluded_source_refs=excluded_keys,
+    )
+    source_refs = list(bundle["source_refs"])  # type: ignore[arg-type]
+    warnings.extend(list(bundle.get("warnings", [])))  # type: ignore[arg-type]
+    context_options["corpusBundle"] = bundle["corpusBundle"]
+    if payload.task_kind == "session.player_safe_recap" and not any(not ref.get("isSyntheticScopeRef") for ref in source_refs):
+        if len(payload.gm_instruction.strip()) < 40:
+            raise api_error(400, "public_safe_context_empty", "Mark reviewed recaps or memory as public-safe, or provide a stronger instruction")
+        warnings.append(
+            {
+                "code": "instruction_only_public_safe_draft",
+                "severity": "medium",
+                "message": "No curated public-safe sources are included; draft must rely only on GM instruction.",
+            }
+        )
+    if payload.task_kind == "session.build_recap":
+        rendered_prompt = _render_recap_prompt(source_refs, payload.gm_instruction)
+    elif payload.task_kind == "scene.branch_directions":
+        rendered_prompt = _render_branch_prompt(source_refs, payload.gm_instruction, scope_kind=scope_kind, warnings=warnings)
+    else:
+        rendered_prompt = _render_player_safe_prompt(source_refs, payload.gm_instruction, warnings=warnings)
     source_hash = _canonical_source_hash(
         payload.task_kind,
         payload.visibility_mode,
@@ -2199,28 +2260,27 @@ def _create_context_package(db: Session, *, campaign_id: str, payload: ContextPr
 
 def _assert_context_fresh(db: Session, package: LlmContextPackage) -> None:
     context_options = _json_load(package.context_options_json, {})
-    if package.task_kind == "session.build_recap":
-        refs = _source_refs_for_session(db, package.campaign_id, str(package.session_id), package.visibility_mode)
-    elif package.task_kind == "scene.branch_directions":
-        refs = _source_refs_for_branch(
-            db,
-            package.campaign_id,
-            scope_kind=package.scope_kind,
-            session_id=package.session_id,
-            scene_id=package.scene_id,
-            visibility_mode=package.visibility_mode,
-        )
-    elif package.task_kind == "session.player_safe_recap":
-        excluded_keys = set(context_options.get("excludedSourceRefs") or [])
-        refs, _warnings = _source_refs_for_player_safe(
-            db,
-            package.campaign_id,
-            session_id=str(package.session_id),
-            include_unshown_public_snippets=bool(context_options.get("includeUnshownPublicSnippets")),
-        )
-        refs = _filter_excluded_refs(refs, {str(item) for item in excluded_keys})
-    else:
+    if package.task_kind not in {"session.build_recap", "scene.branch_directions", "session.player_safe_recap"}:
         raise api_error(400, "unsupported_task", "Unsupported LLM task")
+    excluded_keys = {str(item) for item in context_options.get("excludedSourceRefs") or []}
+    bundle = build_scribe_context_bundle(
+        db,
+        campaign_id=package.campaign_id,
+        task_kind=package.task_kind,
+        scope_kind=package.scope_kind,
+        session_id=package.session_id,
+        scene_id=package.scene_id,
+        visibility_mode=package.visibility_mode,
+        gm_instruction=package.gm_instruction,
+        include_unshown_public_snippets=bool(context_options.get("includeUnshownPublicSnippets")),
+        excluded_source_refs=excluded_keys,
+    )
+    refs = list(bundle["source_refs"])  # type: ignore[arg-type]
+    rebuilt_context_options = {
+        "includeUnshownPublicSnippets": bool(context_options.get("includeUnshownPublicSnippets")),
+        "excludedSourceRefs": sorted(excluded_keys),
+        "corpusBundle": bundle["corpusBundle"],
+    }
     current_hash = _canonical_source_hash(
         package.task_kind,
         package.visibility_mode,
@@ -2229,10 +2289,45 @@ def _assert_context_fresh(db: Session, package: LlmContextPackage) -> None:
         scope_kind=package.scope_kind,
         session_id=package.session_id,
         scene_id=package.scene_id,
-        context_options=context_options,
+        context_options=rebuilt_context_options,
     )
     if current_hash != package.source_ref_hash:
-        raise api_error(409, "context_preview_stale", "Context preview is stale; rebuild and review it before running")
+        details = [{"reasonCode": _safe_stale_reason(package.visibility_mode, _json_load(package.source_refs_json, []), refs)}]
+        raise api_error(409, "context_preview_stale", "Context preview is stale; rebuild and review it before running", details)
+
+
+def _safe_stale_reason(visibility_mode: str, old_refs: object, new_refs: list[dict[str, object]]) -> str:
+    if visibility_mode == "public_safe":
+        return "public_safe_sources_changed"
+    old_list = old_refs if isinstance(old_refs, list) else []
+    old_by_key = {
+        (str(ref.get("kind")), str(ref.get("id"))): ref
+        for ref in old_list
+        if isinstance(ref, dict)
+    }
+    new_by_key = {(str(ref.get("kind")), str(ref.get("id"))): ref for ref in new_refs}
+    changed_keys = set(old_by_key) ^ set(new_by_key)
+    for key, old_ref in old_by_key.items():
+        new_ref = new_by_key.get(key)
+        if new_ref is not None and (
+            old_ref.get("revision") != new_ref.get("revision")
+            or old_ref.get("sourceHash") != new_ref.get("sourceHash")
+            or old_ref.get("sourceStatus") != new_ref.get("sourceStatus")
+            or old_ref.get("visibility") != new_ref.get("visibility")
+        ):
+            changed_keys.add(key)
+    changed_kinds = {kind for kind, _source_id in changed_keys}
+    if "campaign_memory_entry" in changed_kinds:
+        return "accepted_memory_changed"
+    if "note" in changed_kinds:
+        return "note_recall_status_changed"
+    if "planning_marker" in changed_kinds:
+        return "marker_status_changed"
+    if "session_recap" in changed_kinds:
+        return "reviewed_summary_changed"
+    if "session_transcript_event" in changed_kinds:
+        return "played_evidence_changed"
+    return "context_sources_changed"
     if package.review_status != "reviewed":
         raise api_error(409, "context_preview_unreviewed", "Context preview must be reviewed before running")
 
@@ -2510,6 +2605,9 @@ def _evidence_ref_analysis(evidence_refs: list[object], source_refs: list[dict[s
         source = lookup.get((kind, source_id))
         if source is None:
             errors.append("evidence_source_missing")
+            continue
+        if source.get("isSyntheticScopeRef"):
+            errors.append("synthetic_scope_ref_cannot_create_memory")
             continue
         valid_ref_count += 1
         source_is_planning = source.get("lane") == "planning"
@@ -4264,7 +4362,7 @@ def recall(campaign_id: UUID, payload: RecallIn, db: DbSession) -> RecallOut:
     try:
         with db.begin():
             _require_campaign(db, campaign_id)
-            rebuild_campaign_corpus(db, campaign_id_str)
+            ensure_campaign_corpus_cards_current(db, campaign_id_str)
         result = recall_campaign_corpus(
             db,
             campaign_id=campaign_id_str,

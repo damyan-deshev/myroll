@@ -13,7 +13,9 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from backend.app.db.models import (
+    Campaign,
     CampaignMemoryEntry,
+    Session as CampaignSession,
     Entity,
     EntityAlias,
     PartyTrackerConfig,
@@ -41,6 +43,33 @@ MAX_FTS_CANDIDATES = 80
 MAX_TRACE_NODES = 50
 MAX_TRACE_EDGES = 100
 MAX_EXCERPT_CHARS = 500
+CONTEXT_BUNDLE_VERSION = "llm5b_corpus_context_v1"
+
+
+CONTEXT_ROLE_CAPS: dict[str, dict[str, int]] = {
+    "session.build_recap": {
+        "played_evidence": 80,
+        "gm_note": 12,
+        "canon_claim": 12,
+        "reviewed_summary": 4,
+        "planning_intent": 12,
+    },
+    "scene.branch_directions": {
+        "scope_context": 3,
+        "canon_claim": 8,
+        "reviewed_summary": 3,
+        "played_evidence": 8,
+        "gm_note": 5,
+        "planning_intent": 8,
+    },
+    "session.player_safe_recap": {
+        "shown_public_artifact": 8,
+        "public_artifact": 8,
+        "canon_claim": 10,
+        "reviewed_summary": 4,
+        "entity_shell": 12,
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -271,7 +300,7 @@ def compile_campaign_cards(db: Session, campaign_id: str) -> list[CorpusCardDraf
         )
 
     for marker in db.scalars(select(PlanningMarker).where(PlanningMarker.campaign_id == campaign_id)):
-        status = "active" if _marker_is_active(marker, now) else marker.status
+        status = "active" if _marker_is_active(marker, now) else ("expired" if marker.status == "active" else marker.status)
         cards.append(
             CorpusCardDraft(
                 source_kind="planning_marker",
@@ -431,6 +460,29 @@ def rebuild_campaign_corpus(db: Session, campaign_id: str) -> int:
         )
     db.flush()
     return len(drafts)
+
+
+def ensure_campaign_corpus_cards_current(db: Session, campaign_id: str) -> dict[str, object]:
+    drafts = compile_campaign_cards(db, campaign_id)
+    expected = {
+        _card_id(campaign_id, draft): _source_hash(_card_hash_input(draft))
+        for draft in drafts
+    }
+    existing = {
+        card.id: card.source_hash
+        for card in db.scalars(select(ScribeCorpusCard).where(ScribeCorpusCard.campaign_id == campaign_id))
+    }
+    fts_count = (
+        db.execute(
+            text("SELECT count(*) FROM scribe_corpus_cards_fts WHERE campaign_id = :campaign_id"),
+            {"campaign_id": campaign_id},
+        ).scalar()
+        or 0
+    )
+    if existing == expected and int(fts_count) == len(expected):
+        return {"rebuilt": False, "cardCount": len(expected)}
+    count = rebuild_campaign_corpus(db, campaign_id)
+    return {"rebuilt": True, "cardCount": count}
 
 
 def _query_tokens(value: str) -> list[str]:
@@ -640,6 +692,418 @@ def _policy(mode: str) -> dict[str, object]:
     if mode == "public_safe":
         return {"includedVisibility": ["public_safe", "player_display"], "excludedVisibility": ["gm_private"]}
     return {"includedLanes": ["all"], "trace": "gm_private_debug_history"}
+
+
+def _scope_ref(kind: str, source_id: str, revision: str, title: str, body: str) -> dict[str, object]:
+    return {
+        "kind": kind,
+        "sourceClass": kind,
+        "id": source_id,
+        "revision": revision,
+        "lane": "scope",
+        "visibility": "gm_private",
+        "title": title,
+        "body": body,
+        "quote": body[:MAX_EXCERPT_CHARS],
+        "isSyntheticScopeRef": True,
+        "claimRole": "scope_context",
+        "sourceStatus": "scope_context",
+        "admissibility": "included",
+    }
+
+
+def _scope_refs(
+    db: Session,
+    *,
+    campaign_id: str,
+    scope_kind: str,
+    session_id: str | None,
+    scene_id: str | None,
+) -> list[dict[str, object]]:
+    refs: list[dict[str, object]] = []
+    campaign = db.get(Campaign, campaign_id)
+    if campaign is not None:
+        refs.append(_scope_ref("campaign", campaign.id, campaign.updated_at, "Campaign", campaign.description or campaign.name))
+    if session_id is not None:
+        session = db.get(CampaignSession, session_id)
+        if session is not None and session.campaign_id == campaign_id:
+            refs.append(_scope_ref("session", session.id, session.updated_at, "Session", session.title))
+    if scope_kind == "scene" and scene_id is not None:
+        scene = db.get(Scene, scene_id)
+        if scene is not None and scene.campaign_id == campaign_id:
+            refs.append(_scope_ref("scene", scene.id, scene.updated_at, "Scene", scene.title))
+    return refs
+
+
+def _card_body(card: ScribeCorpusCard) -> str:
+    if card.claim_role in {"entity_shell", "debug_metadata"}:
+        return card.excerpt
+    text_value = card.searchable_text or card.excerpt
+    title_prefix = f"{card.title}\n"
+    if text_value.startswith(title_prefix):
+        return text_value[len(title_prefix) :]
+    return text_value
+
+
+def _card_source_class(card: ScribeCorpusCard) -> str:
+    if card.source_kind == "campaign_memory_entry":
+        return "memory_entry"
+    if card.source_kind == "session_transcript_event":
+        return "transcript_event"
+    return card.source_kind
+
+
+def _json_load(value: str | None, default: object) -> object:
+    if not value:
+        return default
+    try:
+        return json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return default
+
+
+def _card_to_source_ref(card: ScribeCorpusCard) -> dict[str, object]:
+    body = _card_body(card)
+    provenance = _json_load(card.provenance_json, {})
+    ref: dict[str, object] = {
+        "kind": card.source_kind,
+        "sourceClass": _card_source_class(card),
+        "id": card.source_id,
+        "revision": card.source_revision,
+        "lane": card.lane,
+        "visibility": card.visibility,
+        "title": card.title,
+        "body": body,
+        "quote": body[:MAX_EXCERPT_CHARS],
+        "cardId": card.id,
+        "sourceHash": card.source_hash,
+        "cardVariant": card.card_variant,
+        "claimRole": card.claim_role,
+        "sourceStatus": card.source_status,
+        "admissibility": "included",
+        "sessionId": card.session_id,
+        "sceneId": card.scene_id,
+        "happenedAt": card.happened_at,
+    }
+    if isinstance(provenance, dict):
+        for key, value in provenance.items():
+            if value is not None and key not in ref:
+                ref[key] = value
+        if "orderIndex" in provenance:
+            ref["orderIndex"] = provenance["orderIndex"]
+        if "correctsEventId" in provenance:
+            ref["correctsEventId"] = provenance["correctsEventId"]
+        if card.source_kind == "planning_marker":
+            ref["scopeKind"] = "scene" if card.scene_id else ("session" if card.session_id else "campaign")
+            ref["relatedPlanningMarkerId"] = card.source_id
+    if card.happened_at is not None:
+        ref["capturedAt"] = card.happened_at
+    return ref
+
+
+def _marker_card_scope_compatible(card: ScribeCorpusCard, *, scope_kind: str, session_id: str | None, scene_id: str | None) -> bool:
+    marker_scope = "scene" if card.scene_id else ("session" if card.session_id else "campaign")
+    if marker_scope == "campaign":
+        return True
+    if scope_kind in {"session", "scene"} and marker_scope == "session" and card.session_id == session_id:
+        return True
+    if scope_kind == "session" and marker_scope == "scene" and card.session_id == session_id:
+        return True
+    if scope_kind == "scene" and marker_scope == "scene" and card.scene_id == scene_id:
+        return True
+    return False
+
+
+def _session_recap_cards(cards: list[ScribeCorpusCard], session_id: str) -> list[ScribeCorpusCard]:
+    return [
+        card
+        for card in cards
+        if card.source_kind == "session_recap"
+        and card.lane == "reviewed"
+        and (card.session_id is None or card.session_id != session_id)
+    ]
+
+
+def _eligible_context_cards(
+    cards: list[ScribeCorpusCard],
+    *,
+    task_kind: str,
+    scope_kind: str,
+    session_id: str | None,
+    scene_id: str | None,
+    visibility_mode: str,
+    include_unshown_public_snippets: bool,
+) -> list[ScribeCorpusCard]:
+    eligible: list[ScribeCorpusCard] = []
+    if task_kind == "session.build_recap":
+        for card in cards:
+            if card.source_kind == "session_transcript_event" and card.session_id == session_id:
+                eligible.append(card)
+            elif card.source_kind == "note" and card.session_id == session_id and card.source_status == "scoped_recall_eligible":
+                eligible.append(card)
+            elif card.source_kind == "campaign_memory_entry" and card.lane == "canon":
+                eligible.append(card)
+            elif card in _session_recap_cards(cards, str(session_id)):
+                eligible.append(card)
+            elif card.source_kind == "planning_marker" and card.source_status == "active" and _marker_card_scope_compatible(card, scope_kind="session", session_id=session_id, scene_id=None):
+                eligible.append(card)
+        return eligible
+    if task_kind == "scene.branch_directions":
+        for card in cards:
+            if card.source_kind == "campaign_memory_entry" and card.lane == "canon":
+                eligible.append(card)
+            elif card.source_kind == "session_recap" and card.lane == "reviewed" and (scope_kind == "campaign" or card.session_id == session_id):
+                eligible.append(card)
+            elif card.source_kind == "note" and card.source_status == "scoped_recall_eligible" and scope_kind in {"session", "scene"} and card.session_id == session_id and (scope_kind != "scene" or card.scene_id == scene_id):
+                eligible.append(card)
+            elif card.source_kind == "session_transcript_event" and scope_kind in {"session", "scene"} and card.session_id == session_id and (scope_kind != "scene" or card.scene_id == scene_id):
+                eligible.append(card)
+            elif card.source_kind == "planning_marker" and card.source_status == "active" and _marker_card_scope_compatible(card, scope_kind=scope_kind, session_id=session_id, scene_id=scene_id):
+                eligible.append(card)
+        return eligible
+    if task_kind == "session.player_safe_recap":
+        for card in cards:
+            if card.visibility not in {"public_safe", "player_display"}:
+                continue
+            if card.source_kind == "public_snippet":
+                if include_unshown_public_snippets or card.visibility == "player_display":
+                    eligible.append(card)
+            elif card.source_kind == "session_recap" and card.session_id == session_id:
+                eligible.append(card)
+            elif card.source_kind == "campaign_memory_entry" and (card.session_id in {None, session_id}):
+                eligible.append(card)
+            elif card.source_kind == "entity" and card.claim_role == "entity_shell":
+                eligible.append(card)
+        return eligible
+    return []
+
+
+def _context_sort_key(task_kind: str, ref: dict[str, object]) -> tuple[object, ...]:
+    role = str(ref.get("claimRole") or "")
+    lane = str(ref.get("lane") or "")
+    kind = str(ref.get("kind") or "")
+    revision = str(ref.get("revision") or "")
+    order_index = int(ref.get("orderIndex", 100000))
+    if task_kind == "session.build_recap":
+        role_order = {
+            "source_evidence": 0 if lane == "played_evidence" else 1,
+            "canon_claim": 2,
+            "reviewed_summary": 3,
+            "planning_intent": 4,
+        }.get(role, 9)
+        if lane == "gm_note":
+            role_order = 1
+        return (role_order, order_index, revision, kind, str(ref.get("id")))
+    if task_kind == "scene.branch_directions":
+        role_order = {
+            "scope_context": 0,
+            "canon_claim": 1,
+            "reviewed_summary": 2,
+            "source_evidence": 3,
+            "planning_intent": 4,
+        }.get(role, 9)
+        if lane == "gm_note":
+            role_order = 3
+        return (role_order, -order_index, revision, kind, str(ref.get("id")))
+    role_order = {
+        "public_artifact": 0 if ref.get("visibility") == "player_display" else 1,
+        "canon_claim": 2,
+        "reviewed_summary": 3,
+        "entity_shell": 4,
+    }.get(role, 9)
+    return (role_order, revision, kind, str(ref.get("id")))
+
+
+def _ref_cap_bucket(ref: dict[str, object]) -> str:
+    if ref.get("claimRole") == "public_artifact" and ref.get("visibility") == "player_display":
+        return "shown_public_artifact"
+    if ref.get("lane") == "gm_note":
+        return "gm_note"
+    if ref.get("lane") == "played_evidence":
+        return "played_evidence"
+    return str(ref.get("claimRole") or ref.get("lane") or "unknown")
+
+
+def _apply_context_caps(task_kind: str, refs: list[dict[str, object]]) -> tuple[list[dict[str, object]], dict[str, dict[str, int]]]:
+    caps = CONTEXT_ROLE_CAPS.get(task_kind, {})
+    seen: dict[str, int] = {}
+    total: dict[str, int] = {}
+    included: list[dict[str, object]] = []
+    for ref in refs:
+        bucket = _ref_cap_bucket(ref)
+        total[bucket] = total.get(bucket, 0) + 1
+        cap = caps.get(bucket, caps.get(str(ref.get("claimRole")), MAX_LIMIT))
+        if seen.get(bucket, 0) >= cap:
+            continue
+        seen[bucket] = seen.get(bucket, 0) + 1
+        included.append(ref)
+    truncation = {
+        bucket: {"included": seen.get(bucket, 0), "total": count, "truncated": seen.get(bucket, 0) < count}
+        for bucket, count in total.items()
+        if seen.get(bucket, 0) < count
+    }
+    return included, truncation
+
+
+def _source_key_for_ref(ref: dict[str, object]) -> str:
+    return f"{ref.get('kind')}:{ref.get('id')}"
+
+
+def _filter_context_exclusions(refs: list[dict[str, object]], excluded_source_refs: set[str]) -> list[dict[str, object]]:
+    if not excluded_source_refs:
+        return refs
+    return [
+        ref for ref in refs
+        if str(ref.get("cardId") or "") not in excluded_source_refs and _source_key_for_ref(ref) not in excluded_source_refs
+    ]
+
+
+def _excluded_counts(cards: list[ScribeCorpusCard], included_refs: list[dict[str, object]], *, public_safe: bool) -> dict[str, int]:
+    included_card_ids = {str(ref.get("cardId")) for ref in included_refs if ref.get("cardId")}
+    counts: dict[str, int] = {}
+    for card in cards:
+        if card.id in included_card_ids:
+            continue
+        key = card.visibility if public_safe else card.lane
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def _evidence_coverage_for_refs(refs: list[dict[str, object]], *, truncated: bool) -> str:
+    if not refs:
+        return "none"
+    dynamic_refs = [ref for ref in refs if not ref.get("isSyntheticScopeRef")]
+    if not dynamic_refs:
+        return "weak"
+    if any(ref.get("claimRole") in {"canon_claim", "reviewed_summary"} for ref in dynamic_refs) and not truncated:
+        return "sufficient"
+    return "partial" if len(dynamic_refs) > 1 else "weak"
+
+
+def build_scribe_context_bundle(
+    db: Session,
+    *,
+    campaign_id: str,
+    task_kind: str,
+    scope_kind: str,
+    session_id: str | None,
+    scene_id: str | None,
+    visibility_mode: str,
+    gm_instruction: str,
+    include_unshown_public_snippets: bool = False,
+    excluded_source_refs: set[str] | None = None,
+) -> dict[str, object]:
+    ensure_result = ensure_campaign_corpus_cards_current(db, campaign_id)
+    cards = list(db.scalars(select(ScribeCorpusCard).where(ScribeCorpusCard.campaign_id == campaign_id)))
+    dynamic_cards = _eligible_context_cards(
+        cards,
+        task_kind=task_kind,
+        scope_kind=scope_kind,
+        session_id=session_id,
+        scene_id=scene_id,
+        visibility_mode=visibility_mode,
+        include_unshown_public_snippets=include_unshown_public_snippets,
+    )
+    dynamic_refs = [_card_to_source_ref(card) for card in dynamic_cards]
+    if visibility_mode == "public_safe":
+        scope_refs: list[dict[str, object]] = []
+    else:
+        scope_refs = _scope_refs(db, campaign_id=campaign_id, scope_kind=scope_kind, session_id=session_id, scene_id=scene_id)
+    sorted_refs = sorted([*scope_refs, *dynamic_refs], key=lambda ref: _context_sort_key(task_kind, ref))
+    sorted_refs = _filter_context_exclusions(sorted_refs, excluded_source_refs or set())
+    capped_refs, truncation = _apply_context_caps(task_kind, sorted_refs)
+    public_safe = visibility_mode == "public_safe"
+    excluded_by_policy = _excluded_counts(cards, capped_refs, public_safe=public_safe)
+    dynamic_count = sum(1 for ref in capped_refs if not ref.get("isSyntheticScopeRef"))
+    evidence_coverage = _evidence_coverage_for_refs(capped_refs, truncated=bool(truncation))
+    warnings: list[dict[str, object]] = []
+    if task_kind == "session.player_safe_recap" and include_unshown_public_snippets:
+        if any(ref.get("kind") == "public_snippet" and ref.get("visibility") == "public_safe" for ref in capped_refs):
+            warnings.append(
+                {
+                    "code": "unshown_public_snippet_included",
+                    "severity": "medium",
+                    "message": "Unshown public snippets are manual public artifacts, not Scribe-verified safe text.",
+                }
+            )
+    for bucket, data in truncation.items():
+        code = "public_safe_source_limit" if task_kind == "session.player_safe_recap" else "context_sources_truncated"
+        source_class = {
+            "canon_claim": "memory_entry",
+            "reviewed_summary": "session_recap",
+            "shown_public_artifact": "public_snippet",
+            "public_artifact": "public_snippet",
+            "entity_shell": "entity",
+        }.get(bucket, bucket)
+        warnings.append(
+            {
+                "code": code,
+                "severity": "low",
+                "sourceClass": source_class,
+                "bucket": bucket,
+                "included": data["included"],
+                "totalEligible": data["total"],
+                "message": f"{data['included']} of {data['total']} eligible {bucket} sources included.",
+            }
+        )
+    assembly = [
+        {
+            "cardId": ref.get("cardId"),
+            "sourceKind": ref.get("kind"),
+            "sourceId": ref.get("id"),
+            "lane": ref.get("lane"),
+            "claimRole": ref.get("claimRole"),
+            "sourceStatus": ref.get("sourceStatus"),
+            "title": ref.get("title"),
+            "admissibility": ref.get("admissibility", "included"),
+            "isSyntheticScopeRef": bool(ref.get("isSyntheticScopeRef")),
+        }
+        for ref in capped_refs
+    ]
+    trace = {
+        "traceVisibility": "safe" if public_safe else "gm_private",
+        "nodes": [
+            {
+                "cardId": ref.get("cardId"),
+                "sourceKind": ref.get("kind"),
+                "sourceId": None if public_safe else ref.get("id"),
+                "title": ref.get("title") if not public_safe or ref.get("visibility") in {"public_safe", "player_display"} else None,
+                "lane": ref.get("lane"),
+                "visibility": ref.get("visibility"),
+                "claimRole": ref.get("claimRole"),
+                "admissibility": "included",
+            }
+            for ref in capped_refs
+            if ref.get("cardId")
+        ][:MAX_TRACE_NODES],
+        "edges": [],
+        "excludedByPolicy": excluded_by_policy,
+    }
+    metadata = {
+        "version": CONTEXT_BUNDLE_VERSION,
+        "taskKind": task_kind,
+        "scopeKind": scope_kind,
+        "visibilityMode": visibility_mode,
+        "summary": {
+            "sourceCount": len(capped_refs),
+            "dynamicSourceCount": dynamic_count,
+            "truncated": bool(truncation),
+            "truncation": truncation,
+            "excludedByPolicy": excluded_by_policy,
+            "corpusCardCount": ensure_result.get("cardCount"),
+        },
+        "evidenceCoverage": evidence_coverage,
+        "assembly": assembly,
+        "trace": trace,
+        "policy": _policy("public_safe" if public_safe else "debug_history"),
+    }
+    return {
+        "source_refs": capped_refs,
+        "warnings": warnings,
+        "corpusBundle": metadata,
+        "evidenceCoverage": evidence_coverage,
+        "assembly": assembly,
+    }
 
 
 def recall_campaign_corpus(
