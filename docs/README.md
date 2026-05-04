@@ -123,6 +123,14 @@ scripts/run_scribe_recap_real_llm_e2e.sh
 
 By default the runner uses `http://192.168.1.117:1234/v1` with model `Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q8_K_P`. Override with `MYROLL_E2E_LLM_BASE_URL` and `MYROLL_E2E_LLM_MODEL` when needed.
 
+The longer real provider Scribe campaign journey exercises the branch-to-recap loop and writes human-review reports under ignored `artifacts/e2e/scribe-campaign-real/`:
+
+```bash
+scripts/run_scribe_campaign_real_llm_journey.sh
+```
+
+That journey simulates staged DM captures, a correction event, branch proposal generation, option 2 selection, planning-marker adoption, a later played-event capture, session recap, memory accept, recall, and `/player` payload identity. It is meant to catch semantic drift as well as hard boundary failures. The current discipline checks verify that transcript chronology is rendered as first-class metadata, proposal bodies do not leak into future context, markers remain planning-only, speculative proposal language does not become direct evidence, and accepted memory uses canonical `evidenceRefKind`/`evidenceRefId` citations.
+
 Core product invariant:
 
 ```text

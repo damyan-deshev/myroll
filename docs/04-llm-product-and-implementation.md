@@ -37,6 +37,7 @@ Current shipped status:
 - `[shipped]` LLM-1 first recall spine: campaign memory entries, reviewed session recaps, live capture search indexing, manual aliases, query expansion, and policy-filtered recall results. This first spine uses basic projection-table search, not the full FTS5 target described later in this document.
 - `[shipped]` LLM-2 branch proposals and planning markers: campaign/session/scene branch context preview, structured branch runs, proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection.
 - `[shipped]` LLM-3 player-safe recap/snippet drafting and leak warning gate: public-safe source curation, reviewed public-safe context packages, deterministic warning scan, player-safe structured draft runs, LLM-sourced `PublicSnippet` creation with scan/ack gating, dedicated player-display snippet serialization, publication tracking, and default export redaction of LLM snippet provenance/warnings.
+- `[shipped]` Real-provider Scribe journey verification: opt-in Playwright runners exercise a LAN/OpenAI-compatible model through live capture, branch proposals, planning-marker adoption, played-event capture, session recap, memory accept, recall, and `/player` payload boundary checks. Reports are written under ignored `artifacts/e2e/*` paths for human review.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
 
 Current implementation entry points are intentionally small:
@@ -52,6 +53,7 @@ Known limitations in the shipped first spine:
 - the search projection has upsert behavior for current Scribe writes, but no source-level garbage collection/rebuild command beyond campaign-level cascade cleanup;
 - branch proposals are planning-only in v1: one active marker can be created per source proposal option, proposed deltas are inspection-only, and there is no proposal canonization/apply endpoint.
 - public-safe curation is conservative and manual: `public_safe=true` means eligible for public-safe context, not guaranteed safe to publish; deterministic warnings are not proof of safety; manual snippets are GM-approved public artifacts by convention, not Scribe-verified safe text; raw private recaps, private memory, private notes, planning markers, proposal bodies, live captures, and run history are excluded from player-safe context.
+- timestamps are now rendered as first-class transcript metadata in recap/branch context, but the human-visible capture surface still benefits from GM-authored campaign-clock wording when the table chronology differs from wall-clock capture time.
 
 ## 1. Product Definition
 
@@ -1203,7 +1205,18 @@ type RecapClaimStrength =
 
 Memory-candidate `evidenceRefs` are not trusted because the model wrote them. The backend validates each candidate ref against the reviewed `LlmContextPackage.sourceRefs` that fed the run. Unknown `{ kind, id }` refs, fake quotes, and direct-evidence claims without a quote found in the cited source are rejected before a candidate can enter the inbox. This keeps the audit trail tied to what the model actually saw, not to arbitrary IDs it invented.
 
+Rendered source blocks expose canonical evidence-reference fields:
+
+```text
+evidenceRefKind: session_transcript_event
+evidenceRefId: <source id>
+```
+
+The model must use those exact values in `evidenceRefs`. Display metadata such as `eventType = live_dm_note` or `source = dictation` is useful for interpretation, but it is not a valid `evidenceRefs.kind`. This was added after real-provider testing showed that richer transcript metadata can otherwise lead the model to cite `live_dm_note`/`gm_correction` as fake source kinds.
+
 Memory candidates may be created only for `directly_evidenced` and `strong_inference` recap claims. `strong_inference` candidates must be visually marked in the memory inbox. `weak_inference` and `gm_review_required` claims may appear in the recap draft or continuity warnings, but they must not become candidates without explicit GM rewrite.
+
+Direct-evidence candidates may not cite speculative wording as proof. If an exact quote contains planning/conditional language such as `if played`, `possible consequence`, `may`, `could`, `must choose`, or `GM is considering`, the backend rejects the candidate with `speculative_evidence_for_direct_claim`. The model may still mention that material in the recap as uncertainty or GM review context, but it must not become accepted memory without GM rewrite.
 
 Intermediate map-reduce partials should use a stricter shape than prose-only summary:
 
@@ -1800,9 +1813,12 @@ Apply:
 Rules:
 - this is a post-session button, not a live continuous summarizer;
 - corrected live capture events replace their originals in default recap context;
+- live capture source blocks render `orderIndex`, `capturedAt`, `eventType`, `source`, and `correctsEventId` as metadata before the body text, so chronology does not depend on prose alone;
+- recap prompts instruct the model to use `orderIndex`/`capturedAt` for chronology and to use `evidenceRefKind`/`evidenceRefId` for structured citations;
 - prior `session.build_recap` outputs for the same session are excluded by default, including saved session summaries produced by earlier recap runs;
 - the GM may explicitly enable `include prior recap` for revision/diff workflows, but the default is fresh re-derivation from source evidence;
 - when evidence exceeds the provider context budget, use chronological map-reduce rather than silently dropping the middle of the session;
+- conditional/planning phrasing must not be converted into facts. Text like `if played`, `possible consequence`, `must choose`, or `GM is considering` remains uncertainty unless a later played-event capture confirms what happened;
 - draft/planning evidence may inform the recap, but only GM-approved apply actions create canon.
 
 ### 9.5 `campaign.exact_recall`
@@ -2035,6 +2051,9 @@ Build:
 Tests:
 - build recap assembles live notes, linked notes, entity/session events, planning markers, and approved memory into ordered evidence;
 - build recap uses live DM notes in `orderIndex` order;
+- rendered recap context exposes transcript `capturedAt` and `orderIndex` as first-class metadata;
+- memory-candidate evidence refs use canonical source kind/id fields and do not use display metadata such as `live_dm_note` as a source kind;
+- direct-evidence memory candidates are rejected when their only exact quote is speculative/planning language;
 - corrected live-note events replace originals in recap context while preserving audit history;
 - applied memory entries shadow their source live notes in default recap context;
 - regenerating recap excludes prior recap output from default context;
@@ -2053,6 +2072,28 @@ capture notes during a session
   -> save reviewed recap
   -> future context can include the saved recap
 ```
+
+Real-provider discipline check:
+
+```text
+capture staged session notes
+  -> correct one dictated mistake
+  -> ask for three branch directions
+  -> select option 2
+  -> adopt only its planning marker
+  -> record a later played-event capture for what actually happened
+  -> build recap
+  -> accept memory
+  -> recall accepted memory
+  -> assert /player payload unchanged
+```
+
+The real-provider journey is intentionally not only a pass/fail smoke test. It writes a markdown/JSON report comparing model output against expected anchors and boundary checks. The first run surfaced two useful issues:
+
+- proposal consequence wording can become evidence if the DM copies it into a played capture; the journey now records a separate played fact instead of pasting proposal consequences;
+- adding transcript metadata caused the model to cite `live_dm_note`/`gm_correction` as evidence kinds; the prompt now exposes `evidenceRefKind`/`evidenceRefId` and forbids using display metadata as citation identity.
+
+After those changes, the measured real-provider run moved from `2` accepted memory entries and `1` rejected draft to `3` accepted memory entries and `0` rejected drafts, while preserving the proposal-body exclusion, planning-only marker rendering, correction projection, speculative-phrase avoidance, and `/player` boundary checks.
 
 ### LLM-0d: Memory Inbox And Canon Entries
 
@@ -2348,6 +2389,7 @@ E2E tests:
 - live capture to recap to accepted memory;
 - exact recall with alias expansion;
 - mocked provider branch proposal/adopt flow;
+- opt-in real provider campaign journey: live captures, correction, branch proposals, selected option without marker exclusion, marker adoption, later played-event capture, recap, memory accept, recall, and `/player` unchanged assertion;
 - mocked provider canonization flow;
 - public-safe recap draft to public snippet;
 - `/player` unchanged until explicit publish.

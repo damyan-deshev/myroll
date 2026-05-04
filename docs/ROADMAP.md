@@ -1145,6 +1145,7 @@ Status as of 2026-05-04:
 - shipped first Scribe spine: compact `/gm` live capture, transcript correction, provider profile/probe, reviewed context preview, backend-owned recap run, editable recap save, targetless Memory Inbox accept, manual aliases, basic recall, and default export redaction for LLM prompt/response payloads;
 - shipped branch proposal/planning marker slice: campaign/session/scene branch context preview, structured proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection;
 - shipped player-safe recap/snippet leak-warning gate: public-safe curation, public-safe context preview, structured player-safe draft run, deterministic warning scan, exact-content ack for risky drafts, LLM snippet provenance, and player-display publication tracking;
+- shipped real-provider Scribe journey hardening: opt-in Playwright runners now exercise the local/LAN model through live capture, branch proposals, planning-marker adoption, played-event recap, memory accept, recall, and `/player` boundary checks. The recap prompt now renders transcript chronology and canonical evidence-ref IDs explicitly, and direct-evidence memory candidates reject speculative proposal wording as proof;
 - planned next: proposal canonization and broader Scribe hardening;
 - deferred: vectors, streaming, tool calls, audio capture/transcription, and autonomous entity mutation.
 
