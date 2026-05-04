@@ -362,8 +362,11 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(payload)
     }),
-  acceptMemoryCandidate: (candidateId: string) =>
-    request<CampaignMemoryEntry>(`/api/scribe/memory-candidates/${candidateId}/accept`, { method: "POST" }),
+  acceptMemoryCandidate: (candidateId: string, payload?: { confirm_linked_marker_canonization?: boolean }) =>
+    request<CampaignMemoryEntry>(`/api/scribe/memory-candidates/${candidateId}/accept`, {
+      method: "POST",
+      body: payload ? JSON.stringify(payload) : undefined
+    }),
   rejectMemoryCandidate: (candidateId: string) =>
     request<MemoryCandidate>(`/api/scribe/memory-candidates/${candidateId}/reject`, { method: "POST" }),
   entityAliases: (campaignId: string) => request<EntityAlias[]>(`/api/campaigns/${campaignId}/scribe/aliases`),

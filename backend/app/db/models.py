@@ -767,12 +767,15 @@ class MemoryCandidate(Base):
     session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="SET NULL"), index=True)
     source_llm_run_id: Mapped[str | None] = mapped_column(ForeignKey("llm_runs.id", ondelete="SET NULL"), index=True)
     source_recap_id: Mapped[str | None] = mapped_column(ForeignKey("session_recaps.id", ondelete="SET NULL"), index=True)
+    source_planning_marker_id: Mapped[str | None] = mapped_column(ForeignKey("planning_markers.id", ondelete="SET NULL"), index=True)
+    source_proposal_option_id: Mapped[str | None] = mapped_column(ForeignKey("proposal_options.id", ondelete="SET NULL"), index=True)
     status: Mapped[str] = mapped_column(default="draft", nullable=False)
     title: Mapped[str] = mapped_column(nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     claim_strength: Mapped[str] = mapped_column(nullable=False)
     evidence_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     validation_errors_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    normalization_warnings_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     edited_from_candidate_id: Mapped[str | None] = mapped_column(ForeignKey("memory_candidates.id", ondelete="SET NULL"), index=True)
     applied_memory_entry_id: Mapped[str | None] = mapped_column(ForeignKey("campaign_memory_entries.id", ondelete="SET NULL"), index=True)
     created_at: Mapped[str] = mapped_column(nullable=False)
@@ -781,6 +784,9 @@ class MemoryCandidate(Base):
 
 class CampaignMemoryEntry(Base):
     __tablename__ = "campaign_memory_entries"
+    __table_args__ = (
+        Index("uq_campaign_memory_entries_source_marker", "source_planning_marker_id", unique=True, sqlite_where=text("source_planning_marker_id IS NOT NULL")),
+    )
 
     id: Mapped[str] = mapped_column(primary_key=True)
     campaign_id: Mapped[str] = mapped_column(
@@ -788,6 +794,8 @@ class CampaignMemoryEntry(Base):
     )
     session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="SET NULL"), index=True)
     source_candidate_id: Mapped[str | None] = mapped_column(ForeignKey("memory_candidates.id", ondelete="SET NULL"), index=True)
+    source_planning_marker_id: Mapped[str | None] = mapped_column(ForeignKey("planning_markers.id", ondelete="SET NULL"), index=True)
+    source_proposal_option_id: Mapped[str | None] = mapped_column(ForeignKey("proposal_options.id", ondelete="SET NULL"), index=True)
     title: Mapped[str] = mapped_column(nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     evidence_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
@@ -938,6 +946,8 @@ class PlanningMarker(Base):
     edited_at: Mapped[str | None] = mapped_column()
     edited_from_source: Mapped[bool] = mapped_column(default=False, nullable=False)
     expires_at: Mapped[str | None] = mapped_column()
+    canonized_at: Mapped[str | None] = mapped_column()
+    canon_memory_entry_id: Mapped[str | None] = mapped_column(ForeignKey("campaign_memory_entries.id", ondelete="SET NULL"), index=True)
     created_at: Mapped[str] = mapped_column(nullable=False)
     updated_at: Mapped[str] = mapped_column(nullable=False)
 

@@ -1,7 +1,7 @@
 # Myroll LLM Product And Implementation Spec
 
 Date: 2026-05-04
-Status: First Scribe spine, branch proposal/planning marker slice, and player-safe recap gate implemented
+Status: First Scribe spine, branch proposal/planning marker slice, player-safe recap gate, and proposal canonization bridge implemented
 
 This document turns the LLM direction into implementable product slices. It assumes the current Myroll architecture:
 
@@ -37,6 +37,7 @@ Current shipped status:
 - `[shipped]` LLM-1 first recall spine: campaign memory entries, reviewed session recaps, live capture search indexing, manual aliases, query expansion, and policy-filtered recall results. This first spine uses basic projection-table search, not the full FTS5 target described later in this document.
 - `[shipped]` LLM-2 branch proposals and planning markers: campaign/session/scene branch context preview, structured branch runs, proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection.
 - `[shipped]` LLM-3 player-safe recap/snippet drafting and leak warning gate: public-safe source curation, reviewed public-safe context packages, deterministic warning scan, player-safe structured draft runs, LLM-sourced `PublicSnippet` creation with scan/ack gating, dedicated player-display snippet serialization, publication tracking, and default export redaction of LLM snippet provenance/warnings.
+- `[shipped]` LLM-4 proposal canonization bridge: `session.build_recap` may link a memory candidate to one active planning marker when later played evidence confirms it; `Accept into Memory` atomically creates accepted memory, canonizes the marker/source option, and keeps future canon context carried by the memory entry rather than marker/proposal text.
 - `[shipped]` Real-provider Scribe journey verification: opt-in Playwright runners exercise a LAN/OpenAI-compatible model through live capture, branch proposals, planning-marker adoption, played-event capture, session recap, memory accept, recall, and `/player` payload boundary checks. Reports are written under ignored `artifacts/e2e/*` paths for human review.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
 
@@ -51,7 +52,7 @@ Known limitations in the shipped first spine:
 - cancellation is a durable soft cancel: Myroll marks the run canceled and discards late provider responses, but the blocking non-streaming upstream HTTP request may continue until the provider returns or times out;
 - recall currently scans a `scribe_search_index` projection table over live captures, reviewed recaps, and accepted memory entries; it is not yet SQLite FTS5 and does not yet index every notes/entities/public-snippet source promised by the full recall slice;
 - the search projection has upsert behavior for current Scribe writes, but no source-level garbage collection/rebuild command beyond campaign-level cascade cleanup;
-- branch proposals are planning-only in v1: one active marker can be created per source proposal option, proposed deltas are inspection-only, and there is no proposal canonization/apply endpoint.
+- branch proposal canonization is narrow: one active marker can be created per source proposal option, proposed deltas are inspection-only, accepted memory may canonize a linked marker after played evidence exists, but there is still no direct proposal-body canonization/apply endpoint, entity patching, or manual relinking UI;
 - public-safe curation is conservative and manual: `public_safe=true` means eligible for public-safe context, not guaranteed safe to publish; deterministic warnings are not proof of safety; manual snippets are GM-approved public artifacts by convention, not Scribe-verified safe text; raw private recaps, private memory, private notes, planning markers, proposal bodies, live captures, and run history are excluded from player-safe context.
 - timestamps are now rendered as first-class transcript metadata in recap/branch context, but the human-visible capture surface still benefits from GM-authored campaign-clock wording when the table chronology differs from wall-clock capture time.
 
@@ -144,7 +145,7 @@ Allowed context:
 - canon facts;
 - approved memory;
 - active planning markers;
-- canonized proposal outcomes when a later canonization slice exists;
+- accepted memory entries that came from played evidence confirming a planning marker;
 - explicit evidence snippets from exact recall.
 
 Excluded by default:
@@ -918,6 +919,8 @@ type PlanningMarker = VersionedRecord & {
   scope: PlanningMarkerScope;
   sourceProposalOptionId?: string;
   status: PlanningMarkerStatus;
+  canonizedAt?: IsoDateTime;
+  canonMemoryEntryId?: string;
   title: string;
   markerText: string;
   originalMarkerText?: string;
@@ -944,7 +947,8 @@ Shipped LLM-2 marker rules:
 - marker text has a hard max of 1000 characters and a soft UI warning above 500 characters;
 - default marker scope is exactly the proposal set scope unless the GM deliberately changes it;
 - reject/save-for-later are blocked with `active_marker_exists` while a source option has an active marker;
-- v1 enforces one marker per source proposal option for idempotency. Same idea with multiple scopes is deferred.
+- v1 enforces one marker per source proposal option for idempotency. Same idea with multiple scopes is deferred;
+- `canonized` markers are not active planning context. Their future canon value is carried by the accepted memory entry linked through `canonMemoryEntryId`.
 
 ### 5.7 Canon Deltas And Memory Candidates
 
@@ -989,6 +993,7 @@ type MemoryCandidateStatus =
   | "edited"
   | "rejected"
   | "saved_for_later"
+  | "accepted"
   | "applied";
 
 type MemoryCandidate = VersionedRecord & {
@@ -997,7 +1002,9 @@ type MemoryCandidate = VersionedRecord & {
   sessionId?: SessionId;
   sceneId?: SceneId;
   sourceLlmRunId?: string;
+  sourcePlanningMarkerId?: string;
   sourceProposalOptionId?: string;
+  normalizationWarnings: string[];
   kind: CanonDeltaKind;
   title: string;
   body: string;
@@ -1012,7 +1019,16 @@ type MemoryCandidate = VersionedRecord & {
 };
 ```
 
-Memory candidates are the inbox. They are not canon until approved/applied.
+Memory candidates are the inbox. They are not canon until accepted into memory.
+
+LLM-4 linked marker rules:
+- `session.build_recap` may emit `relatedPlanningMarkerId` on a memory candidate draft;
+- the backend persists this as `sourcePlanningMarkerId` only when the marker is active, included in the reviewed context package, scope-compatible, and supported by at least one non-planning evidence ref;
+- campaign-scoped markers may be confirmed by any session in the same campaign; session markers must match the recap session; scene markers must belong to the recap session or appear in reviewed evidence refs;
+- marker/proposal text is provenance and planning context, never evidence;
+- invalid marker links with otherwise valid played evidence are dropped and surfaced as `planning_marker_link_ignored` on the candidate card;
+- candidates whose body resembles marker text carry `candidate_body_resembles_planning_marker` as a warning so the GM can verify the accepted memory describes played events;
+- weak or GM-review-only drafts never become memory candidates automatically, even if they reference a planning marker.
 
 Candidate targeting rules:
 - each `MemoryCandidate` targets at most one durable record;
@@ -1027,13 +1043,20 @@ Candidate targeting rules:
 Memory inbox UI language should not expose the state machine as the primary user flow. Use actions such as `Accept into Memory`, `Accept and Update NPC`, `Reject`, and `Save for Later`. Internally these may map to approve/apply states, but the GM should not need to reason about `approved` versus `applied` while reviewing session facts.
 
 Apply rules:
-- for targetless memory candidates, `Accept into Memory` approves the candidate and creates the `CampaignMemoryEntry` in one transaction, ending with `status = "applied"`;
+- for targetless memory candidates, `Accept into Memory` approves the candidate and creates the `CampaignMemoryEntry` in one transaction, ending with the implementation's terminal accepted state;
 - targetless candidates should not remain in an "accepted but not remembered" state;
 - for targeted patches, review/approve and apply may remain separate because the target write can fail OCC or need extra GM review;
 - `apply` must run target writes and candidate status updates in one database transaction;
 - repeated `apply` on an already-applied candidate must be idempotent and return the applied target state without double-writing;
 - when `targetRevision` is present, apply must enforce optimistic concurrency and reject with HTTP 409 if the target record revision changed since extraction;
 - stale candidates should surface a UI path to review, edit, or regenerate against the newer target.
+
+Linked-marker accept rules:
+- for a linked targetless memory candidate, `Accept into Memory` creates the `CampaignMemoryEntry`, sets the candidate terminal state, canonizes the planning marker, canonizes the source proposal option when present, and upserts the memory entry into recall/search in one transaction;
+- edited linked candidates require an explicit confirmation flag because accepting them will canonize the linked planning marker;
+- repeated accept is idempotent and reconciles missing marker/option/search-index state;
+- accepting fails visibly when the linked marker is missing, expired, discarded, or already canonized by another memory entry;
+- rejecting a linked candidate does not mutate the marker. The UI may offer a separate expire action.
 
 ### 5.8 Campaign Memory Entries
 
@@ -1052,6 +1075,8 @@ type CampaignMemoryEntry = VersionedRecord & {
   sceneId?: SceneId;
   entityId?: EntityId;
   sourceMemoryCandidateId?: string;
+  sourcePlanningMarkerId?: string;
+  sourceProposalOptionId?: string;
   kind: CanonDeltaKind;
   title: string;
   body: string;
@@ -1071,6 +1096,7 @@ Rules:
 - public-safe recap tasks may use only entries with `publicSafe = true`;
 - `sensitivityReason` explains why a fact is hidden or risky and feeds public leak review UI;
 - entity-specific memory should link `entityId` when known instead of relying on text search alone.
+- linked planning-marker provenance is GM-private audit metadata; normal recall cites the accepted memory entry, not marker/proposal source text.
 
 ### 5.9 Transcript Events
 
@@ -2093,7 +2119,7 @@ The real-provider journey is intentionally not only a pass/fail smoke test. It w
 - proposal consequence wording can become evidence if the DM copies it into a played capture; the journey now records a separate played fact instead of pasting proposal consequences;
 - adding transcript metadata caused the model to cite `live_dm_note`/`gm_correction` as evidence kinds; the prompt now exposes `evidenceRefKind`/`evidenceRefId` and forbids using display metadata as citation identity.
 
-After those changes, the measured real-provider run moved from `2` accepted memory entries and `1` rejected draft to `3` accepted memory entries and `0` rejected drafts, while preserving the proposal-body exclusion, planning-only marker rendering, correction projection, speculative-phrase avoidance, and `/player` boundary checks.
+After those changes, the measured real-provider run consistently preserves proposal-body exclusion, planning-only marker rendering, correction projection, speculative-phrase avoidance, and `/player` boundary checks. The LLM-4 journey now also records model linkage quality separately from backend contract checks: when the model emits a valid `relatedPlanningMarkerId`, accepting the linked memory candidate canonizes the marker/source option and future context carries the accepted memory entry instead of the raw proposal or active marker text.
 
 ### LLM-0d: Memory Inbox And Canon Entries
 
@@ -2212,7 +2238,7 @@ run branch directions for a scene during prep
 Shipped v1 limitations:
 - one planning marker per source proposal option;
 - proposed deltas are inspection-only and labeled as possible consequences if played;
-- no proposal canonization/apply endpoint;
+- no direct proposal-body canonization/apply endpoint;
 - full FTS5 proposal-history recall remains future work;
 - provider calls remain non-streaming with the same soft-cancel behavior as the recap path.
 
@@ -2265,36 +2291,51 @@ Shipped v1 limitations:
 - full edit diff/provenance is deferred; v1 stores `source_llm_run_id`, `source_draft_hash`, and final snippet text only;
 - deterministic warning phrase lists are intentionally easy to extend and should not be treated as exhaustive.
 
-### LLM-4: GM Assistant UI Hardening
+### LLM-4: Proposal Canonization Bridge
+
+Status: `[shipped]`
 
 Goal:
-- make the minimal Scribe loop usable from `/gm` without turning it into a cockpit inside the cockpit.
+- connect planning markers to later played evidence without ever canonizing raw proposal text.
 
-Build:
-- live capture surface;
-- post-session Build Session Recap action;
-- Memory Inbox;
-- provider status and run history behind compact drawers;
-- full context preview drawer and fast trusted preview;
-- later tabs for branch proposals and planning markers.
+Shipped build:
+- `session.build_recap` memory candidate drafts may include `relatedPlanningMarkerId`;
+- active planning markers are rendered with machine-copy marker IDs in recap context;
+- backend validation accepts a marker link only when played non-planning evidence supports the candidate;
+- invalid marker links are dropped into unlinked candidates with visible normalization warnings when the candidate is otherwise valid;
+- `Accept into Memory` canonizes the linked marker and source option atomically with the accepted memory entry;
+- canonized markers leave active planning context, while accepted memory carries the future canon fact;
+- normal recall cites accepted memory entries, not marker/proposal provenance.
 
 Tests:
-- frontend unit tests for API calls and state transitions;
-- e2e with mocked provider showing Build Session Recap evidence preview, recap draft edit, memory candidate review, and save;
-- e2e with mocked provider showing exact recall with aliases;
-- e2e public-safe recap draft does not publish automatically;
-- e2e branch proposal/adopt/context-preview flow after the core Scribe loop is stable.
+- recap draft with marker ID plus transcript evidence creates a linked memory candidate;
+- marker-only evidence is rejected;
+- invalid marker IDs with valid played evidence become unlinked candidates with `planning_marker_link_ignored`;
+- edited linked candidates require explicit confirmation before accept;
+- expired/discarded/canonized-by-other markers block accept;
+- linked accept is idempotent, repairs missing search-index state, and atomically canonizes marker/option;
+- canonized marker text leaves future active planning context;
+- accepted memory appears in recall and future context;
+- proposal cards never expose a direct canonize/apply action.
 
 Acceptance:
 
 ```text
-GM opens /gm
-  -> captures notes
-  -> builds recap
-  -> accepts memory
-  -> recalls accepted memory later
-  -> /player remains unchanged throughout
+GM adopts a planning marker
+  -> table later records played evidence
+  -> recap proposes a memory candidate with relatedPlanningMarkerId
+  -> GM reviews marker plus played evidence side by side
+  -> Accept into Memory creates canon memory
+  -> marker/option show Canonized via memory
+  -> future context uses accepted memory, not raw marker/proposal text
 ```
+
+Shipped v1 limitations:
+- one memory candidate links to at most one planning marker;
+- one marker can be canonized by at most one memory entry;
+- manual relinking is deferred;
+- entity patching and proposal-body canonization remain deferred;
+- hard delete may sever marker/option provenance because new provenance FKs use `ON DELETE SET NULL`.
 
 ### LLM-5: Vector Retrieval And Embeddings
 

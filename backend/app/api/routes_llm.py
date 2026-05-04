@@ -5,6 +5,7 @@ import json
 import os
 import re
 import time
+import unicodedata
 import uuid
 from typing import Annotated, Any
 from uuid import UUID
@@ -13,6 +14,7 @@ import httpx
 from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import delete, func, select, text, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.api.errors import api_error
@@ -472,18 +474,25 @@ class MemoryCandidateEditIn(BaseModel):
         return _trim_optional(value)
 
 
+class MemoryCandidateAcceptIn(BaseModel):
+    confirm_linked_marker_canonization: bool = False
+
+
 class MemoryCandidateOut(BaseModel):
     id: str
     campaign_id: str
     session_id: str | None
     source_llm_run_id: str | None
     source_recap_id: str | None
+    source_planning_marker_id: str | None
+    source_proposal_option_id: str | None
     status: str
     title: str
     body: str
     claim_strength: str
     evidence_refs: list[dict[str, object]]
     validation_errors: list[str]
+    normalization_warnings: list[str]
     edited_from_candidate_id: str | None
     applied_memory_entry_id: str | None
     created_at: str
@@ -495,6 +504,8 @@ class CampaignMemoryEntryOut(BaseModel):
     campaign_id: str
     session_id: str | None
     source_candidate_id: str | None
+    source_planning_marker_id: str | None
+    source_proposal_option_id: str | None
     title: str
     body: str
     evidence_refs: list[dict[str, object]]
@@ -627,6 +638,8 @@ class PlanningMarkerOut(BaseModel):
     edited_at: str | None
     edited_from_source: bool
     expires_at: str | None
+    canonized_at: str | None = None
+    canon_memory_entry_id: str | None = None
     created_at: str
     updated_at: str
 
@@ -750,12 +763,15 @@ def _candidate_out(candidate: MemoryCandidate) -> MemoryCandidateOut:
         session_id=candidate.session_id,
         source_llm_run_id=candidate.source_llm_run_id,
         source_recap_id=candidate.source_recap_id,
+        source_planning_marker_id=candidate.source_planning_marker_id,
+        source_proposal_option_id=candidate.source_proposal_option_id,
         status=candidate.status,
         title=candidate.title,
         body=candidate.body,
         claim_strength=candidate.claim_strength,
         evidence_refs=_json_load(candidate.evidence_refs_json, []),
         validation_errors=[str(item) for item in _json_load(candidate.validation_errors_json, [])],
+        normalization_warnings=[str(item) for item in _json_load(candidate.normalization_warnings_json, [])],
         edited_from_candidate_id=candidate.edited_from_candidate_id,
         applied_memory_entry_id=candidate.applied_memory_entry_id,
         created_at=candidate.created_at,
@@ -769,6 +785,8 @@ def _memory_entry_out(entry: CampaignMemoryEntry) -> CampaignMemoryEntryOut:
         campaign_id=entry.campaign_id,
         session_id=entry.session_id,
         source_candidate_id=entry.source_candidate_id,
+        source_planning_marker_id=entry.source_planning_marker_id,
+        source_proposal_option_id=entry.source_proposal_option_id,
         title=entry.title,
         body=entry.body,
         evidence_refs=_json_load(entry.evidence_refs_json, []),
@@ -897,6 +915,8 @@ def _marker_out(marker: PlanningMarker) -> PlanningMarkerOut:
         edited_at=marker.edited_at,
         edited_from_source=marker.edited_from_source,
         expires_at=marker.expires_at,
+        canonized_at=marker.canonized_at,
+        canon_memory_entry_id=marker.canon_memory_entry_id,
         created_at=marker.created_at,
         updated_at=marker.updated_at,
     )
@@ -929,7 +949,7 @@ def _option_out(option: ProposalOption, markers_by_option: dict[str, PlanningMar
 def _proposal_status(options: list[ProposalOption], markers: list[PlanningMarker]) -> str:
     if options and all(option.status == "rejected" for option in options):
         return "rejected"
-    if any(option.status == "selected" for option in options) or any(_marker_is_active(marker) for marker in markers):
+    if any(option.status in {"selected", "canonized"} for option in options) or any(_marker_is_active(marker) for marker in markers):
         return "partially_used"
     return "proposed"
 
@@ -1247,6 +1267,10 @@ def _planning_marker_refs_for_scope(
                 "lane": "planning",
                 "visibility": "gm_private",
                 "scopeKind": marker.scope_kind,
+                "sessionId": marker.session_id,
+                "sceneId": marker.scene_id,
+                "sourceProposalOptionId": marker.source_proposal_option_id,
+                "relatedPlanningMarkerId": marker.id,
                 "title": marker.title,
                 "body": f"GM intent, not played history: {marker.marker_text}",
                 "quote": marker.marker_text[:500],
@@ -1262,6 +1286,7 @@ def _transcript_ref_extra(event: TranscriptEventOut) -> dict[str, object]:
         "eventType": event.event_type,
         "source": event.source,
         "correctsEventId": event.corrects_event_id,
+        "sceneId": event.scene_id,
     }
 
 
@@ -1637,6 +1662,10 @@ def _render_source_block(ref: dict[str, object]) -> str:
         ("eventType", "eventType"),
         ("source", "source"),
         ("correctsEventId", "correctsEventId"),
+        ("sceneId", "sceneId"),
+        ("scopeKind", "scopeKind"),
+        ("sourceProposalOptionId", "sourceProposalOptionId"),
+        ("relatedPlanningMarkerId", "relatedPlanningMarkerId"),
     ):
         value = ref.get(key)
         if value is not None:
@@ -1662,6 +1691,7 @@ def _render_recap_prompt(source_refs: list[dict[str, object]], gm_instruction: s
                 "body": "string",
                 "claimStrength": "directly_evidenced|strong_inference|weak_inference|gm_review_required",
                 "evidenceRefs": [{"kind": "source kind", "id": "source id", "quote": "short exact quote"}],
+                "relatedPlanningMarkerId": "optional planning marker id copied exactly from a planning source block when later played evidence confirms it",
             }
         ],
         "continuityWarnings": [{"title": "string", "body": "string", "evidenceRefs": []}],
@@ -1674,6 +1704,9 @@ def _render_recap_prompt(source_refs: list[dict[str, object]], gm_instruction: s
         "Use orderIndex and capturedAt fields for chronology. Do not infer chronology from prose alone.\n"
         "For every evidenceRefs item, use exactly evidenceRefKind as kind and evidenceRefId as id from the source block. Do not use eventType or source as evidenceRefs.kind.\n"
         "Planning markers are GM intent, not played events. Claims derived only from planning markers must be gm_review_required and must not become memory candidates.\n"
+        "Planning marker/proposal text is provenance and context, never proof. Do not copy proposal bodies or marker wording as evidence.\n"
+        "If later played non-planning evidence confirms an active planning marker, set relatedPlanningMarkerId to the exact relatedPlanningMarkerId value from that planning source block. Otherwise omit relatedPlanningMarkerId.\n"
+        "Memory candidate bodies must summarize played outcomes, not GM planning intent.\n"
         "Do not convert conditional or speculative wording into facts. Phrases like 'may', 'could', 'must choose', 'if played', 'possible consequence', and 'GM is considering' indicate uncertainty unless a later played event confirms the result.\n"
         "Memory candidates marked directly_evidenced must cite played evidence with exact quotes, not speculative proposal text.\n"
         "Return JSON only. Do not include markdown fences.\n\n"
@@ -2025,12 +2058,30 @@ def _has_speculative_language(value: str) -> bool:
     return any(re.search(pattern, value, flags=re.IGNORECASE) for pattern in SPECULATIVE_EVIDENCE_PATTERNS)
 
 
-def _evidence_ref_errors(evidence_refs: list[object], source_refs: list[dict[str, object]], *, requires_direct_quote: bool) -> list[str]:
+def _normalized_quote_text(value: str) -> str:
+    normalized = unicodedata.normalize("NFKC", value)
+    normalized = re.sub(r"`([^`]*)`", r"\1", normalized)
+    normalized = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", normalized)
+    normalized = re.sub(r"[*_~>#]+", " ", normalized)
+    normalized = re.sub(r"[^\w\s]+", " ", normalized, flags=re.UNICODE)
+    return " ".join(normalized.casefold().split())
+
+
+def _quote_matches_source(quote: str, source_text: str) -> bool:
+    normalized_quote = _normalized_quote_text(quote)
+    if not normalized_quote:
+        return False
+    return normalized_quote in _normalized_quote_text(source_text)
+
+
+def _evidence_ref_analysis(evidence_refs: list[object], source_refs: list[dict[str, object]], *, requires_direct_quote: bool) -> dict[str, object]:
     lookup = _source_lookup(source_refs)
     errors: list[str] = []
     valid_ref_count = 0
     valid_quote_count = 0
+    valid_non_planning_quote_count = 0
     non_planning_ref_count = 0
+    planning_ref_count = 0
     for ref in evidence_refs:
         if not isinstance(ref, dict):
             errors.append("evidence_ref_not_object")
@@ -2046,28 +2097,86 @@ def _evidence_ref_errors(evidence_refs: list[object], source_refs: list[dict[str
             errors.append("evidence_source_missing")
             continue
         valid_ref_count += 1
-        if source.get("lane") != "planning":
+        source_is_planning = source.get("lane") == "planning"
+        if source_is_planning:
+            planning_ref_count += 1
+        else:
             non_planning_ref_count += 1
         if quote:
             source_text = str(source.get("body") or source.get("quote") or "")
-            if _normalize_text(quote) not in _normalize_text(source_text):
+            if not _quote_matches_source(quote, source_text):
                 errors.append("evidence_quote_not_found")
             else:
                 valid_quote_count += 1
-                if requires_direct_quote and _has_speculative_language(quote):
+                if not source_is_planning:
+                    valid_non_planning_quote_count += 1
+                if requires_direct_quote and source_is_planning and _has_speculative_language(quote):
                     errors.append("speculative_evidence_for_direct_claim")
+                elif requires_direct_quote and not source_is_planning and _has_speculative_language(quote):
+                    for pattern in (r"\bif played\b", r"\bpossible consequence", r"\bGM is considering\b"):
+                        if re.search(pattern, quote, flags=re.IGNORECASE):
+                            errors.append("speculative_evidence_for_direct_claim")
+                            break
     if not valid_ref_count:
         errors.append("evidence_requires_known_source")
     elif not non_planning_ref_count:
         errors.append("planning_evidence_cannot_create_memory")
-    if requires_direct_quote and not valid_quote_count:
+    if requires_direct_quote and not valid_non_planning_quote_count:
         errors.append("direct_evidence_requires_valid_quote")
-    return errors
+    return {
+        "errors": errors,
+        "valid_ref_count": valid_ref_count,
+        "valid_quote_count": valid_quote_count,
+        "valid_non_planning_quote_count": valid_non_planning_quote_count,
+        "non_planning_ref_count": non_planning_ref_count,
+        "planning_ref_count": planning_ref_count,
+    }
+
+
+def _evidence_ref_errors(evidence_refs: list[object], source_refs: list[dict[str, object]], *, requires_direct_quote: bool) -> list[str]:
+    return [str(item) for item in _evidence_ref_analysis(evidence_refs, source_refs, requires_direct_quote=requires_direct_quote)["errors"]]
+
+
+def _context_scene_ids(source_refs: list[dict[str, object]]) -> set[str]:
+    scene_ids: set[str] = set()
+    for ref in source_refs:
+        if ref.get("kind") == "scene" and ref.get("id"):
+            scene_ids.add(str(ref["id"]))
+        if ref.get("sceneId"):
+            scene_ids.add(str(ref["sceneId"]))
+    return scene_ids
+
+
+def _is_marker_scope_compatible(db: Session, marker: PlanningMarker, *, campaign_id: str, recap_session_id: str, source_refs: list[dict[str, object]]) -> bool:
+    if marker.campaign_id != campaign_id:
+        return False
+    if marker.scope_kind == "campaign":
+        return True
+    if marker.scope_kind == "session":
+        return marker.session_id == recap_session_id
+    if marker.scope_kind != "scene" or marker.scene_id is None:
+        return False
+    if marker.scene_id in _context_scene_ids(source_refs):
+        return True
+    scene = db.get(Scene, marker.scene_id)
+    return scene is not None and scene.session_id == recap_session_id
+
+
+def _candidate_body_resembles_marker(body: str, marker_text: str) -> bool:
+    normalized_body = _normalized_quote_text(body)
+    normalized_marker = _normalized_quote_text(marker_text)
+    if len(normalized_body) < 24 or len(normalized_marker) < 24:
+        return False
+    return normalized_body == normalized_marker or normalized_body in normalized_marker or normalized_marker in normalized_body
 
 
 def _validate_recap_bundle(
+    db: Session,
     bundle: dict[str, object],
     source_refs: list[dict[str, object]],
+    *,
+    campaign_id: str,
+    session_id: str,
 ) -> tuple[dict[str, object], list[dict[str, object]], list[dict[str, object]]]:
     rejected: list[dict[str, object]] = []
     private_recap = bundle.get("privateRecap")
@@ -2088,6 +2197,9 @@ def _validate_recap_bundle(
         strength = str(raw.get("claimStrength") or "")
         evidence_refs = raw.get("evidenceRefs")
         errors: list[str] = []
+        normalization_warnings: list[str] = []
+        related_marker_id = str(raw.get("relatedPlanningMarkerId") or raw.get("related_planning_marker_id") or "").strip()
+        related_marker: PlanningMarker | None = None
         if strength not in CLAIM_STRENGTHS:
             errors.append("invalid_claim_strength")
         if not str(raw.get("title") or "").strip():
@@ -2097,17 +2209,43 @@ def _validate_recap_bundle(
         if not isinstance(evidence_refs, list):
             errors.append("missing_evidence_refs")
             evidence_refs = []
+        evidence_analysis = _evidence_ref_analysis(evidence_refs, source_refs, requires_direct_quote=strength == "directly_evidenced") if isinstance(evidence_refs, list) else {
+            "errors": [],
+            "non_planning_ref_count": 0,
+            "planning_ref_count": 0,
+        }
         if evidence_refs:
-            errors.extend(_evidence_ref_errors(evidence_refs, source_refs, requires_direct_quote=strength == "directly_evidenced"))
+            errors.extend(str(item) for item in evidence_analysis["errors"])
         elif strength == "directly_evidenced":
             errors.append("direct_evidence_requires_valid_quote")
         elif strength == "strong_inference":
             errors.append("strong_inference_requires_evidence")
+        if related_marker_id:
+            marker_ref_in_context = ("planning_marker", related_marker_id) in _source_lookup(source_refs)
+            db_marker = db.get(PlanningMarker, related_marker_id)
+            if db_marker is not None and db_marker.campaign_id != campaign_id:
+                errors.append("related_marker_scope_mismatch")
+            elif db_marker is not None and marker_ref_in_context and _marker_is_active(db_marker) and _is_marker_scope_compatible(db, db_marker, campaign_id=campaign_id, recap_session_id=session_id, source_refs=source_refs):
+                related_marker = db_marker
+                if _candidate_body_resembles_marker(str(raw.get("body") or ""), db_marker.marker_text):
+                    normalization_warnings.append("candidate_body_resembles_planning_marker")
+            else:
+                if int(evidence_analysis.get("non_planning_ref_count", 0)) > 0:
+                    normalization_warnings.append("planning_marker_link_ignored")
+                    related_marker_id = ""
+                else:
+                    errors.append("related_marker_not_in_context")
         if strength not in MEMORY_ACCEPT_STRENGTHS:
             errors.append("claim_strength_not_auto_candidate")
         if errors:
             rejected.append({"draft": raw, "errors": errors})
             continue
+        if related_marker is not None:
+            raw["relatedPlanningMarkerId"] = related_marker.id
+            raw["sourceProposalOptionId"] = related_marker.source_proposal_option_id
+        elif "relatedPlanningMarkerId" in raw:
+            raw.pop("relatedPlanningMarkerId", None)
+        raw["normalizationWarnings"] = normalization_warnings
         accepted_candidates.append(raw)
     return bundle, accepted_candidates, rejected
 
@@ -2314,12 +2452,15 @@ def _persist_memory_candidates(
             campaign_id=campaign_id,
             session_id=session_id,
             source_llm_run_id=run_id,
+            source_planning_marker_id=str(draft.get("relatedPlanningMarkerId")) if draft.get("relatedPlanningMarkerId") else None,
+            source_proposal_option_id=str(draft.get("sourceProposalOptionId")) if draft.get("sourceProposalOptionId") else None,
             status="draft",
             title=str(draft.get("title") or "").strip()[:200],
             body=str(draft.get("body") or "").strip(),
             claim_strength=str(draft.get("claimStrength")),
             evidence_refs_json=_json_dump(draft.get("evidenceRefs") if isinstance(draft.get("evidenceRefs"), list) else []),
             validation_errors_json="[]",
+            normalization_warnings_json=_json_dump(draft.get("normalizationWarnings") if isinstance(draft.get("normalizationWarnings"), list) else []),
             created_at=now,
             updated_at=now,
         )
@@ -2362,6 +2503,76 @@ def _upsert_search_index(
     db.flush()
 
 
+def _ensure_memory_search_index(db: Session, entry: CampaignMemoryEntry, now: str) -> None:
+    _upsert_search_index(
+        db,
+        campaign_id=entry.campaign_id,
+        source_kind="campaign_memory_entry",
+        source_id=entry.id,
+        source_revision=entry.updated_at,
+        title=entry.title,
+        body=entry.body,
+        lane="canon",
+        visibility="gm_private",
+        now=now,
+    )
+
+
+def _source_option_for_marker(db: Session, marker: PlanningMarker) -> ProposalOption | None:
+    if not marker.source_proposal_option_id:
+        return None
+    return db.get(ProposalOption, marker.source_proposal_option_id)
+
+
+def _reconcile_linked_memory_accept(db: Session, candidate: MemoryCandidate, entry: CampaignMemoryEntry, now: str) -> CampaignMemoryEntry:
+    marker: PlanningMarker | None = None
+    if candidate.source_planning_marker_id:
+        marker = db.get(PlanningMarker, candidate.source_planning_marker_id)
+    if marker is not None:
+        marker.status = "canonized"
+        marker.canonized_at = marker.canonized_at or now
+        marker.canon_memory_entry_id = entry.id
+        marker.updated_at = now
+        option = _source_option_for_marker(db, marker)
+        if option is not None:
+            option.status = "canonized"
+            option.canonized_at = option.canonized_at or now
+            option.updated_at = now
+            if entry.source_proposal_option_id is None:
+                entry.source_proposal_option_id = option.id
+    if entry.source_planning_marker_id is None and candidate.source_planning_marker_id:
+        entry.source_planning_marker_id = candidate.source_planning_marker_id
+    if entry.source_proposal_option_id is None and candidate.source_proposal_option_id:
+        entry.source_proposal_option_id = candidate.source_proposal_option_id
+    candidate.status = "accepted"
+    candidate.applied_memory_entry_id = entry.id
+    candidate.updated_at = now
+    entry.updated_at = now
+    _ensure_memory_search_index(db, entry, now)
+    db.flush()
+    return entry
+
+
+def _accepted_entry_for_marker(db: Session, marker_id: str) -> CampaignMemoryEntry | None:
+    return db.scalars(select(CampaignMemoryEntry).where(CampaignMemoryEntry.source_planning_marker_id == marker_id)).first()
+
+
+def _linked_marker_for_accept(db: Session, candidate: MemoryCandidate) -> PlanningMarker | None:
+    if not candidate.source_planning_marker_id:
+        return None
+    marker = db.get(PlanningMarker, candidate.source_planning_marker_id)
+    if marker is None:
+        raise api_error(409, "related_marker_missing", "Linked planning marker is missing")
+    if marker.status == "canonized":
+        existing_entry = db.get(CampaignMemoryEntry, marker.canon_memory_entry_id) if marker.canon_memory_entry_id else _accepted_entry_for_marker(db, marker.id)
+        if existing_entry is not None and existing_entry.source_candidate_id == candidate.id:
+            return marker
+        raise api_error(409, "related_marker_already_canonized", "Linked planning marker is already canonized")
+    if not _marker_is_active(marker):
+        raise api_error(409, "related_marker_not_active", "Linked planning marker is no longer active")
+    return marker
+
+
 def _proposal_set_for_option(db: Session, option: ProposalOption) -> ProposalSet:
     return _require_proposal_set(db, option.proposal_set_id)
 
@@ -2375,6 +2586,8 @@ def _active_marker_for_option(db: Session, option_id: str) -> PlanningMarker | N
 
 
 def _select_option(db: Session, option: ProposalOption, now: str) -> None:
+    if option.status == "canonized":
+        raise api_error(409, "proposal_option_canonized", "Canonized proposal options are terminal")
     if option.status != "selected":
         option.status = "selected"
         option.selected_at = option.selected_at or now
@@ -2620,7 +2833,9 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
         try:
             parsed = _parse_json_object(response_text)
             source_refs = _json_load(package.source_refs_json, [])
-            bundle, candidate_drafts, rejected_drafts = _validate_recap_bundle(parsed, source_refs)
+            bundle, candidate_drafts, rejected_drafts = _validate_recap_bundle(db, parsed, source_refs, campaign_id=str(campaign_id), session_id=session.id)
+            if db.in_transaction():
+                db.rollback()
             with db.begin():
                 run = _require_run(db, run.id)
                 _finalize_run_success(
@@ -2634,6 +2849,8 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
                 candidates = _persist_memory_candidates(db, campaign_id=str(campaign_id), session_id=session.id, run_id=run.id, drafts=candidate_drafts)
                 return BuildRecapOut(run=_run_out(run), bundle=bundle, candidates=[_candidate_out(candidate) for candidate in candidates], rejected_drafts=rejected_drafts)
         except Exception as parse_error:  # noqa: BLE001
+            if db.in_transaction():
+                db.rollback()
             with db.begin():
                 parent = _require_run(db, run.id)
                 parent.repair_attempted = True
@@ -2684,8 +2901,12 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
             try:
                 repaired = _parse_json_object(repair_text)
                 source_refs = _json_load(package.source_refs_json, [])
-                bundle, candidate_drafts, rejected_drafts = _validate_recap_bundle(repaired, source_refs)
+                bundle, candidate_drafts, rejected_drafts = _validate_recap_bundle(db, repaired, source_refs, campaign_id=str(campaign_id), session_id=session.id)
+                if db.in_transaction():
+                    db.rollback()
             except Exception as repair_error:  # noqa: BLE001
+                if db.in_transaction():
+                    db.rollback()
                 with db.begin():
                     child = _require_run(db, child.id)
                     _finalize_run_failed(
@@ -3177,50 +3398,63 @@ def reject_memory_candidate(candidate_id: UUID, db: DbSession) -> MemoryCandidat
     return _candidate_out(candidate)
 
 
+def _accept_memory_candidate_locked(db: Session, candidate: MemoryCandidate, *, confirm_linked_marker_canonization: bool, now: str) -> CampaignMemoryEntry:
+    if candidate.applied_memory_entry_id:
+        entry = db.get(CampaignMemoryEntry, candidate.applied_memory_entry_id)
+        if entry is None:
+            raise api_error(409, "memory_entry_missing", "Accepted memory entry is missing")
+        return _reconcile_linked_memory_accept(db, candidate, entry, now)
+    errors = _json_load(candidate.validation_errors_json, [])
+    if errors:
+        raise api_error(409, "memory_candidate_invalid", "Candidate has validation errors")
+    if candidate.claim_strength not in MEMORY_ACCEPT_STRENGTHS:
+        raise api_error(409, "claim_strength_too_weak", "Candidate claim strength requires GM rewrite before accepting")
+    marker = _linked_marker_for_accept(db, candidate)
+    if marker is not None:
+        if candidate.status == "edited" and not confirm_linked_marker_canonization:
+            raise api_error(409, "linked_marker_confirmation_required", "Edited linked candidate requires confirmation before canonizing its planning marker")
+        if candidate.source_proposal_option_id is None and marker.source_proposal_option_id:
+            candidate.source_proposal_option_id = marker.source_proposal_option_id
+    entry = CampaignMemoryEntry(
+        id=_new_id(),
+        campaign_id=candidate.campaign_id,
+        session_id=candidate.session_id,
+        source_candidate_id=candidate.id,
+        source_planning_marker_id=candidate.source_planning_marker_id,
+        source_proposal_option_id=candidate.source_proposal_option_id,
+        title=candidate.title,
+        body=candidate.body,
+        evidence_refs_json=candidate.evidence_refs_json,
+        tags_json="[]",
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(entry)
+    db.flush()
+    return _reconcile_linked_memory_accept(db, candidate, entry, now)
+
+
 @router.post("/api/scribe/memory-candidates/{candidate_id}/accept", response_model=CampaignMemoryEntryOut)
-def accept_memory_candidate(candidate_id: UUID, db: DbSession) -> CampaignMemoryEntryOut:
+def accept_memory_candidate(candidate_id: UUID, db: DbSession, payload: MemoryCandidateAcceptIn | None = None) -> CampaignMemoryEntryOut:
     now = utc_now_z()
-    with db.begin():
-        candidate = _require_candidate(db, candidate_id)
-        if candidate.applied_memory_entry_id:
-            entry = db.get(CampaignMemoryEntry, candidate.applied_memory_entry_id)
-            if entry is None:
-                raise api_error(409, "memory_entry_missing", "Accepted memory entry is missing")
-            return _memory_entry_out(entry)
-        errors = _json_load(candidate.validation_errors_json, [])
-        if errors:
-            raise api_error(409, "memory_candidate_invalid", "Candidate has validation errors")
-        if candidate.claim_strength not in MEMORY_ACCEPT_STRENGTHS:
-            raise api_error(409, "claim_strength_too_weak", "Candidate claim strength requires GM rewrite before accepting")
-        entry = CampaignMemoryEntry(
-            id=_new_id(),
-            campaign_id=candidate.campaign_id,
-            session_id=candidate.session_id,
-            source_candidate_id=candidate.id,
-            title=candidate.title,
-            body=candidate.body,
-            evidence_refs_json=candidate.evidence_refs_json,
-            tags_json="[]",
-            created_at=now,
-            updated_at=now,
-        )
-        db.add(entry)
-        db.flush()
-        candidate.status = "accepted"
-        candidate.applied_memory_entry_id = entry.id
-        candidate.updated_at = now
-        _upsert_search_index(
-            db,
-            campaign_id=entry.campaign_id,
-            source_kind="campaign_memory_entry",
-            source_id=entry.id,
-            source_revision=entry.updated_at,
-            title=entry.title,
-            body=entry.body,
-            lane="canon",
-            visibility="gm_private",
-            now=now,
-        )
+    confirm = bool(payload and payload.confirm_linked_marker_canonization)
+    try:
+        with db.begin():
+            candidate = _require_candidate(db, candidate_id)
+            entry = _accept_memory_candidate_locked(db, candidate, confirm_linked_marker_canonization=confirm, now=now)
+    except IntegrityError as error:
+        db.rollback()
+        with db.begin():
+            candidate = _require_candidate(db, candidate_id)
+            if not candidate.source_planning_marker_id:
+                raise
+            entry = _accepted_entry_for_marker(db, candidate.source_planning_marker_id)
+            if entry is not None and entry.source_candidate_id == candidate.id:
+                entry = _reconcile_linked_memory_accept(db, candidate, entry, now)
+            elif entry is not None:
+                raise api_error(409, "related_marker_already_canonized", "Linked planning marker is already canonized") from error
+            else:
+                raise
     return _memory_entry_out(entry)
 
 
@@ -3277,6 +3511,8 @@ def reject_proposal_option(option_id: UUID, db: DbSession) -> ProposalOptionOut:
     now = utc_now_z()
     with db.begin():
         option = _require_proposal_option(db, option_id)
+        if option.status == "canonized":
+            raise api_error(409, "proposal_option_canonized", "Canonized proposal options are terminal")
         if _active_marker_for_option(db, option.id):
             raise api_error(409, "active_marker_exists", "Expire or discard the active planning marker before rejecting this option")
         option.status = "rejected"
@@ -3289,6 +3525,8 @@ def save_proposal_option_for_later(option_id: UUID, db: DbSession) -> ProposalOp
     now = utc_now_z()
     with db.begin():
         option = _require_proposal_option(db, option_id)
+        if option.status == "canonized":
+            raise api_error(409, "proposal_option_canonized", "Canonized proposal options are terminal")
         if _active_marker_for_option(db, option.id):
             raise api_error(409, "active_marker_exists", "Expire or discard the active planning marker before saving this option for later")
         option.status = "saved_for_later"
@@ -3304,6 +3542,8 @@ def create_planning_marker_from_option(option_id: UUID, payload: PlanningMarkerC
         raise api_error(409, "marker_lint_confirmation_required", "Planning marker wording needs explicit confirmation", [{"code": warning} for warning in lint_warnings])
     with db.begin():
         option = _require_proposal_option(db, option_id)
+        if option.status == "canonized":
+            raise api_error(409, "proposal_option_canonized", "Canonized proposal options are terminal")
         existing = db.scalars(select(PlanningMarker).where(PlanningMarker.source_proposal_option_id == option.id)).one_or_none()
         if existing is not None:
             return _marker_out(existing)

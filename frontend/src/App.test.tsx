@@ -688,6 +688,7 @@ describe("GM shell widgets", () => {
     await userEvent.click(screen.getByRole("button", { name: "Run Branch Directions" }));
     expect(await screen.findByText("Degraded output: 2 options")).toBeInTheDocument();
     expect(screen.getByText("Possible consequences if played")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /canonize/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Adopt as Planning Direction" }));
     fireEvent.change(screen.getByLabelText("Planning marker text"), { target: { value: "Varos betrayed the party." } });
     await userEvent.click(screen.getByRole("button", { name: "Create Planning Marker" }));

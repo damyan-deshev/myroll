@@ -103,7 +103,7 @@ Current implemented slices:
 - scene orchestration with private scene activation, linked context, staged public display, and explicit publish.
 - local backup/export/restore, Storage / Demo widget, original public demo profile, ignored private local override map, and generated demo asset pack.
 - laptop-friendly multi-surface GM shell with the original floating canvas preserved at `/gm/floating`.
-- first Myroll Scribe spine plus branch/player-safe slices: live DM capture, correction events, provider harness, reviewed context preview, session recap draft/save, targetless Memory Inbox accept, aliases, basic recall, branch proposal cards, planning markers, player-safe recap drafting, public-safety warning gate, and LLM export redaction.
+- first Myroll Scribe spine plus branch/player-safe/canonization slices: live DM capture, correction events, provider harness, reviewed context preview, session recap draft/save, targetless Memory Inbox accept, aliases, basic recall, branch proposal cards, planning markers, proposal-marker canonization via accepted memory, player-safe recap drafting, public-safety warning gate, and LLM export redaction.
 
 Frontend verification:
 
@@ -129,7 +129,7 @@ The longer real provider Scribe campaign journey exercises the branch-to-recap l
 scripts/run_scribe_campaign_real_llm_journey.sh
 ```
 
-That journey simulates staged DM captures, a correction event, branch proposal generation, option 2 selection, planning-marker adoption, a later played-event capture, session recap, memory accept, recall, and `/player` payload identity. It is meant to catch semantic drift as well as hard boundary failures. The current discipline checks verify that transcript chronology is rendered as first-class metadata, proposal bodies do not leak into future context, markers remain planning-only, speculative proposal language does not become direct evidence, and accepted memory uses canonical `evidenceRefKind`/`evidenceRefId` citations.
+That journey simulates staged DM captures, a correction event, branch proposal generation, option 2 selection, planning-marker adoption, a later played-event capture, session recap, memory accept, recall, and `/player` payload identity. It is meant to catch semantic drift as well as hard boundary failures. The current discipline checks verify that transcript chronology is rendered as first-class metadata, proposal bodies do not leak into future context, markers remain planning-only, speculative proposal language does not become direct evidence, accepted memory uses canonical `evidenceRefKind`/`evidenceRefId` citations, and linked memory candidates canonize marker/option state only when the model produced a valid reviewed marker link.
 
 Core product invariant:
 

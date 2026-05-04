@@ -60,6 +60,8 @@ type PlanningMarker = {
   scope_kind: string;
   provenance: JsonObject;
   lint_warnings: string[];
+  canonized_at?: string | null;
+  canon_memory_entry_id?: string | null;
 };
 type BuildRecapResult = {
   run: { id: string; task_kind: string; status: string; repair_attempted: boolean; error_code?: string | null; parse_failure_reason?: string | null };
@@ -69,10 +71,19 @@ type BuildRecapResult = {
     continuityWarnings?: JsonObject[];
     unresolvedThreads?: string[];
   };
-  candidates: Array<{ id: string; title: string; body: string; claim_strength: string; validation_errors: string[] }>;
+  candidates: Array<{
+    id: string;
+    title: string;
+    body: string;
+    claim_strength: string;
+    validation_errors: string[];
+    source_planning_marker_id?: string | null;
+    source_proposal_option_id?: string | null;
+    normalization_warnings?: string[];
+  }>;
   rejected_drafts: JsonObject[];
 };
-type MemoryEntry = { id: string; title: string; body: string };
+type MemoryEntry = { id: string; title: string; body: string; source_planning_marker_id?: string | null; source_proposal_option_id?: string | null };
 type RecallResult = { expanded_terms: string[]; hits: Array<{ source_kind: string; title: string; excerpt: string; score: number }> };
 
 type JourneyCheck = {
@@ -103,6 +114,13 @@ type JourneyReport = {
     rejectedDrafts: JsonObject[];
     acceptedMemory: MemoryEntry[];
     recall?: RecallResult;
+  };
+  bridge: {
+    linkedCandidateCount: number;
+    droppedMarkerLinkCount: number;
+    canonizedMarkerStatus?: string;
+    canonizedOptionStatus?: string;
+    futurePromptAfterAcceptExcerpt?: string;
   };
   checks: JourneyCheck[];
   observations: string[];
@@ -336,7 +354,12 @@ function writeReport(report: JourneyReport): void {
     report.recap.bodyMarkdown ?? "",
     "",
     "### Memory Candidates",
-    ...report.recap.candidates.map((candidate) => `- ${candidate.claim_strength} · ${candidate.title}: ${candidate.body}`),
+    ...report.recap.candidates.map(
+      (candidate) =>
+        `- ${candidate.claim_strength} · ${candidate.title}: ${candidate.body}` +
+        (candidate.source_planning_marker_id ? ` · linked marker ${candidate.source_planning_marker_id}` : "") +
+        (candidate.normalization_warnings?.length ? ` · warnings ${candidate.normalization_warnings.join(", ")}` : ""),
+    ),
     report.recap.candidates.length ? "" : "- none",
     "",
     "### Accepted Memory",
@@ -350,6 +373,12 @@ function writeReport(report: JourneyReport): void {
           ...report.recap.recall.hits.map((hit) => `- ${hit.source_kind} · ${hit.title} · score ${hit.score}: ${hit.excerpt}`),
         ].join("\n")
       : "not run",
+    "",
+    "## Canonization Bridge",
+    `Linked candidate count: ${report.bridge.linkedCandidateCount}`,
+    `Dropped marker link count: ${report.bridge.droppedMarkerLinkCount}`,
+    `Canonized marker status: ${report.bridge.canonizedMarkerStatus ?? "not observed"}`,
+    `Canonized option status: ${report.bridge.canonizedOptionStatus ?? "not observed"}`,
     "",
     "## Checks",
     ...report.checks.map((check) => `- ${check.pass ? "PASS" : "FAIL"} [${check.severity}] ${check.name}: ${check.details}`),
@@ -375,6 +404,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     notes: [],
     branch: { options: [] },
     recap: { candidates: [], rejectedDrafts: [], acceptedMemory: [] },
+    bridge: { linkedCandidateCount: 0, droppedMarkerLinkCount: 0 },
     checks: [],
     observations: [],
     screenshots: [],
@@ -678,6 +708,19 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       pass: recapBuild.candidates.length > 0,
       details: `${recapBuild.candidates.length} valid candidate(s), ${recapBuild.rejected_drafts.length} rejected draft(s).`,
     });
+    const linkedCandidates = recapBuild.candidates.filter((candidate) => candidate.source_planning_marker_id === marker.id);
+    const droppedMarkerLinks = recapBuild.candidates.filter((candidate) => candidate.normalization_warnings?.includes("planning_marker_link_ignored"));
+    report.bridge.linkedCandidateCount = linkedCandidates.length;
+    report.bridge.droppedMarkerLinkCount = droppedMarkerLinks.length;
+    addCheck(report, {
+      name: "Model linkage quality: recap candidate linked to chosen marker",
+      pass: linkedCandidates.length > 0,
+      severity: "info",
+      details:
+        linkedCandidates.length > 0
+          ? `${linkedCandidates.length} candidate(s) linked to the chosen planning marker.`
+          : `No candidate linked to the chosen marker; dropped-link warnings: ${droppedMarkerLinks.length}. Backend validation remains strict.`,
+    });
     addCheck(report, {
       name: "Accepted memory candidates avoid speculative evidence language",
       pass: recapBuild.candidates.every((candidate) => !hasSpeculativeLanguage(`${candidate.title} ${candidate.body}`)),
@@ -710,6 +753,61 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       pass: report.recap.acceptedMemory.length > 0,
       details: `${report.recap.acceptedMemory.length} accepted memory entry/entries.`,
     });
+    const acceptedLinkedMemory = report.recap.acceptedMemory.find((entry) => entry.source_planning_marker_id === marker.id);
+    const markerList = await apiGet<{ planning_markers: PlanningMarker[] }>(
+      request,
+      `/api/campaigns/${campaign.id}/planning-markers`,
+      "planning marker list after memory accept",
+    );
+    const markerAfterAccept = markerList.planning_markers.find((item) => item.id === marker.id);
+    const proposalAfterAccept = await apiGet<NonNullable<BuildBranchResult["proposal_set"]>>(
+      request,
+      `/api/proposal-sets/${branchDetail.proposal_set.id}`,
+      "proposal set after memory accept",
+    );
+    const optionAfterAccept = proposalAfterAccept.options.find((item) => item.id === chosen.id);
+    report.bridge.canonizedMarkerStatus = markerAfterAccept?.status;
+    report.bridge.canonizedOptionStatus = optionAfterAccept?.status;
+    addCheck(report, {
+      name: "Linked accept canonizes marker and option when model supplied a valid link",
+      pass:
+        linkedCandidates.length === 0 ||
+        Boolean(acceptedLinkedMemory && markerAfterAccept?.status === "canonized" && optionAfterAccept?.status === "canonized"),
+      severity: linkedCandidates.length > 0 ? "critical" : "info",
+      details:
+        linkedCandidates.length > 0
+          ? `acceptedLinkedMemory=${Boolean(acceptedLinkedMemory)} marker=${markerAfterAccept?.status ?? "missing"} option=${optionAfterAccept?.status ?? "missing"}`
+          : "No valid linked candidate was produced by the model, so canonization bridge persistence was not exercised in this run.",
+    });
+    const postAcceptContext = await reviewedContext(
+      request,
+      campaign.id,
+      {
+        session_id: session.id,
+        scene_id: scene.id,
+        task_kind: "scene.branch_directions",
+        scope_kind: "scene",
+        visibility_mode: "gm_private",
+        gm_instruction: "Check canonized planning bridge context after memory accept.",
+      },
+      "post-accept branch context",
+    );
+    report.bridge.futurePromptAfterAcceptExcerpt = postAcceptContext.rendered_prompt.slice(-1500);
+    addCheck(report, {
+      name: "Future context uses accepted memory rather than raw proposal body",
+      pass: !promptContains(postAcceptContext.rendered_prompt, chosen.body),
+      severity: "critical",
+      details: "Checked post-accept branch prompt against chosen raw proposal body.",
+    });
+    addCheck(report, {
+      name: "Canonized marker leaves active planning context",
+      pass: linkedCandidates.length === 0 || !postAcceptContext.rendered_prompt.includes(marker.marker_text),
+      severity: linkedCandidates.length > 0 ? "critical" : "info",
+      details:
+        linkedCandidates.length > 0
+          ? "Checked post-accept branch prompt for absence of canonized marker text."
+          : "Marker was not canonized because the model did not produce a valid linked candidate.",
+    });
     const recall = await apiPost<RecallResult>(
       request,
       `/api/campaigns/${campaign.id}/scribe/recall`,
@@ -738,7 +836,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     } else {
       report.observations.push("The recap prompt's clearest chronological signal came from campaign-clock text embedded in note bodies.");
     }
-    report.observations.push("Proposal canonization endpoint is not part of the current slice; the branch becomes canon only after the DM records a later played live capture.");
+    report.observations.push("Proposal canonization remains memory-mediated: the branch becomes canon only after later played evidence produces an accepted memory entry.");
 
     await page.goto("/gm");
     await expect(page.getByText("Scribe", { exact: true })).toBeVisible();

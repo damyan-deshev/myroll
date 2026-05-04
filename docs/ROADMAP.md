@@ -1145,8 +1145,9 @@ Status as of 2026-05-04:
 - shipped first Scribe spine: compact `/gm` live capture, transcript correction, provider profile/probe, reviewed context preview, backend-owned recap run, editable recap save, targetless Memory Inbox accept, manual aliases, basic recall, and default export redaction for LLM prompt/response payloads;
 - shipped branch proposal/planning marker slice: campaign/session/scene branch context preview, structured proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection;
 - shipped player-safe recap/snippet leak-warning gate: public-safe curation, public-safe context preview, structured player-safe draft run, deterministic warning scan, exact-content ack for risky drafts, LLM snippet provenance, and player-display publication tracking;
+- shipped proposal canonization bridge: `session.build_recap` can link a memory candidate to one active planning marker when later played evidence confirms it, and `Accept into Memory` atomically creates canon memory while marking the marker/source option `canonized`;
 - shipped real-provider Scribe journey hardening: opt-in Playwright runners now exercise the local/LAN model through live capture, branch proposals, planning-marker adoption, played-event recap, memory accept, recall, and `/player` boundary checks. The recap prompt now renders transcript chronology and canonical evidence-ref IDs explicitly, and direct-evidence memory candidates reject speculative proposal wording as proof;
-- planned next: proposal canonization and broader Scribe hardening;
+- planned next: broader Scribe hardening, full FTS recall, and deferred entity/object patch workflows;
 - deferred: vectors, streaming, tool calls, audio capture/transcription, and autonomous entity mutation.
 
 Detailed build specification:
@@ -1262,7 +1263,7 @@ Build:
   - statuses: proposed, selected, rejected, saved_for_later, superseded, canonized;
   - shipped actions: "Adopt as Planning Direction", "Save for later", "Reject", "Expire Marker", and "Discard Marker";
   - selected options without active planning markers do not enter normal future context;
-  - proposal canonization/state patches remain deferred and are not silently created.
+  - direct proposal-body canonization and entity/state patches remain deferred and are not silently created.
 - Structured response contracts:
   - proposal tasks must return machine-readable options where supported by the provider;
   - each option should include a short GM-facing summary, possible consequences if played, what may be revealed, what remains hidden, and a concise planning marker draft;
@@ -1271,9 +1272,11 @@ Build:
   - malformed output after one schema-repair attempt fails visibly and creates no proposal records.
 - Canonization and context hygiene:
   - shipped branch proposals create planning markers, not canon memory, notes, entity drafts, faction/location/quest records, or session state patches;
+  - shipped recap memory candidates can canonize a planning marker only after played non-planning evidence supports the accepted memory entry;
   - rejected options are stored as rejected proposal history, not as campaign memory;
   - saved-for-later options enter an idea bank and are not active canon;
   - context packages include approved memory and active planning markers, never raw brainstorm sets by default;
+  - canonized markers leave active planning context; accepted memory carries the future canon fact;
   - proposal/rejection history is included only when the GM explicitly selects a brainstorm-history or contradiction-checking context mode.
 - Append-only session transcript:
   - live DM note capture events with backend timestamps and per-session order;

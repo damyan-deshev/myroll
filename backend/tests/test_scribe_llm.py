@@ -742,6 +742,270 @@ def test_planning_only_recap_candidate_is_rejected(migrated_settings, monkeypatc
     assert "planning_evidence_cannot_create_memory" in body["rejected_drafts"][0]["errors"]
 
 
+def test_linked_recap_candidate_accept_canonizes_marker_option_and_context(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    scene = client.post(
+        f"/api/campaigns/{campaign_id}/scenes",
+        json={"title": "Bridge", "session_id": session_id},
+    ).json()
+
+    mode: dict[str, object] = {"task": "branch"}
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        if mode["task"] == "branch":
+            return json.dumps(_proposal_fixture(3)), {"usage": {"prompt_tokens": 120, "completion_tokens": 90}}
+        content = "\n".join(message["content"] for message in payload["messages"])
+        assert f"relatedPlanningMarkerId: {mode['marker_id']}" in content
+        assert "Planning marker/proposal text is provenance and context, never proof" in content
+        return (
+            json.dumps(
+                {
+                    "privateRecap": {"title": "Varos debt", "bodyMarkdown": "Captain Varos became the party's public creditor."},
+                    "memoryCandidateDrafts": [
+                        {
+                            "title": "Varos became a public creditor",
+                            "body": "Captain Varos became the party's public creditor after the bridge negotiation.",
+                            "claimStrength": "directly_evidenced",
+                            "relatedPlanningMarkerId": mode["marker_id"],
+                            "evidenceRefs": [
+                                {
+                                    "kind": "session_transcript_event",
+                                    "id": mode["event_id"],
+                                    "quote": "Captain Varos became the party's public creditor after the bridge negotiation.",
+                                }
+                            ],
+                        }
+                    ],
+                    "continuityWarnings": [],
+                    "unresolvedThreads": [],
+                }
+            ),
+            {"usage": {"prompt_tokens": 100, "completion_tokens": 60}},
+        )
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    branch_preview = _build_reviewed_branch_preview(
+        client,
+        campaign_id=campaign_id,
+        session_id=session_id,
+        scene_id=scene["id"],
+        scope_kind="scene",
+    )
+    branch = client.post(
+        f"/api/campaigns/{campaign_id}/llm/branch-directions/build",
+        json={"provider_profile_id": provider_id, "context_package_id": branch_preview["id"]},
+    ).json()
+    option = branch["proposal_set"]["options"][1]
+    marker = client.post(
+        f"/api/proposal-options/{option['id']}/create-planning-marker",
+        json={"title": "Varos public creditor", "marker_text": option["planning_marker_text"]},
+    ).json()
+    played = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={
+            "session_id": session_id,
+            "scene_id": scene["id"],
+            "body": "Captain Varos became the party's public creditor after the bridge negotiation.",
+        },
+    ).json()
+    mode.update({"task": "recap", "marker_id": marker["id"], "event_id": played["id"]})
+
+    recap_preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Extract confirmed played outcomes."},
+    )
+    assert recap_preview.status_code == 201
+    recap_preview_body = recap_preview.json()
+    assert marker["marker_text"] in recap_preview_body["rendered_prompt"]
+    assert client.post(f"/api/llm/context-packages/{recap_preview_body['id']}/review").status_code == 200
+
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": recap_preview_body["id"]},
+    )
+    assert recap.status_code == 200
+    candidate = recap.json()["candidates"][0]
+    assert candidate["source_planning_marker_id"] == marker["id"]
+    assert candidate["source_proposal_option_id"] == option["id"]
+    assert candidate["normalization_warnings"] == []
+
+    accepted = client.post(f"/api/scribe/memory-candidates/{candidate['id']}/accept")
+    accepted_again = client.post(f"/api/scribe/memory-candidates/{candidate['id']}/accept")
+    assert accepted.status_code == 200
+    assert accepted_again.status_code == 200
+    entry = accepted.json()
+    assert entry["id"] == accepted_again.json()["id"]
+    assert entry["source_planning_marker_id"] == marker["id"]
+    assert entry["source_proposal_option_id"] == option["id"]
+
+    with sqlite3.connect(migrated_settings.db_path) as connection:
+        marker_row = connection.execute(
+            "SELECT status, canon_memory_entry_id FROM planning_markers WHERE id = ?",
+            (marker["id"],),
+        ).fetchone()
+        option_row = connection.execute("SELECT status FROM proposal_options WHERE id = ?", (option["id"],)).fetchone()
+        search_count = connection.execute(
+            "SELECT count(*) FROM scribe_search_index WHERE source_kind = 'campaign_memory_entry' AND source_id = ?",
+            (entry["id"],),
+        ).fetchone()[0]
+    assert marker_row == ("canonized", entry["id"])
+    assert option_row == ("canonized",)
+    assert search_count == 1
+
+    future_preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Use canon, not old planning."},
+    )
+    assert future_preview.status_code == 201
+    rendered = future_preview.json()["rendered_prompt"]
+    assert marker["marker_text"] not in rendered
+    assert "Captain Varos became the party's public creditor" in rendered
+
+    recall = client.post(f"/api/campaigns/{campaign_id}/scribe/recall", json={"query": "public creditor"})
+    assert recall.status_code == 200
+    assert recall.json()["hits"][0]["source_kind"] == "campaign_memory_entry"
+
+
+def test_invalid_related_marker_link_drops_to_unlinked_candidate_with_warning(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    event = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "Mira burned the false writ in front of the council."},
+    ).json()
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        return (
+            json.dumps(
+                {
+                    "privateRecap": {"title": "False writ", "bodyMarkdown": "Mira burned the false writ."},
+                    "memoryCandidateDrafts": [
+                        {
+                            "title": "Mira burned the false writ",
+                            "body": "Mira burned the false writ in front of the council.",
+                            "claimStrength": "directly_evidenced",
+                            "relatedPlanningMarkerId": "not-in-reviewed-context",
+                            "evidenceRefs": [
+                                {
+                                    "kind": "session_transcript_event",
+                                    "id": event["id"],
+                                    "quote": "Mira burned the false writ in front of the council.",
+                                }
+                            ],
+                        }
+                    ],
+                    "continuityWarnings": [],
+                    "unresolvedThreads": [],
+                }
+            ),
+            {"usage": {"prompt_tokens": 80, "completion_tokens": 40}},
+        )
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Keep useful played facts."},
+    ).json()
+    assert client.post(f"/api/llm/context-packages/{preview['id']}/review").status_code == 200
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    )
+    assert recap.status_code == 200
+    candidate = recap.json()["candidates"][0]
+    assert candidate["source_planning_marker_id"] is None
+    assert "planning_marker_link_ignored" in candidate["normalization_warnings"]
+
+    accepted = client.post(f"/api/scribe/memory-candidates/{candidate['id']}/accept")
+    assert accepted.status_code == 200
+    assert accepted.json()["source_planning_marker_id"] is None
+
+
+def test_edited_linked_candidate_requires_confirmation_and_expired_marker_blocks_accept(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    mode: dict[str, object] = {"task": "branch"}
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        if mode["task"] == "branch":
+            return json.dumps(_proposal_fixture(1)), {"usage": {"prompt_tokens": 120, "completion_tokens": 90}}
+        return (
+            json.dumps(
+                {
+                    "privateRecap": {"title": "Varos debt", "bodyMarkdown": "Varos claimed a debt."},
+                    "memoryCandidateDrafts": [
+                        {
+                            "title": "Varos claimed a debt",
+                            "body": "Varos claimed a debt after the council vote.",
+                            "claimStrength": "directly_evidenced",
+                            "relatedPlanningMarkerId": mode["marker_id"],
+                            "evidenceRefs": [
+                                {
+                                    "kind": "session_transcript_event",
+                                    "id": mode["event_id"],
+                                    "quote": "Varos claimed a debt after the council vote.",
+                                }
+                            ],
+                        }
+                    ],
+                    "continuityWarnings": [],
+                    "unresolvedThreads": [],
+                }
+            ),
+            {"usage": {"prompt_tokens": 100, "completion_tokens": 60}},
+        )
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    branch_preview = _build_reviewed_branch_preview(client, campaign_id=campaign_id, session_id=session_id)
+    branch = client.post(
+        f"/api/campaigns/{campaign_id}/llm/branch-directions/build",
+        json={"provider_profile_id": provider_id, "context_package_id": branch_preview["id"]},
+    ).json()
+    option = branch["proposal_set"]["options"][0]
+    marker = client.post(
+        f"/api/proposal-options/{option['id']}/create-planning-marker",
+        json={"title": "Varos debt", "marker_text": option["planning_marker_text"]},
+    ).json()
+    event = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "Varos claimed a debt after the council vote."},
+    ).json()
+    mode.update({"task": "recap", "marker_id": marker["id"], "event_id": event["id"]})
+
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Extract confirmed outcomes."},
+    ).json()
+    assert client.post(f"/api/llm/context-packages/{preview['id']}/review").status_code == 200
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    ).json()
+    candidate = recap["candidates"][0]
+
+    edited = client.patch(
+        f"/api/scribe/memory-candidates/{candidate['id']}",
+        json={"body": "Varos claimed a debt, and the GM reviewed the wording."},
+    )
+    assert edited.status_code == 200
+    missing_confirm = client.post(f"/api/scribe/memory-candidates/{candidate['id']}/accept")
+    assert missing_confirm.status_code == 409
+    assert missing_confirm.json()["error"]["code"] == "linked_marker_confirmation_required"
+
+    expired = client.post(f"/api/planning-markers/{marker['id']}/expire")
+    assert expired.status_code == 200
+    with_confirm_after_expire = client.post(
+        f"/api/scribe/memory-candidates/{candidate['id']}/accept",
+        json={"confirm_linked_marker_canonization": True},
+    )
+    assert with_confirm_after_expire.status_code == 409
+    assert with_confirm_after_expire.json()["error"]["code"] == "related_marker_not_active"
+    with sqlite3.connect(migrated_settings.db_path) as connection:
+        option_status = connection.execute("SELECT status FROM proposal_options WHERE id = ?", (option["id"],)).fetchone()[0]
+    assert option_status != "canonized"
+
+
 def test_player_safe_context_excludes_private_sources_and_stales_on_curation_change(migrated_settings, monkeypatch):
     client = _client(migrated_settings)
     campaign_id, session_id = _campaign_session(client)

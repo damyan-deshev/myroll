@@ -743,12 +743,15 @@ export type MemoryCandidate = {
   session_id: string | null;
   source_llm_run_id: string | null;
   source_recap_id: string | null;
+  source_planning_marker_id: string | null;
+  source_proposal_option_id: string | null;
   status: "draft" | "edited" | "accepted" | "rejected";
   title: string;
   body: string;
   claim_strength: "directly_evidenced" | "strong_inference" | "weak_inference" | "gm_review_required";
   evidence_refs: Array<Record<string, unknown>>;
   validation_errors: string[];
+  normalization_warnings: string[];
   edited_from_candidate_id: string | null;
   applied_memory_entry_id: string | null;
   created_at: string;
@@ -765,6 +768,8 @@ export type CampaignMemoryEntry = {
   campaign_id: string;
   session_id: string | null;
   source_candidate_id: string | null;
+  source_planning_marker_id: string | null;
+  source_proposal_option_id: string | null;
   title: string;
   body: string;
   evidence_refs: Array<Record<string, unknown>>;
@@ -828,6 +833,8 @@ export type PlanningMarker = {
   edited_at: string | null;
   edited_from_source: boolean;
   expires_at: string | null;
+  canonized_at: string | null;
+  canon_memory_entry_id: string | null;
   created_at: string;
   updated_at: string;
 };

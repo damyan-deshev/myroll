@@ -899,7 +899,7 @@ function proposalOptionLabel(status: ProposalOption["status"]): string {
   if (status === "rejected") return "Rejected by GM";
   if (status === "saved_for_later") return "Saved for later";
   if (status === "superseded") return "Not chosen in this pass";
-  if (status === "canonized") return "Canonized";
+  if (status === "canonized") return "Canonized via memory";
   return "Proposed";
 }
 
@@ -932,6 +932,7 @@ function ScribeWidget(props: SharedWidgetProps) {
   const [markerTitle, setMarkerTitle] = useState("");
   const [markerText, setMarkerText] = useState("");
   const [markerConfirmWarnings, setMarkerConfirmWarnings] = useState(false);
+  const [linkedCandidateConfirmId, setLinkedCandidateConfirmId] = useState<string | null>(null);
   const [playerSafeInstruction, setPlayerSafeInstruction] = useState("");
   const [includeUnshownPublicSnippets, setIncludeUnshownPublicSnippets] = useState(false);
   const [excludedPublicSafeRefs, setExcludedPublicSafeRefs] = useState<string[]>([]);
@@ -1234,10 +1235,18 @@ function ScribeWidget(props: SharedWidgetProps) {
     onError: (error, variables) => publicSafetyAckFromError(error, "memory", variables.entryId)
   });
   const acceptCandidate = useMutation({
-    mutationFn: (candidateId: string) => api.acceptMemoryCandidate(candidateId),
+    mutationFn: (candidate: MemoryCandidate) =>
+      api.acceptMemoryCandidate(candidate.id, {
+        confirm_linked_marker_canonization: linkedCandidateConfirmId === candidate.id
+      }),
     onSuccess: () => {
+      setLinkedCandidateConfirmId(null);
       void queryClient.invalidateQueries({ queryKey: ["memory-candidates", props.selectedCampaignId] });
       void queryClient.invalidateQueries({ queryKey: ["memory-entries", props.selectedCampaignId, props.selectedSessionId] });
+      void queryClient.invalidateQueries({ queryKey: ["proposal-sets", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["proposal-set", selectedProposalSetId] });
+      void queryClient.invalidateQueries({ queryKey: ["planning-markers", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["scribe-recall", props.selectedCampaignId] });
     }
   });
   const rejectCandidate = useMutation({
@@ -1306,6 +1315,7 @@ function ScribeWidget(props: SharedWidgetProps) {
       void queryClient.invalidateQueries({ queryKey: ["planning-markers", props.selectedCampaignId] });
     }
   });
+  const markersById = new globalThis.Map((planningMarkersQuery.data?.planning_markers ?? []).map((marker) => [marker.id, marker]));
 
   function submitCapture() {
     if (!props.selectedCampaignId || !props.selectedSessionId || !captureBody.trim()) return;
@@ -1359,6 +1369,7 @@ function ScribeWidget(props: SharedWidgetProps) {
   const proposalSets = proposalSetsQuery.data?.proposal_sets ?? [];
   const currentProposalDetail = branchDraft?.proposal_set ?? proposalDetailQuery.data ?? null;
   const activeMarkers = (planningMarkersQuery.data?.planning_markers ?? []).filter((marker) => marker.status === "active");
+  const canonizedMarkers = (planningMarkersQuery.data?.planning_markers ?? []).filter((marker) => marker.status === "canonized");
   const publicSafeRecaps = sessionRecapsQuery.data?.recaps ?? [];
   const publicSafeMemoryEntries = memoryEntriesQuery.data?.entries ?? [];
   const publicSnippetArtifacts = publicSnippetsQuery.data?.snippets ?? [];
@@ -1528,23 +1539,78 @@ function ScribeWidget(props: SharedWidgetProps) {
           <strong>Memory Inbox</strong>
           <span className="muted">{pendingCandidates.length} pending</span>
         </div>
-        {pendingCandidates.slice(0, 3).map((candidate: MemoryCandidate) => (
-          <div key={candidate.id} className="scribe-candidate">
-            <strong>{candidate.title}</strong>
-            <p>{candidate.body}</p>
-            <span className={candidate.claim_strength === "strong_inference" ? "status-pill warning" : "status-pill"}>
-              {candidate.claim_strength}
-            </span>
-            <div className="token-actions">
-              <button onClick={() => acceptCandidate.mutate(candidate.id)} disabled={acceptCandidate.isPending}>
-                Accept into Memory
-              </button>
-              <button onClick={() => rejectCandidate.mutate(candidate.id)} disabled={rejectCandidate.isPending}>
-                Reject
-              </button>
+        {pendingCandidates.slice(0, 3).map((candidate: MemoryCandidate) => {
+          const linkedMarker = candidate.source_planning_marker_id ? markersById.get(candidate.source_planning_marker_id) ?? null : null;
+          const droppedLink = candidate.normalization_warnings.includes("planning_marker_link_ignored");
+          const markerInactive = Boolean(candidate.source_planning_marker_id && (!linkedMarker || linkedMarker.status !== "active"));
+          const editedLinkedCandidate = Boolean(candidate.source_planning_marker_id && candidate.status === "edited");
+          return (
+            <div key={candidate.id} className="scribe-candidate">
+              <strong>{candidate.title}</strong>
+              <p>{candidate.body}</p>
+              <div className="scribe-source-list">
+                <span className={candidate.claim_strength === "strong_inference" ? "status-pill warning" : "status-pill"}>
+                  {candidate.claim_strength}
+                </span>
+                {linkedMarker ? <span className="status-pill warning">Proposed confirmation of planning direction</span> : null}
+                {droppedLink ? <span className="status-pill warning">Planning marker link ignored</span> : null}
+                {candidate.normalization_warnings
+                  .filter((warning) => warning !== "planning_marker_link_ignored")
+                  .map((warning) => (
+                    <span key={warning} className="status-pill warning">
+                      {warning === "candidate_body_resembles_planning_marker" ? "Candidate wording resembles planning marker" : warning}
+                    </span>
+                  ))}
+              </div>
+              {linkedMarker ? (
+                <div className="muted-block">
+                  <strong>{linkedMarker.status === "canonized" ? "Canonized via memory" : "Planning marker"}</strong>
+                  <p>{linkedMarker.title}: {linkedMarker.marker_text}</p>
+                  <span className="muted">Marker status: {linkedMarker.status}{linkedMarker.source_proposal_option_id ? ` · Option ${linkedMarker.source_proposal_option_id.slice(0, 8)}` : " · No source option"}</span>
+                </div>
+              ) : candidate.source_planning_marker_id ? (
+                <p className="muted-block">Source planning marker no longer available. Memory entry can only be accepted if the backend still considers the link valid.</p>
+              ) : null}
+              {candidate.evidence_refs.length ? (
+                <details>
+                  <summary>Played evidence refs</summary>
+                  <div className="scribe-source-list">
+                    {candidate.evidence_refs.map((ref, index) => (
+                      <span key={index}>
+                        {String(ref.kind ?? "source")}:{String(ref.id ?? "").slice(0, 8)}
+                        {ref.quote ? ` · ${String(ref.quote).slice(0, 120)}` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
+              {editedLinkedCandidate ? (
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={linkedCandidateConfirmId === candidate.id}
+                    onChange={(event) => setLinkedCandidateConfirmId(event.target.checked ? candidate.id : null)}
+                  />
+                  I understand this will canonize the linked planning marker.
+                </label>
+              ) : null}
+              {markerInactive ? <p className="muted-block">Linked marker is no longer active; accept is disabled for this linked candidate.</p> : null}
+              <div className="token-actions">
+                <button onClick={() => acceptCandidate.mutate(candidate)} disabled={acceptCandidate.isPending || markerInactive || (editedLinkedCandidate && linkedCandidateConfirmId !== candidate.id)}>
+                  Accept into Memory
+                </button>
+                <button onClick={() => rejectCandidate.mutate(candidate.id)} disabled={rejectCandidate.isPending}>
+                  Reject
+                </button>
+                {linkedMarker && linkedMarker.status === "active" ? (
+                  <button onClick={() => expireMarker.mutate(linkedMarker.id)} disabled={expireMarker.isPending}>
+                    Expire linked planning marker
+                  </button>
+                ) : null}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="scribe-recall">
@@ -1904,6 +1970,7 @@ function ScribeWidget(props: SharedWidgetProps) {
                   </div>
                   <div className="token-actions">
                     <button
+                      disabled={option.status === "canonized"}
                       onClick={() => {
                         setAdoptOption(option);
                         setMarkerTitle(option.title);
@@ -1913,13 +1980,14 @@ function ScribeWidget(props: SharedWidgetProps) {
                     >
                       Adopt as Planning Direction
                     </button>
-                    <button onClick={() => saveOptionForLater.mutate(option.id)} disabled={saveOptionForLater.isPending || Boolean(option.active_planning_marker_id)}>
+                    <button onClick={() => saveOptionForLater.mutate(option.id)} disabled={saveOptionForLater.isPending || Boolean(option.active_planning_marker_id) || option.status === "canonized"}>
                       Save for later
                     </button>
-                    <button onClick={() => rejectOption.mutate(option.id)} disabled={rejectOption.isPending || Boolean(option.active_planning_marker_id)}>
+                    <button onClick={() => rejectOption.mutate(option.id)} disabled={rejectOption.isPending || Boolean(option.active_planning_marker_id) || option.status === "canonized"}>
                       Reject
                     </button>
                   </div>
+                  {option.status === "canonized" ? <span className="muted">Canonized via memory; proposal actions are closed.</span> : null}
                   {option.active_planning_marker_id ? <span className="muted">Expire or discard the active marker before rejecting or saving this option.</span> : null}
                 </div>
               ))}
@@ -1972,6 +2040,18 @@ function ScribeWidget(props: SharedWidgetProps) {
                   Discard Marker
                 </button>
               </div>
+            </div>
+          ))}
+          {canonizedMarkers.slice(0, 3).map((marker: PlanningMarker) => (
+            <div key={marker.id} className="scribe-candidate">
+              <div className="section-heading">
+                <strong>{marker.title}</strong>
+                <span className="status-pill">Canonized via memory</span>
+              </div>
+              <p>{marker.marker_text}</p>
+              <span className="muted">
+                {marker.canon_memory_entry_id ? `Memory ${marker.canon_memory_entry_id.slice(0, 8)}` : "Source planning marker no longer available"}
+              </span>
             </div>
           ))}
         </div>
