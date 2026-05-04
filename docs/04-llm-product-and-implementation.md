@@ -38,7 +38,7 @@ Current shipped status:
 - `[shipped]` LLM-2 branch proposals and planning markers: campaign/session/scene branch context preview, structured branch runs, proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection.
 - `[shipped]` LLM-3 player-safe recap/snippet drafting and leak warning gate: public-safe source curation, reviewed public-safe context packages, deterministic warning scan, player-safe structured draft runs, LLM-sourced `PublicSnippet` creation with scan/ack gating, dedicated player-display snippet serialization, publication tracking, and default export redaction of LLM snippet provenance/warnings.
 - `[shipped]` LLM-4 proposal canonization bridge: `session.build_recap` may link a memory candidate to one active planning marker when later played evidence confirms it; `Accept into Memory` atomically creates accepted memory, canonizes the marker/source option, and keeps future canon context carried by the memory entry rather than marker/proposal text.
-- `[shipped]` Real-provider Scribe journey verification: opt-in Playwright runners exercise a LAN/OpenAI-compatible model through live capture, branch proposals, planning-marker adoption, played-event capture, session recap, memory accept, recall, and `/player` payload boundary checks. Reports are written under ignored `artifacts/e2e/*` paths for human review and split checks into backend contract, product quality, and model behavior sections.
+- `[shipped]` Real-provider Scribe journey verification: opt-in Playwright runners exercise a LAN/OpenAI-compatible model through live capture, branch proposals, planning-marker adoption, played-event capture, session recap, memory accept, recall, and `/player` payload boundary checks. Reports are written under ignored `artifacts/e2e/*` paths for human review and split checks into backend contract, product quality, and model behavior sections. A synthetic Bulgarian scenario matrix now broadens this from one scripted journey to multiple campaign shapes.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
 
 Current implementation entry points are intentionally small:
@@ -2126,6 +2126,29 @@ The real-provider journey is intentionally not only a pass/fail smoke test. It w
 After those changes, the measured real-provider run consistently preserves proposal-body exclusion, planning-only marker rendering, correction projection, speculative-phrase avoidance, and `/player` boundary checks. The LLM-4 journey now also records model linkage quality separately from backend contract checks: when the model emits a valid `relatedPlanningMarkerId`, accepting the linked memory candidate canonizes the marker/source option and future context carries the accepted memory entry instead of the raw proposal or active marker text.
 
 LLM-4.1 tightened the journey harness after a Bulgarian run exposed an instrumentation bug: proposal options were persisted in model order but detail APIs sorted same-second rows by UUID, so "option 2" checks could inspect the wrong card. `proposal_options.option_index` is now the stable source of truth for option order. The real-provider report now separates checks into backend contract, product quality, and model behavior sections, and `scripts/run_scribe_campaign_real_llm_journey_repeat.sh` can run repeated journeys to distinguish deterministic app regressions from stochastic model behavior. Explicit slot requirements such as "Option 2 should..." remain advisory product-quality checks: the backend can emit `requested_slot_may_not_match`, but it never rejects a structurally valid proposal set solely because heuristic text overlap is low.
+
+LLM-4.2 expands the journey from a single campaign script into a synthetic matrix. The current matrix uses six Bulgarian-heavy scenarios with different story shapes: tribunal testimony, social heist, wilderness expedition, quarantine negotiation, naval pursuit, and mixed-script/RTL-adjacent note taking. The goal is not to deterministically grade prose quality. The hard checks remain structural and product-bound:
+
+- selected proposal options without markers do not enter future context;
+- raw proposal bodies stay out of recap/branch prompts;
+- planning markers render as GM intent, not played evidence;
+- corrected capture projection wins over mistaken capture text;
+- recap output normalizes before it can create candidates;
+- linked memory accept canonizes marker/option only through accepted memory;
+- `/player` payload stays unchanged unless an existing explicit publish action is used.
+
+Model-authored text is reported as human-review signal rather than hard truth. Scenario reports can flag missing anchors, slot drift, or suspicious wording, but those findings are review prompts for the GM/developer. They should not be confused with backend safety failures unless a structural boundary is broken.
+
+The matrix also introduced an advisory recap verifier loop. When enabled, `session.build_recap.verify` runs as a child LLM task over the draft, evidence projection, context refs, and normalized warnings. It returns a verdict and findings for the GM-private inspection panel. It does not save recaps, create memory, canonize markers, publish snippets, or prove semantic truth. The verifier exists to surface suspicious recap claims; the GM remains the semantic authority. Current matrix results favor verifier-off as the default: after adding canonical JSON examples and stricter repair instructions, both verifier-on and verifier-off runs preserved every backend contract, while verifier-on did not reduce human-review signals enough to justify the extra provider call in the normal path. `/gm` therefore exposes it as an explicit advisory review option rather than running it silently for every recap.
+
+Prompt discipline from the matrix is deliberately concrete. Branch and recap prompts include canonical final JSON examples, and the repair prompt is stricter about returning only valid JSON. This addresses structured-output drift without weakening backend validation. If a model still fails to produce valid schema, the run fails visibly or records a repair failure; Myroll does not silently downgrade structured work to prose.
+
+Testing layers for advisory language rules must stay separate:
+
+- Hard contract tests assert language-agnostic structure with empty and counterfactual rule packs: planning/proposal lanes cannot become evidence, quotes must match real source text, unknown source kinds reject, and `/player` serializers strip Scribe state.
+- Rule-pack content tests assert that specific advisory patterns match or do not match example phrases. Those tests are allowed to evolve with language coverage and GM preferences, but they must not carry safety responsibility.
+
+This separation is intentional. Myroll should not pretend regex over GM-authored text is semantic understanding. Structural boundaries live in code and database state; language-specific phrase checks are advisory signals that should be visible, editable over time, and safe to ignore when the GM judges them wrong.
 
 ### LLM-0d: Memory Inbox And Canon Entries
 

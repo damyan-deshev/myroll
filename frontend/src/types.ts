@@ -796,6 +796,8 @@ export type BuildRecapResult = {
   };
   candidates: MemoryCandidate[];
   rejected_drafts: Array<Record<string, unknown>>;
+  verification?: Record<string, unknown> | null;
+  verification_run?: LlmRun | null;
 };
 
 export type ProposalOption = {

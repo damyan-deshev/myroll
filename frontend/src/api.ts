@@ -255,7 +255,7 @@ export const api = {
     request<LlmContextPackage>(`/api/llm/context-packages/${packageId}/review`, { method: "POST" }),
   buildSessionRecap: (
     campaignId: string,
-    payload: { session_id: string; provider_profile_id: string; context_package_id: string }
+    payload: { session_id: string; provider_profile_id: string; context_package_id: string; verify?: boolean }
   ) =>
     request<BuildRecapResult>(`/api/campaigns/${campaignId}/llm/session-recap/build`, {
       method: "POST",

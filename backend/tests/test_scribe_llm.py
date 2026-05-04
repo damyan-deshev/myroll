@@ -363,6 +363,75 @@ def _fixture_provider(client: TestClient, monkeypatch, fake_send_chat, *, level:
     return provider_id
 
 
+def test_recap_verification_child_run_is_advisory(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    event = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "Mira returned the moon-silver coin after dawn."},
+    ).json()
+    calls: list[str] = []
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        content = "\n".join(message["content"] for message in payload["messages"])
+        calls.append(content)
+        if "NORMALIZED RECAP BUNDLE TO REVIEW" in content:
+            return (
+                json.dumps({"verdict": "pass", "findings": [], "notes": ["No obvious evidence mismatch."]}),
+                {"usage": {"prompt_tokens": 40, "completion_tokens": 20}},
+            )
+        return (
+            json.dumps(
+                {
+                    "privateRecap": {"title": "Returned coin", "bodyMarkdown": "Mira returned the coin after dawn."},
+                    "memoryCandidateDrafts": [
+                        {
+                            "title": "Mira returned the coin",
+                            "body": "Mira returned the moon-silver coin after dawn.",
+                            "claimStrength": "directly_evidenced",
+                            "evidenceRefs": [
+                                {
+                                    "kind": "session_transcript_event",
+                                    "id": event["id"],
+                                    "quote": "Mira returned the moon-silver coin after dawn.",
+                                }
+                            ],
+                        }
+                    ],
+                    "continuityWarnings": [],
+                    "unresolvedThreads": [],
+                }
+            ),
+            {"usage": {"prompt_tokens": 80, "completion_tokens": 40}},
+        )
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Use verifier."},
+    ).json()
+    assert client.post(f"/api/llm/context-packages/{preview['id']}/review").status_code == 200
+
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"], "verify": True},
+    )
+    assert recap.status_code == 200
+    body = recap.json()
+    assert body["verification"]["verdict"] == "pass"
+    assert body["verification_run"]["task_kind"] == "session.build_recap.verify"
+    assert body["verification_run"]["parent_run_id"] == body["run"]["id"]
+    assert len(body["candidates"]) == 1
+    assert len(calls) == 2
+
+    with sqlite3.connect(migrated_settings.db_path) as connection:
+        rows = connection.execute("select task_kind, status, parent_run_id from llm_runs order by created_at").fetchall()
+    assert rows == [
+        ("session.build_recap", "succeeded", None),
+        ("session.build_recap.verify", "succeeded", body["run"]["id"]),
+    ]
+
+
 def test_recap_accepts_canonical_evidence_ref_alias_keys(migrated_settings, monkeypatch):
     client = _client(migrated_settings)
     campaign_id, session_id = _campaign_session(client)

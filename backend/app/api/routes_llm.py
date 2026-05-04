@@ -427,6 +427,7 @@ class BuildRecapIn(BaseModel):
     session_id: UUID
     provider_profile_id: UUID
     context_package_id: UUID
+    verify: bool = False
 
 
 class BuildPlayerSafeRecapIn(BaseModel):
@@ -559,6 +560,8 @@ class BuildRecapOut(BaseModel):
     bundle: dict[str, object]
     candidates: list[MemoryCandidateOut]
     rejected_drafts: list[dict[str, object]]
+    verification: dict[str, object] | None = None
+    verification_run: LlmRunOut | None = None
 
 
 class BuildPlayerSafeRecapOut(BaseModel):
@@ -1739,6 +1742,30 @@ def _render_recap_prompt(source_refs: list[dict[str, object]], gm_instruction: s
         "continuityWarnings": [{"title": "string", "body": "string", "evidenceRefs": []}],
         "unresolvedThreads": ["string"],
     }
+    example = {
+        "privateRecap": {
+            "title": "Example session title",
+            "bodyMarkdown": "One or two paragraphs summarizing played evidence only.",
+            "keyMoments": [
+                {
+                    "orderIndex": 4,
+                    "summary": "A played event happened at the table.",
+                    "evidenceRefs": [{"kind": "session_transcript_event", "id": "source-id-from-context", "quote": "short exact quote"}],
+                }
+            ],
+        },
+        "memoryCandidateDrafts": [
+            {
+                "title": "Durable fact from played evidence",
+                "body": "A concise fact that should be reviewed by the GM before memory accept.",
+                "claimStrength": "directly_evidenced",
+                "evidenceRefs": [{"kind": "session_transcript_event", "id": "source-id-from-context", "quote": "short exact quote"}],
+                "relatedPlanningMarkerId": "planning-marker-id-from-context-if-confirmed-by-played-evidence",
+            }
+        ],
+        "continuityWarnings": [],
+        "unresolvedThreads": ["Open question for later"],
+    }
     return (
         "SYSTEM:\n"
         "You are Myroll Scribe. LLM outputs are drafts. GM decisions are memory. Played events are canon.\n"
@@ -1755,10 +1782,90 @@ def _render_recap_prompt(source_refs: list[dict[str, object]], gm_instruction: s
         f"USER GM INSTRUCTION:\n{instruction}\n\n"
         "OUTPUT SHAPE:\n"
         f"{json.dumps(schema, ensure_ascii=False, indent=2)}\n\n"
+        "CANONICAL FINAL JSON EXAMPLE (shape only; do not copy example content or ids):\n"
+        f"{json.dumps(example, ensure_ascii=False, indent=2)}\n\n"
         "CONTEXT EVIDENCE:\n"
         + "\n\n".join(evidence_lines)
         + ("\n\nGM PLANNING CONTEXT, NOT PLAYED EVENTS:\n" + "\n\n".join(planning_lines) if planning_lines else "")
     )
+
+
+def _render_recap_verification_prompt(
+    source_refs: list[dict[str, object]],
+    bundle: dict[str, object],
+    rejected_drafts: list[dict[str, object]],
+) -> str:
+    evidence_lines = []
+    planning_lines = []
+    for ref in sorted(source_refs, key=lambda item: (int(item.get("orderIndex", 100000)), str(item.get("kind")), str(item.get("id")))):
+        line = _render_source_block(ref)
+        if ref.get("lane") == "planning":
+            planning_lines.append(line)
+        else:
+            evidence_lines.append(line)
+    schema = {
+        "verdict": "pass|warnings|fail",
+        "findings": [
+            {
+                "code": "unsupported_claim|corrected_mistake_repeated|missing_played_anchor|planning_text_as_evidence|chronology_issue|candidate_overclaims_evidence|other",
+                "severity": "low|medium|high",
+                "message": "short GM-facing finding",
+                "evidenceRefs": [{"kind": "source kind", "id": "source id", "quote": "short quote if available"}],
+                "appliesTo": "privateRecap|memoryCandidateDrafts|continuityWarnings|unresolvedThreads",
+            }
+        ],
+        "notes": ["optional short observation"],
+    }
+    return (
+        "SYSTEM:\n"
+        "You are a skeptical reviewer for Myroll Scribe drafts. You do not decide canon and you do not prove safety.\n"
+        "Review the normalized recap draft against the supplied source context. Return JSON only.\n"
+        "Hard rules to check semantically: played evidence and planning intent are different; planning/proposal text is not evidence; "
+        "memory candidates must not claim more than their cited played evidence supports; corrected mistaken captures must not survive as facts.\n"
+        "If a concern requires GM judgment rather than deterministic proof, report it as a warning finding instead of rewriting the draft.\n\n"
+        "OUTPUT SHAPE:\n"
+        f"{json.dumps(schema, ensure_ascii=False, indent=2)}\n\n"
+        "NORMALIZED RECAP BUNDLE TO REVIEW:\n"
+        f"{json.dumps(bundle, ensure_ascii=False, indent=2)}\n\n"
+        "BACKEND REJECTED DRAFTS / VALIDATION NOTES:\n"
+        f"{json.dumps(rejected_drafts, ensure_ascii=False, indent=2)}\n\n"
+        "CONTEXT EVIDENCE:\n"
+        + "\n\n".join(evidence_lines)
+        + ("\n\nGM PLANNING CONTEXT, NOT PLAYED EVENTS:\n" + "\n\n".join(planning_lines) if planning_lines else "")
+    )
+
+
+def _validate_recap_verification(raw: dict[str, object]) -> dict[str, object]:
+    verdict = str(raw.get("verdict") or "warnings").strip().lower()
+    if verdict not in {"pass", "warnings", "fail"}:
+        verdict = "warnings"
+    findings_raw = raw.get("findings", [])
+    findings: list[dict[str, object]] = []
+    if isinstance(findings_raw, list):
+        for item in findings_raw:
+            if not isinstance(item, dict):
+                continue
+            code = str(item.get("code") or "other").strip()[:80] or "other"
+            severity = str(item.get("severity") or "medium").strip().lower()
+            if severity not in {"low", "medium", "high"}:
+                severity = "medium"
+            message = str(item.get("message") or code).strip()[:600]
+            evidence_refs = item.get("evidenceRefs")
+            findings.append(
+                {
+                    "code": code,
+                    "severity": severity,
+                    "message": message,
+                    "evidenceRefs": evidence_refs if isinstance(evidence_refs, list) else [],
+                    "appliesTo": str(item.get("appliesTo") or "").strip()[:80] or None,
+                }
+            )
+    notes = raw.get("notes", [])
+    return {
+        "verdict": "pass" if verdict == "pass" and not findings else verdict,
+        "findings": findings,
+        "notes": [str(item)[:300] for item in notes if isinstance(item, str)] if isinstance(notes, list) else [],
+    }
 
 
 def _render_branch_prompt(source_refs: list[dict[str, object]], gm_instruction: str, *, scope_kind: str, warnings: list[dict[str, object]]) -> str:
@@ -1785,6 +1892,41 @@ def _render_branch_prompt(source_refs: list[dict[str, object]], gm_instruction: 
             }
         ],
     }
+    example = {
+        "title": "Example branch directions",
+        "proposalOptions": [
+            {
+                "title": "Option one",
+                "summary": "A concise speculative direction.",
+                "body": "GM-facing planning text. This is not canon and not played history.",
+                "consequences": "Possible consequences if the GM later plays this option.",
+                "whatThisReveals": "What this may reveal if played.",
+                "whatStaysHidden": "What stays hidden for now.",
+                "planningMarkerText": "GM is considering developing this direction as future planning.",
+                "proposedDelta": {"kind": "possible consequence only"},
+            },
+            {
+                "title": "Option two",
+                "summary": "A second distinct speculative direction.",
+                "body": "GM-facing planning text for the requested second slot.",
+                "consequences": "Possible consequences if the GM later plays this option.",
+                "whatThisReveals": "What this may reveal if played.",
+                "whatStaysHidden": "What stays hidden for now.",
+                "planningMarkerText": "GM is considering developing the second direction as future planning.",
+                "proposedDelta": {"kind": "possible consequence only"},
+            },
+            {
+                "title": "Option three",
+                "summary": "A third distinct speculative direction.",
+                "body": "GM-facing planning text. This is not canon and not played history.",
+                "consequences": "Possible consequences if the GM later plays this option.",
+                "whatThisReveals": "What this may reveal if played.",
+                "whatStaysHidden": "What stays hidden for now.",
+                "planningMarkerText": "GM is considering developing the third direction as future planning.",
+                "proposedDelta": {"kind": "possible consequence only"},
+            },
+        ],
+    }
     instruction = gm_instruction.strip() or "Suggest several branch directions."
     warning_text = "\n".join(str(item.get("message", item)) for item in warnings) if warnings else "none"
     return (
@@ -1799,6 +1941,8 @@ def _render_branch_prompt(source_refs: list[dict[str, object]], gm_instruction: 
         f"CONTEXT WARNINGS:\n{warning_text}\n\n"
         "OUTPUT SHAPE:\n"
         f"{json.dumps(schema, ensure_ascii=False, indent=2)}\n\n"
+        "CANONICAL FINAL JSON EXAMPLE (shape only; do not copy example content):\n"
+        f"{json.dumps(example, ensure_ascii=False, indent=2)}\n\n"
         "CANON/DRAFT CONTEXT:\n"
         + "\n\n".join(context_lines)
         + ("\n\nGM PLANNING CONTEXT, NOT PLAYED EVENTS:\n" + "\n\n".join(planning_lines) if planning_lines else "")
@@ -2060,11 +2204,103 @@ def _finalize_running_failed_if_needed(db: Session, run_id: str | None, *, code:
 def _repair_prompt(original_prompt: str, bad_response: str, reason: str) -> str:
     return (
         "SYSTEM:\n"
-        "Repair this model output into the requested JSON object only. Do not add prose or markdown fences.\n\n"
+        "Repair this model output into the requested JSON object only. Do not add prose or markdown fences.\n"
+        "The final answer must start with { and end with }. Use double-quoted JSON strings and escape any quote characters inside strings.\n"
+        "Preserve the intended facts and options, but fix syntax, key names, trailing commas, and accidental prose outside the object.\n\n"
         f"PARSE ERROR:\n{reason}\n\n"
         f"ORIGINAL TASK PROMPT:\n{original_prompt}\n\n"
         f"BAD RESPONSE:\n{bad_response}"
     )
+
+
+def _verification_unavailable(code: str, message: str) -> dict[str, object]:
+    return {
+        "verdict": "unavailable",
+        "findings": [
+            {
+                "code": code,
+                "severity": "medium",
+                "message": message[:600],
+                "evidenceRefs": [],
+                "appliesTo": "verification",
+            }
+        ],
+        "notes": ["LLM verification is advisory and did not block recap creation."],
+    }
+
+
+def _run_recap_verification(
+    db: Session,
+    *,
+    profile: LlmProviderProfile,
+    package: LlmContextPackage,
+    parent_run_id: str,
+    bundle: dict[str, object],
+    rejected_drafts: list[dict[str, object]],
+    source_refs: list[dict[str, object]],
+) -> tuple[dict[str, object], LlmRunOut | None]:
+    prompt = _render_recap_verification_prompt(source_refs, bundle, rejected_drafts)
+    request_payload = _chat_request(
+        profile,
+        [
+            {"role": "system", "content": "Return valid JSON only."},
+            {"role": "user", "content": prompt},
+        ],
+        response_format=profile.conformance_level == "level_2_json_validated",
+    )
+    if db.in_transaction():
+        db.rollback()
+    with db.begin():
+        child = _create_run(
+            db,
+            campaign_id=package.campaign_id,
+            session_id=package.session_id,
+            task_kind="session.build_recap.verify",
+            provider_profile_id=profile.id,
+            context_package_id=package.id,
+            parent_run_id=parent_run_id,
+            request_metadata={"providerLabel": profile.label, "modelId": profile.model_id, "verifyFor": parent_run_id},
+            request_payload=request_payload,
+            prompt_tokens_estimate=_rough_token_estimate(prompt),
+        )
+        child_id = child.id
+    started = time.perf_counter()
+    try:
+        response_text, metadata = _send_chat(profile, request_payload, timeout=90.0)
+        parsed = _parse_json_object(response_text)
+        verification = _validate_recap_verification(parsed)
+    except Exception as error:  # noqa: BLE001
+        code = _exception_code(error, "verification_failed")
+        message = _exception_message(error)
+        if db.in_transaction():
+            db.rollback()
+        with db.begin():
+            child = _require_run(db, child_id)
+            if child.status == "running":
+                _finalize_run_failed(
+                    db,
+                    child,
+                    code=code,
+                    message=message,
+                    duration_ms=int((time.perf_counter() - started) * 1000),
+                    parse_failure_reason=message,
+                )
+            child_out = _run_out(child)
+        return _verification_unavailable(code, message), child_out
+    if db.in_transaction():
+        db.rollback()
+    with db.begin():
+        child = _require_run(db, child_id)
+        _finalize_run_success(
+            db,
+            child,
+            response_text=response_text,
+            normalized_output=verification,
+            duration_ms=int((time.perf_counter() - started) * 1000),
+            metadata=metadata,
+        )
+        child_out = _run_out(child)
+    return verification, child_out
 
 
 def _exception_code(error: Exception, fallback: str = "provider_error") -> str:
@@ -2626,6 +2862,60 @@ def _persist_memory_candidates(
     return candidates
 
 
+def _complete_recap_build(
+    db: Session,
+    *,
+    run_id: str,
+    profile: LlmProviderProfile,
+    package: LlmContextPackage,
+    campaign_id: str,
+    session_id: str,
+    response_text: str,
+    normalized_bundle: dict[str, object],
+    candidate_drafts: list[dict[str, object]],
+    rejected_drafts: list[dict[str, object]],
+    provider_metadata: dict[str, object],
+    duration_ms: int,
+    verify: bool,
+    source_refs: list[dict[str, object]],
+) -> BuildRecapOut:
+    if db.in_transaction():
+        db.rollback()
+    with db.begin():
+        run = _require_run(db, run_id)
+        _finalize_run_success(
+            db,
+            run,
+            response_text=response_text,
+            normalized_output=normalized_bundle,
+            duration_ms=duration_ms,
+            metadata=provider_metadata,
+        )
+        candidates = _persist_memory_candidates(db, campaign_id=campaign_id, session_id=session_id, run_id=run.id, drafts=candidate_drafts)
+        run_out = _run_out(run)
+        candidate_outs = [_candidate_out(candidate) for candidate in candidates]
+    verification = None
+    verification_run = None
+    if verify:
+        verification, verification_run = _run_recap_verification(
+            db,
+            profile=profile,
+            package=package,
+            parent_run_id=run_id,
+            bundle=normalized_bundle,
+            rejected_drafts=rejected_drafts,
+            source_refs=source_refs,
+        )
+    return BuildRecapOut(
+        run=run_out,
+        bundle=normalized_bundle,
+        candidates=candidate_outs,
+        rejected_drafts=rejected_drafts,
+        verification=verification,
+        verification_run=verification_run,
+    )
+
+
 def _upsert_search_index(
     db: Session,
     *,
@@ -2990,20 +3280,22 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
             parsed = _parse_json_object(response_text)
             source_refs = _json_load(package.source_refs_json, [])
             bundle, candidate_drafts, rejected_drafts = _validate_recap_bundle(db, parsed, source_refs, campaign_id=str(campaign_id), session_id=session.id)
-            if db.in_transaction():
-                db.rollback()
-            with db.begin():
-                run = _require_run(db, run.id)
-                _finalize_run_success(
-                    db,
-                    run,
-                    response_text=response_text,
-                    normalized_output=bundle,
-                    duration_ms=int((time.perf_counter() - started) * 1000),
-                    metadata=provider_metadata,
-                )
-                candidates = _persist_memory_candidates(db, campaign_id=str(campaign_id), session_id=session.id, run_id=run.id, drafts=candidate_drafts)
-                return BuildRecapOut(run=_run_out(run), bundle=bundle, candidates=[_candidate_out(candidate) for candidate in candidates], rejected_drafts=rejected_drafts)
+            return _complete_recap_build(
+                db,
+                run_id=run.id,
+                profile=profile,
+                package=package,
+                campaign_id=str(campaign_id),
+                session_id=session.id,
+                response_text=response_text,
+                normalized_bundle=bundle,
+                candidate_drafts=candidate_drafts,
+                rejected_drafts=rejected_drafts,
+                provider_metadata=provider_metadata,
+                duration_ms=int((time.perf_counter() - started) * 1000),
+                verify=payload.verify,
+                source_refs=source_refs,
+            )
         except Exception as parse_error:  # noqa: BLE001
             if db.in_transaction():
                 db.rollback()
@@ -3075,18 +3367,22 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
                         parse_failure_reason=str(repair_error),
                     )
                 raise api_error(502, "parse_failed", "Provider response could not be normalized after one repair attempt") from repair_error
-            with db.begin():
-                child = _require_run(db, child.id)
-                _finalize_run_success(
-                    db,
-                    child,
-                    response_text=repair_text,
-                    normalized_output=bundle,
-                    duration_ms=int((time.perf_counter() - repair_started) * 1000),
-                    metadata=repair_metadata,
-                )
-                candidates = _persist_memory_candidates(db, campaign_id=str(campaign_id), session_id=session.id, run_id=child.id, drafts=candidate_drafts)
-                return BuildRecapOut(run=_run_out(child), bundle=bundle, candidates=[_candidate_out(candidate) for candidate in candidates], rejected_drafts=rejected_drafts)
+            return _complete_recap_build(
+                db,
+                run_id=child.id,
+                profile=profile,
+                package=package,
+                campaign_id=str(campaign_id),
+                session_id=session.id,
+                response_text=repair_text,
+                normalized_bundle=bundle,
+                candidate_drafts=candidate_drafts,
+                rejected_drafts=rejected_drafts,
+                provider_metadata=repair_metadata,
+                duration_ms=int((time.perf_counter() - repair_started) * 1000),
+                verify=payload.verify,
+                source_refs=source_refs,
+            )
     except Exception as error:
         code = _exception_code(error) if getattr(error, "status_code", None) else "provider_error"
         message = _exception_message(error) if getattr(error, "status_code", None) else str(error)

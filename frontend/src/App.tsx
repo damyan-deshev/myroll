@@ -941,6 +941,7 @@ function ScribeWidget(props: SharedWidgetProps) {
   const [providerKeySource, setProviderKeySource] = useState<"none" | "env">("none");
   const [providerKeyRef, setProviderKeyRef] = useState("MYROLL_LLM_API_KEY");
   const [gmInstruction, setGmInstruction] = useState("");
+  const [recapVerifierEnabled, setRecapVerifierEnabled] = useState(false);
   const [contextPackage, setContextPackage] = useState<null | Awaited<ReturnType<typeof api.createContextPreview>>>(null);
   const [recapDraft, setRecapDraft] = useState<BuildRecapResult | null>(null);
   const [recapTitle, setRecapTitle] = useState("");
@@ -1152,7 +1153,8 @@ function ScribeWidget(props: SharedWidgetProps) {
       api.buildSessionRecap(props.selectedCampaignId!, {
         session_id: props.selectedSessionId!,
         provider_profile_id: selectedProvider!.id,
-        context_package_id: contextPackage!.id
+        context_package_id: contextPackage!.id,
+        verify: recapVerifierEnabled
       }),
     onSuccess: (result) => {
       setRecapDraft(result);
@@ -1544,6 +1546,10 @@ function ScribeWidget(props: SharedWidgetProps) {
         <span>GM instruction for recap</span>
         <textarea value={gmInstruction} onChange={(event) => setGmInstruction(event.target.value)} placeholder="Optional focus for the recap." />
       </label>
+      <label className="checkbox-row">
+        <input type="checkbox" checked={recapVerifierEnabled} onChange={(event) => setRecapVerifierEnabled(event.target.checked)} />
+        <span>Run advisory LLM review after recap</span>
+      </label>
 
       {recapDraft ? (
         <div className="scribe-review-block">
@@ -1556,6 +1562,21 @@ function ScribeWidget(props: SharedWidgetProps) {
             </button>
             <span className="muted">{recapDraft.candidates.length} memory drafts · {recapDraft.rejected_drafts.length} validation rejects</span>
           </div>
+          {recapDraft.verification ? (
+            <div className="muted-block">
+              <strong>LLM review: {String(recapDraft.verification.verdict ?? "unknown")}</strong>
+              {Array.isArray(recapDraft.verification.findings) && recapDraft.verification.findings.length ? (
+                <ul>
+                  {recapDraft.verification.findings.slice(0, 3).map((finding, index) => {
+                    const item = finding as Record<string, unknown>;
+                    return <li key={index}>{String(item.severity ?? "warning")}: {String(item.message ?? item.code ?? "Review finding")}</li>;
+                  })}
+                </ul>
+              ) : (
+                <p>No obvious reviewer findings. GM review still decides what becomes canon.</p>
+              )}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -2148,8 +2169,10 @@ function ScribeWidget(props: SharedWidgetProps) {
           {recapDraft?.run ? (
             <>
               <InfoRow label="Run" value={`${recapDraft.run.status} · ${recapDraft.run.duration_ms ?? "-"}ms`} />
+              {recapDraft.verification_run ? <InfoRow label="Verifier run" value={`${recapDraft.verification_run.status} · ${recapDraft.verification_run.duration_ms ?? "-"}ms`} /> : null}
               {recapDraft.run.parse_failure_reason ? <InfoRow label="Parse failure" value={recapDraft.run.parse_failure_reason} /> : null}
               <textarea readOnly value={JSON.stringify(recapDraft.bundle, null, 2)} aria-label="Normalized output JSON" />
+              {recapDraft.verification ? <textarea readOnly value={JSON.stringify(recapDraft.verification, null, 2)} aria-label="LLM review JSON" /> : null}
             </>
           ) : null}
         </div>

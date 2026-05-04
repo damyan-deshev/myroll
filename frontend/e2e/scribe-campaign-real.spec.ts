@@ -19,6 +19,7 @@ const baselineReportJsonPath =
   process.env.MYROLL_E2E_BASELINE_REPORT_JSON ??
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../artifacts/e2e/scribe-campaign-real-baseline/before-tightening-report.json");
 const requestedScenarioId = process.env.MYROLL_E2E_SCENARIO ?? (process.env.MYROLL_E2E_LANGUAGE === "bg" ? "bg" : "en");
+const recapVerifierEnabled = process.env.MYROLL_E2E_RECAP_VERIFY === "1";
 
 test.skip(!enabled, "Set MYROLL_E2E_REAL_LLM=1 to run the real llama.cpp campaign Scribe journey.");
 
@@ -67,6 +68,7 @@ type PlanningMarker = {
 };
 type BuildRecapResult = {
   run: { id: string; task_kind: string; status: string; repair_attempted: boolean; error_code?: string | null; parse_failure_reason?: string | null };
+  verification_run?: { id: string; task_kind: string; status: string; repair_attempted: boolean; error_code?: string | null; parse_failure_reason?: string | null } | null;
   bundle: {
     privateRecap?: { title?: string; bodyMarkdown?: string; keyMoments?: JsonObject[] };
     memoryCandidateDrafts?: JsonObject[];
@@ -85,6 +87,11 @@ type BuildRecapResult = {
     normalization_warning_details?: JsonObject[];
   }>;
   rejected_drafts: JsonObject[];
+  verification?: {
+    verdict?: string;
+    findings?: Array<{ code?: string; severity?: string; message?: string }>;
+    notes?: string[];
+  } | null;
 };
 type MemoryEntry = { id: string; title: string; body: string; source_planning_marker_id?: string | null; source_proposal_option_id?: string | null };
 type RecallResult = { expanded_terms: string[]; hits: Array<{ source_kind: string; title: string; excerpt: string; score: number }> };
@@ -101,6 +108,7 @@ type JourneyReport = {
   generatedAt: string;
   provider: { baseUrl: string; model: string; conformanceLevel?: string };
   scenario: { id: string; language: "en" | "bg"; title: string };
+  recapVerifierEnabled: boolean;
   campaign: { id?: string; sessionId?: string; sceneId?: string };
   notes: Array<{ label: string; campaignClock: string; eventId: string; orderIndex: number; body: string }>;
   branch: {
@@ -117,6 +125,8 @@ type JourneyReport = {
     keyMoments?: JsonObject[];
     candidates: BuildRecapResult["candidates"];
     rejectedDrafts: JsonObject[];
+    verification?: BuildRecapResult["verification"];
+    verificationRun?: BuildRecapResult["verification_run"];
     acceptedMemory: MemoryEntry[];
     recall?: RecallResult;
   };
@@ -787,6 +797,7 @@ function writeReport(report: JourneyReport): void {
     `Scenario: ${report.scenario.id} (${report.scenario.title})`,
     `Provider: ${report.provider.model} at ${report.provider.baseUrl}`,
     `Conformance: ${report.provider.conformanceLevel ?? "unknown"}`,
+    `Recap verifier: ${report.recapVerifierEnabled ? "enabled" : "disabled"}`,
     "",
     "## Notes Captured",
     ...report.notes.map((note) => `- ${note.campaignClock} · #${note.orderIndex} · ${note.label}: ${note.body}`),
@@ -826,6 +837,16 @@ function writeReport(report: JourneyReport): void {
         (candidate.normalization_warnings?.length ? ` · warnings ${candidate.normalization_warnings.join(", ")}` : ""),
     ),
     report.recap.candidates.length ? "" : "- none",
+    "",
+    "### LLM Review",
+    report.recap.verification
+      ? [
+          `Verdict: ${report.recap.verification.verdict ?? "unknown"}`,
+          ...(report.recap.verification.findings ?? []).map(
+            (finding) => `- ${finding.severity ?? "warning"} · ${finding.code ?? "finding"}: ${finding.message ?? ""}`,
+          ),
+        ].join("\n")
+      : "not run",
     "",
     "### Accepted Memory",
     ...report.recap.acceptedMemory.map((entry) => `- ${entry.title}: ${entry.body}`),
@@ -881,6 +902,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     generatedAt,
     provider: { baseUrl: llmBaseUrl, model: modelId },
     scenario: { id: scenarioId, language: scenario.language, title: scenario.campaignNamePrefix },
+    recapVerifierEnabled,
     campaign: {},
     notes: [],
     branch: { options: [] },
@@ -1133,7 +1155,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       recapBuild = await apiPost<BuildRecapResult>(
         request,
         `/api/campaigns/${campaign.id}/llm/session-recap/build`,
-        { session_id: session.id, provider_profile_id: provider.id, context_package_id: recapContext.id },
+        { session_id: session.id, provider_profile_id: provider.id, context_package_id: recapContext.id, verify: recapVerifierEnabled },
         "run session recap",
       );
     } catch (error) {
@@ -1155,7 +1177,28 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     report.recap.keyMoments = recapBuild.bundle.privateRecap?.keyMoments;
     report.recap.candidates = recapBuild.candidates;
     report.recap.rejectedDrafts = recapBuild.rejected_drafts;
+    report.recap.verification = recapBuild.verification;
+    report.recap.verificationRun = recapBuild.verification_run;
     const recapText = `${report.recap.title ?? ""}\n${report.recap.bodyMarkdown ?? ""}`;
+    const verificationFindings = recapBuild.verification?.findings ?? [];
+    if (recapVerifierEnabled) {
+      addCheck(report, {
+        name: "LLM recap review completed",
+        pass: Boolean(recapBuild.verification && recapBuild.verification.verdict !== "unavailable"),
+        details: recapBuild.verification
+          ? `Verdict: ${recapBuild.verification.verdict}; findings: ${verificationFindings.length}.`
+          : "No verifier output returned.",
+      });
+      addCheck(report, {
+        name: "LLM recap review found no high-severity findings",
+        pass: !verificationFindings.some((finding) => finding.severity === "high"),
+        details: verificationFindings.length
+          ? verificationFindings.map((finding) => `${finding.severity ?? "warning"}:${finding.code ?? "finding"} ${finding.message ?? ""}`).join(" | ")
+          : "No verifier findings.",
+      });
+    } else {
+      report.observations.push("Recap verifier disabled for this run; model text is evaluated only by structural checks and GM/human review signals.");
+    }
     addCheck(report, {
       name: "Recap includes core played anchors",
       pass: containsAll(recapText, scenario.recapCoreAnchors),
