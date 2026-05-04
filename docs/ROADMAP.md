@@ -1144,7 +1144,8 @@ Goal: make a large language model a first-class GM creative workbench without tu
 Status as of 2026-05-04:
 - shipped first Scribe spine: compact `/gm` live capture, transcript correction, provider profile/probe, reviewed context preview, backend-owned recap run, editable recap save, targetless Memory Inbox accept, manual aliases, basic recall, and default export redaction for LLM prompt/response payloads;
 - shipped branch proposal/planning marker slice: campaign/session/scene branch context preview, structured proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection;
-- planned next: player-safe recap/snippet leak-warning gate and later proposal canonization;
+- shipped player-safe recap/snippet leak-warning gate: public-safe curation, public-safe context preview, structured player-safe draft run, deterministic warning scan, exact-content ack for risky drafts, LLM snippet provenance, and player-display publication tracking;
+- planned next: proposal canonization and broader Scribe hardening;
 - deferred: vectors, streaming, tool calls, audio capture/transcription, and autonomous entity mutation.
 
 Detailed build specification:

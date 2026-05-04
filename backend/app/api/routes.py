@@ -30,6 +30,7 @@ from backend.app.db.models import (
     CustomFieldDefinition,
     CustomFieldValue,
     Entity,
+    LlmRun,
     Note,
     NoteSource,
     PartyTrackerConfig,
@@ -61,6 +62,13 @@ from backend.app.fog_store import (
     load_mask,
     resolve_fog_path,
     save_mask_atomic,
+)
+from backend.app.public_safety import (
+    private_reference_terms,
+    sanitize_public_markdown,
+    scan_public_safety_text,
+    warning_ack_required,
+    warnings_for_storage,
 )
 from backend.app.storage_export import (
     StorageExportError,
@@ -972,6 +980,12 @@ class PublicSnippetOut(BaseModel):
     title: str | None
     body: str
     format: str
+    creation_source: str
+    source_llm_run_id: str | None
+    source_draft_hash: str | None
+    safety_warnings: list[dict[str, object]]
+    last_published_at: str | None
+    publication_count: int
     created_at: str
     updated_at: str
 
@@ -986,16 +1000,26 @@ class PublicSnippetCreate(BaseModel):
     title: str | None = Field(default=None, max_length=160)
     body: str = Field(min_length=1, max_length=8000)
     format: str = "markdown"
+    creation_source: str = "manual"
+    source_llm_run_id: UUID | None = None
+    source_draft_hash: str | None = Field(default=None, max_length=128)
+    warning_content_hash: str | None = Field(default=None, max_length=128)
+    warning_ack_content_hash: str | None = Field(default=None, max_length=128)
 
     @field_validator("title", mode="before")
     @classmethod
     def trim_title(cls, value: object) -> object:
         return _trim_optional(value)
 
-    @field_validator("body", "format", mode="before")
+    @field_validator("body", "format", "creation_source", mode="before")
     @classmethod
     def trim_required_fields(cls, value: object) -> object:
         return _trim_required(value)
+
+    @field_validator("source_draft_hash", "warning_content_hash", "warning_ack_content_hash", mode="before")
+    @classmethod
+    def trim_optional_fields(cls, value: object) -> object:
+        return _trim_optional(value)
 
 
 class PublicSnippetPatch(BaseModel):
@@ -1372,6 +1396,41 @@ def _require_snippet_format(value: str) -> str:
     return value
 
 
+def _validate_public_snippet_provenance(
+    db: Session,
+    *,
+    campaign_id: str,
+    payload: PublicSnippetCreate,
+) -> tuple[str, str | None, str | None, list[dict[str, str]]]:
+    creation_source = payload.creation_source or "manual"
+    if creation_source not in {"manual", "llm_scribe"}:
+        raise api_error(400, "invalid_snippet_creation_source", "Public snippet creation source is invalid")
+
+    source_run_id = str(payload.source_llm_run_id) if payload.source_llm_run_id else None
+    if source_run_id is not None and creation_source != "llm_scribe":
+        raise api_error(400, "invalid_snippet_creation_source", "LLM source run requires llm_scribe creation source")
+    if creation_source == "llm_scribe":
+        if source_run_id is None:
+            raise api_error(400, "source_llm_run_required", "LLM-sourced snippets require a source run")
+        run = db.get(LlmRun, source_run_id)
+        if run is None or run.campaign_id != campaign_id:
+            raise api_error(400, "source_llm_run_campaign_mismatch", "Source run does not belong to campaign")
+        if not run.task_kind.startswith("session.player_safe_recap") or run.status != "succeeded":
+            raise api_error(400, "source_llm_run_invalid", "Source run is not a successful player-safe recap run")
+        warnings, content_hash = scan_public_safety_text(
+            title=payload.title,
+            body_markdown=payload.body,
+            private_terms=private_reference_terms(db, campaign_id),
+        )
+        if payload.warning_content_hash != content_hash:
+            raise api_error(409, "public_safety_scan_stale", "Public-safety warning scan must match the submitted text")
+        if warning_ack_required(warnings) and payload.warning_ack_content_hash != content_hash:
+            raise api_error(409, "public_safety_ack_required", "Public-safety warnings must be acknowledged for this exact text")
+        return creation_source, source_run_id, payload.source_draft_hash, warnings_for_storage(warnings)
+
+    return "manual", None, None, []
+
+
 def _note_source_if_missing(db: Session, campaign_id: str, *, kind: str, name: str, now: str) -> NoteSource:
     source_id = _note_source_id(campaign_id, kind, name)
     source = db.get(NoteSource, source_id)
@@ -1458,6 +1517,12 @@ def _public_snippet_out(snippet: PublicSnippet) -> PublicSnippetOut:
         title=snippet.title,
         body=snippet.body,
         format=snippet.format,
+        creation_source=snippet.creation_source,
+        source_llm_run_id=snippet.source_llm_run_id,
+        source_draft_hash=snippet.source_draft_hash,
+        safety_warnings=json.loads(snippet.safety_warnings_json or "[]"),
+        last_published_at=snippet.last_published_at,
+        publication_count=snippet.publication_count,
         created_at=snippet.created_at,
         updated_at=snippet.updated_at,
     )
@@ -1675,24 +1740,31 @@ def _validate_markdown_suffix(name: str) -> None:
         raise api_error(400, "unsupported_markdown_extension", "Markdown import must be .md, .markdown, or .txt")
 
 
-def _apply_text_display(display: PlayerDisplayRuntime, db: Session, snippet: PublicSnippet) -> None:
-    campaign = db.get(Campaign, snippet.campaign_id)
-    public_payload = {
+def serialize_snippet_for_player_display(snippet: PublicSnippet) -> dict[str, object]:
+    return {
         "type": "public_snippet",
         "snippet_id": snippet.id,
         "title": snippet.title,
-        "body": snippet.body,
+        "body": sanitize_public_markdown(snippet.body),
         "format": snippet.format,
     }
+
+
+def _apply_text_display(display: PlayerDisplayRuntime, db: Session, snippet: PublicSnippet) -> None:
+    campaign = db.get(Campaign, snippet.campaign_id)
+    now = utc_now_z()
     display.mode = "text"
     display.active_campaign_id = snippet.campaign_id
     display.active_session_id = None
     display.active_scene_id = None
     display.title = snippet.title
     display.subtitle = campaign.name if campaign else None
-    display.payload_json = json.dumps(public_payload)
+    display.payload_json = json.dumps(serialize_snippet_for_player_display(snippet))
     display.revision += 1
-    display.updated_at = utc_now_z()
+    display.updated_at = now
+    snippet.last_published_at = now
+    snippet.publication_count += 1
+    snippet.updated_at = now
 
 
 def _public_party_value_payload(db: Session, field: CustomFieldDefinition, value: object) -> dict[str, object] | None:
@@ -4208,6 +4280,11 @@ def create_public_snippet(campaign_id: UUID, payload: PublicSnippetCreate, db: D
             note = _require_note(db, note_id)
             if note.campaign_id != str(campaign_id):
                 raise api_error(400, "note_campaign_mismatch", "Note does not belong to campaign")
+        creation_source, source_run_id, source_draft_hash, safety_warnings = _validate_public_snippet_provenance(
+            db,
+            campaign_id=str(campaign_id),
+            payload=payload,
+        )
         snippet = PublicSnippet(
             id=_new_id(),
             campaign_id=str(campaign_id),
@@ -4215,6 +4292,10 @@ def create_public_snippet(campaign_id: UUID, payload: PublicSnippetCreate, db: D
             title=payload.title,
             body=payload.body,
             format=_require_snippet_format(payload.format),
+            creation_source=creation_source,
+            source_llm_run_id=source_run_id,
+            source_draft_hash=source_draft_hash,
+            safety_warnings_json=json.dumps(safety_warnings, ensure_ascii=False, sort_keys=True),
             created_at=now,
             updated_at=now,
         )

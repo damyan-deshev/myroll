@@ -575,6 +575,9 @@ def test_notes_public_snippets_schema_and_text_display_mode(migrated_settings):
         ).scalar_one()
         assert "private_body" in notes_sql
         assert "ck_public_snippets_format" in snippets_sql
+        assert "creation_source" in snippets_sql
+        assert "safety_warnings_json" in snippets_sql
+        assert "publication_count" in snippets_sql
         assert "'text'" in display_sql
 
         connection.execute(
@@ -625,6 +628,10 @@ def test_notes_public_snippets_schema_and_text_display_mode(migrated_settings):
                 updated_at=now,
             )
         )
+        row = connection.exec_driver_sql(
+            "SELECT creation_source, safety_warnings_json, publication_count FROM public_snippets WHERE id = 'cdf0f35b-b8fd-474f-8a95-6c6a1d74a914'"
+        ).one()
+        assert row == ("manual", "[]", 0)
         with pytest.raises(IntegrityError):
             connection.execute(
                 insert(PublicSnippet).values(

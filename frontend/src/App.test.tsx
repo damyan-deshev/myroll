@@ -223,6 +223,12 @@ const publicSnippet: PublicSnippet = {
   title: "Safe clue",
   body: "Safe clue text.",
   format: "markdown",
+  creation_source: "manual",
+  source_llm_run_id: null,
+  source_draft_hash: null,
+  safety_warnings: [],
+  last_published_at: null,
+  publication_count: 0,
   created_at: "2026-04-27T00:00:00Z",
   updated_at: "2026-04-27T00:00:00Z"
 };
@@ -369,7 +375,7 @@ describe("GM shell widgets", () => {
           return jsonResponse({
             status: "ok",
             db: "ok",
-            schema_version: "20260504_0015",
+            schema_version: "20260504_0016",
             db_path: "data/myroll.dev.sqlite3",
             time: "2026-04-27T00:00:00Z"
           });
@@ -378,7 +384,7 @@ describe("GM shell widgets", () => {
           app: "myroll",
           version: "dev",
           db_path: "data/myroll.dev.sqlite3",
-          schema_version: "20260504_0015",
+          schema_version: "20260504_0016",
           seed_version: "2026-04-27-v12",
           expected_seed_version: "2026-04-27-v12"
         });
@@ -388,7 +394,7 @@ describe("GM shell widgets", () => {
     renderWithClient(<BackendStatusWidget />);
 
     expect(await screen.findByText("myroll")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("20260504_0015")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("20260504_0016")).toBeInTheDocument());
   });
 
   it("renders backend unavailable state", async () => {
@@ -431,7 +437,7 @@ describe("GM shell widgets", () => {
         asset_size_bytes: 2048,
         latest_backup: null,
         latest_export: null,
-        schema_version: "20260504_0015",
+        schema_version: "20260504_0016",
         seed_version: "2026-04-27-v12",
         expected_seed_version: "2026-04-27-v12",
         private_demo_name_map_active: true
@@ -498,13 +504,13 @@ describe("GM shell widgets", () => {
           });
         }
         if (url.endsWith("/health")) {
-          return jsonResponse({ status: "ok", db: "ok", schema_version: "20260504_0015", db_path: "data/db", time: "z" });
+          return jsonResponse({ status: "ok", db: "ok", schema_version: "20260504_0016", db_path: "data/db", time: "z" });
         }
         return jsonResponse({
           app: "myroll",
           version: "dev",
           db_path: "data/db",
-          schema_version: "20260504_0015",
+          schema_version: "20260504_0016",
           seed_version: "2026-04-27-v12",
           expected_seed_version: "2026-04-27-v12"
         });
@@ -666,8 +672,8 @@ describe("GM shell widgets", () => {
         if (markerAttempt === 1) return jsonResponse({ error: { code: "marker_lint_confirmation_required", message: "Needs confirmation" } }, false, 409);
         return jsonResponse({ id: "m1", campaign_id: "c1", session_id: "s1", scene_id: "sc1", source_proposal_option_id: "opt1", scope_kind: "scene", status: "active", title: "Political debt", marker_text: "Varos betrayed the party.", original_marker_text: "GM is considering developing Varos as a political creditor.", lint_warnings: ["canonish_wording"], provenance: {}, edited_at: "z", edited_from_source: true, expires_at: null, created_at: "z", updated_at: "z" });
       }
-      if (url.endsWith("/health")) return jsonResponse({ status: "ok", db: "ok", schema_version: "20260504_0015", db_path: "data/db", time: "z" });
-      return jsonResponse({ app: "myroll", version: "dev", db_path: "data/db", schema_version: "20260504_0015", seed_version: "seed", expected_seed_version: "seed" });
+      if (url.endsWith("/health")) return jsonResponse({ status: "ok", db: "ok", schema_version: "20260504_0016", db_path: "data/db", time: "z" });
+      return jsonResponse({ app: "myroll", version: "dev", db_path: "data/db", schema_version: "20260504_0016", seed_version: "seed", expected_seed_version: "seed" });
     });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -1688,16 +1694,18 @@ describe("GM shell widgets", () => {
         type: "public_snippet",
         snippet_id: publicSnippet.id,
         title: "Safe clue",
-        body: "**Safe clue text.** [Do not navigate](https://example.com)",
+        body: "# Safe clue\n**Safe clue text.** [Do not navigate](https://example.com)\n![secret](https://example.com/secret.png)",
         format: "markdown"
       },
       revision: 13
     };
     const { container } = render(<PlayerDisplaySurface state={state} now={Date.now()} reconnecting />);
 
-    expect(screen.getByText("Safe clue")).toBeInTheDocument();
+    expect(screen.getAllByText("Safe clue").length).toBeGreaterThan(0);
     expect(screen.getByText("Safe clue text.")).toBeInTheDocument();
     expect(container.querySelector("a")).toBeNull();
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector(".safe-markdown h1")).toBeNull();
     expect(screen.getByText("Reconnecting")).toBeInTheDocument();
   });
 

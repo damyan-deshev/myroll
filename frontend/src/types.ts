@@ -221,6 +221,12 @@ export type PublicSnippet = {
   title: string | null;
   body: string;
   format: "markdown";
+  creation_source: "manual" | "llm_scribe";
+  source_llm_run_id: string | null;
+  source_draft_hash: string | null;
+  safety_warnings: Array<Record<string, unknown>>;
+  last_published_at: string | null;
+  publication_count: number;
   created_at: string;
   updated_at: string;
 };
@@ -679,6 +685,7 @@ export type LlmContextPackage = {
   rendered_prompt: string;
   source_ref_hash: string;
   source_classes: string[];
+  context_options: Record<string, unknown>;
   warnings: Array<Record<string, unknown>>;
   review_status: "unreviewed" | "reviewed";
   reviewed_at: string | null;
@@ -719,7 +726,14 @@ export type SessionRecap = {
   title: string;
   body_markdown: string;
   evidence_refs: Array<Record<string, unknown>>;
+  public_safe: boolean;
+  sensitivity_reason: string | null;
   created_at: string;
+  updated_at: string;
+};
+
+export type SessionRecapsResponse = {
+  recaps: SessionRecap[];
   updated_at: string;
 };
 
@@ -755,7 +769,14 @@ export type CampaignMemoryEntry = {
   body: string;
   evidence_refs: Array<Record<string, unknown>>;
   tags: string[];
+  public_safe: boolean;
+  sensitivity_reason: string | null;
   created_at: string;
+  updated_at: string;
+};
+
+export type CampaignMemoryEntriesResponse = {
+  entries: CampaignMemoryEntry[];
   updated_at: string;
 };
 
@@ -854,6 +875,26 @@ export type BuildBranchResult = {
   proposal_set: ProposalSetDetail | null;
   rejected_options: Array<Record<string, unknown>>;
   warnings: Array<Record<string, unknown>>;
+};
+
+export type PlayerSafeRecapResult = {
+  run: LlmRun;
+  public_snippet_draft: { title: string; bodyMarkdown: string };
+  source_draft_hash: string;
+  warnings: Array<Record<string, unknown>>;
+};
+
+export type PublicSafetyWarning = {
+  code: string;
+  severity: "low" | "medium" | "high" | string;
+  message: string;
+  matched_text?: string;
+};
+
+export type PublicSafetyWarningScanResult = {
+  warnings: PublicSafetyWarning[];
+  content_hash: string;
+  ack_required: boolean;
 };
 
 export type PlanningMarkersResponse = {

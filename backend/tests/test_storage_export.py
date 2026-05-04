@@ -68,7 +68,7 @@ def test_restore_export_restores_db_and_assets_into_clean_target(migrated_settin
 
     connection = sqlite3.connect(target / "myroll.dev.sqlite3")
     try:
-        assert connection.execute("SELECT version_num FROM alembic_version").fetchone()[0] == "20260504_0015"
+        assert connection.execute("SELECT version_num FROM alembic_version").fetchone()[0] == "20260504_0016"
     finally:
         connection.close()
 

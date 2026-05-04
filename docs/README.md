@@ -103,7 +103,7 @@ Current implemented slices:
 - scene orchestration with private scene activation, linked context, staged public display, and explicit publish.
 - local backup/export/restore, Storage / Demo widget, original public demo profile, ignored private local override map, and generated demo asset pack.
 - laptop-friendly multi-surface GM shell with the original floating canvas preserved at `/gm/floating`.
-- first Myroll Scribe spine plus branch proposal slice: live DM capture, correction events, provider harness, reviewed context preview, session recap draft/save, targetless Memory Inbox accept, aliases, basic recall, branch proposal cards, planning markers, and LLM export redaction.
+- first Myroll Scribe spine plus branch/player-safe slices: live DM capture, correction events, provider harness, reviewed context preview, session recap draft/save, targetless Memory Inbox accept, aliases, basic recall, branch proposal cards, planning markers, player-safe recap drafting, public-safety warning gate, and LLM export redaction.
 
 Frontend verification:
 

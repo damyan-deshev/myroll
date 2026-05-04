@@ -883,6 +883,10 @@ function sourceRefLabel(ref: Record<string, unknown>): string {
   return `${String(ref.kind ?? "source")}:${String(ref.id ?? "").slice(0, 8)} · ${String(ref.lane ?? "lane")}`;
 }
 
+function sourceRefKey(ref: Record<string, unknown>): string {
+  return `${String(ref.kind ?? "source")}:${String(ref.id ?? "")}`;
+}
+
 function proposalOptionLabel(status: ProposalOption["status"]): string {
   if (status === "selected") return "Selected";
   if (status === "rejected") return "Rejected by GM";
@@ -921,6 +925,16 @@ function ScribeWidget(props: SharedWidgetProps) {
   const [markerTitle, setMarkerTitle] = useState("");
   const [markerText, setMarkerText] = useState("");
   const [markerConfirmWarnings, setMarkerConfirmWarnings] = useState(false);
+  const [playerSafeInstruction, setPlayerSafeInstruction] = useState("");
+  const [includeUnshownPublicSnippets, setIncludeUnshownPublicSnippets] = useState(false);
+  const [excludedPublicSafeRefs, setExcludedPublicSafeRefs] = useState<string[]>([]);
+  const [playerSafeContextPackage, setPlayerSafeContextPackage] = useState<null | Awaited<ReturnType<typeof api.createContextPreview>>>(null);
+  const [playerSafeDraft, setPlayerSafeDraft] = useState<Awaited<ReturnType<typeof api.buildPlayerSafeRecap>> | null>(null);
+  const [playerSafeTitle, setPlayerSafeTitle] = useState("");
+  const [playerSafeBody, setPlayerSafeBody] = useState("");
+  const [playerSafeSourceDraftHash, setPlayerSafeSourceDraftHash] = useState<string | null>(null);
+  const [publicSafetyScan, setPublicSafetyScan] = useState<Awaited<ReturnType<typeof api.scanPublicSafetyWarnings>> | null>(null);
+  const [publicSafetyAckHash, setPublicSafetyAckHash] = useState<string | null>(null);
 
   const transcriptQuery = useQuery({
     queryKey: ["scribe-transcript", props.selectedCampaignId, props.selectedSessionId],
@@ -952,6 +966,21 @@ function ScribeWidget(props: SharedWidgetProps) {
     queryKey: ["planning-markers", props.selectedCampaignId],
     queryFn: () => api.planningMarkers(props.selectedCampaignId!),
     enabled: Boolean(props.selectedCampaignId)
+  });
+  const publicSnippetsQuery = useQuery({
+    queryKey: ["public-snippets", props.selectedCampaignId],
+    queryFn: () => api.publicSnippets(props.selectedCampaignId!),
+    enabled: Boolean(props.selectedCampaignId)
+  });
+  const sessionRecapsQuery = useQuery({
+    queryKey: ["session-recaps", props.selectedCampaignId, props.selectedSessionId],
+    queryFn: () => api.sessionRecaps(props.selectedCampaignId!, props.selectedSessionId),
+    enabled: Boolean(props.selectedCampaignId && props.selectedSessionId)
+  });
+  const memoryEntriesQuery = useQuery({
+    queryKey: ["memory-entries", props.selectedCampaignId, props.selectedSessionId],
+    queryFn: () => api.memoryEntries(props.selectedCampaignId!, props.selectedSessionId),
+    enabled: Boolean(props.selectedCampaignId && props.selectedSessionId)
   });
   const recallResult = useMutation({
     mutationFn: () => api.recall(props.selectedCampaignId!, { query: recallQuery })
@@ -1046,6 +1075,23 @@ function ScribeWidget(props: SharedWidgetProps) {
       setBranchDraft(null);
     }
   });
+  const previewPlayerSafeContext = useMutation({
+    mutationFn: () =>
+      api.createContextPreview(props.selectedCampaignId!, {
+        session_id: props.selectedSessionId!,
+        task_kind: "session.player_safe_recap",
+        visibility_mode: "public_safe",
+        gm_instruction: playerSafeInstruction,
+        include_unshown_public_snippets: includeUnshownPublicSnippets,
+        excluded_source_refs: excludedPublicSafeRefs
+      }),
+    onSuccess: (preview) => {
+      setPlayerSafeContextPackage(preview);
+      setPlayerSafeDraft(null);
+      setPublicSafetyScan(null);
+      setPublicSafetyAckHash(null);
+    }
+  });
   const reviewContext = useMutation({
     mutationFn: () => api.reviewContextPackage(contextPackage!.id),
     onSuccess: (preview) => setContextPackage(preview)
@@ -1053,6 +1099,10 @@ function ScribeWidget(props: SharedWidgetProps) {
   const reviewBranchContext = useMutation({
     mutationFn: () => api.reviewContextPackage(branchContextPackage!.id),
     onSuccess: (preview) => setBranchContextPackage(preview)
+  });
+  const reviewPlayerSafeContext = useMutation({
+    mutationFn: () => api.reviewContextPackage(playerSafeContextPackage!.id),
+    onSuccess: (preview) => setPlayerSafeContextPackage(preview)
   });
   const buildRecap = useMutation({
     mutationFn: () =>
@@ -1079,6 +1129,7 @@ function ScribeWidget(props: SharedWidgetProps) {
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["memory-candidates", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["session-recaps", props.selectedCampaignId, props.selectedSessionId] });
     }
   });
   const buildBranch = useMutation({
@@ -1094,10 +1145,74 @@ function ScribeWidget(props: SharedWidgetProps) {
       void queryClient.invalidateQueries({ queryKey: ["planning-markers", props.selectedCampaignId] });
     }
   });
+  const buildPlayerSafe = useMutation({
+    mutationFn: () =>
+      api.buildPlayerSafeRecap(props.selectedCampaignId!, {
+        session_id: props.selectedSessionId!,
+        provider_profile_id: selectedProvider!.id,
+        context_package_id: playerSafeContextPackage!.id
+      }),
+    onSuccess: (result) => {
+      setPlayerSafeDraft(result);
+      setPlayerSafeTitle(result.public_snippet_draft.title);
+      setPlayerSafeBody(result.public_snippet_draft.bodyMarkdown);
+      setPlayerSafeSourceDraftHash(result.source_draft_hash);
+      setPublicSafetyScan(null);
+      setPublicSafetyAckHash(null);
+    }
+  });
+  const scanPlayerSafeDraft = useMutation({
+    mutationFn: () => api.scanPublicSafetyWarnings(props.selectedCampaignId!, { title: playerSafeTitle, body_markdown: playerSafeBody }),
+    onSuccess: (scan) => {
+      setPublicSafetyScan(scan);
+      setPublicSafetyAckHash(scan.ack_required ? null : scan.content_hash);
+    }
+  });
+  const createPlayerSafeSnippet = useMutation({
+    mutationFn: () =>
+      api.createPublicSnippet(props.selectedCampaignId!, {
+        title: playerSafeTitle,
+        body: playerSafeBody,
+        format: "markdown",
+        creation_source: "llm_scribe",
+        source_llm_run_id: playerSafeDraft!.run.id,
+        source_draft_hash: playerSafeSourceDraftHash,
+        warning_content_hash: publicSafetyScan?.content_hash ?? null,
+        warning_ack_content_hash: publicSafetyAckHash
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["public-snippets", props.selectedCampaignId] });
+    }
+  });
+  const patchRecapSafety = useMutation({
+    mutationFn: ({ recapId, publicSafe }: { recapId: string; publicSafe: boolean }) =>
+      api.patchSessionRecapPublicSafety(recapId, {
+        campaign_id: props.selectedCampaignId,
+        public_safe: publicSafe,
+        sensitivity_reason: publicSafe ? null : "private_note"
+      }),
+    onSuccess: () => {
+      setPlayerSafeContextPackage(null);
+      void queryClient.invalidateQueries({ queryKey: ["session-recaps", props.selectedCampaignId, props.selectedSessionId] });
+    }
+  });
+  const patchMemorySafety = useMutation({
+    mutationFn: ({ entryId, publicSafe }: { entryId: string; publicSafe: boolean }) =>
+      api.patchMemoryEntryPublicSafety(entryId, {
+        campaign_id: props.selectedCampaignId,
+        public_safe: publicSafe,
+        sensitivity_reason: publicSafe ? null : "private_note"
+      }),
+    onSuccess: () => {
+      setPlayerSafeContextPackage(null);
+      void queryClient.invalidateQueries({ queryKey: ["memory-entries", props.selectedCampaignId, props.selectedSessionId] });
+    }
+  });
   const acceptCandidate = useMutation({
     mutationFn: (candidateId: string) => api.acceptMemoryCandidate(candidateId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["memory-candidates", props.selectedCampaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["memory-entries", props.selectedCampaignId, props.selectedSessionId] });
     }
   });
   const rejectCandidate = useMutation({
@@ -1183,16 +1298,26 @@ function ScribeWidget(props: SharedWidgetProps) {
     proposalSetsQuery.error ??
     proposalDetailQuery.error ??
     planningMarkersQuery.error ??
+    publicSnippetsQuery.error ??
+    sessionRecapsQuery.error ??
+    memoryEntriesQuery.error ??
     capture.error ??
     correct.error ??
     saveProvider.error ??
     testProvider.error ??
     previewContext.error ??
     previewBranchContext.error ??
+    previewPlayerSafeContext.error ??
     reviewContext.error ??
     reviewBranchContext.error ??
+    reviewPlayerSafeContext.error ??
     buildRecap.error ??
     buildBranch.error ??
+    buildPlayerSafe.error ??
+    scanPlayerSafeDraft.error ??
+    createPlayerSafeSnippet.error ??
+    patchRecapSafety.error ??
+    patchMemorySafety.error ??
     saveRecap.error ??
     acceptCandidate.error ??
     rejectCandidate.error ??
@@ -1209,6 +1334,11 @@ function ScribeWidget(props: SharedWidgetProps) {
   const proposalSets = proposalSetsQuery.data?.proposal_sets ?? [];
   const currentProposalDetail = branchDraft?.proposal_set ?? proposalDetailQuery.data ?? null;
   const activeMarkers = (planningMarkersQuery.data?.planning_markers ?? []).filter((marker) => marker.status === "active");
+  const publicSafeRecaps = sessionRecapsQuery.data?.recaps ?? [];
+  const publicSafeMemoryEntries = memoryEntriesQuery.data?.entries ?? [];
+  const publicSnippetArtifacts = publicSnippetsQuery.data?.snippets ?? [];
+  const playerSafeAckRequired = publicSafetyScan?.ack_required ?? false;
+  const playerSafeScanCurrent = Boolean(publicSafetyScan && publicSafetyScan.content_hash === publicSafetyAckHash);
   const branchScopeAvailable =
     branchScope === "campaign" ||
     (branchScope === "session" && Boolean(props.selectedSessionId)) ||
@@ -1413,6 +1543,217 @@ function ScribeWidget(props: SharedWidgetProps) {
           </button>
         </div>
         {aliasesQuery.data?.length ? <span className="muted">{aliasesQuery.data.length} campaign aliases</span> : null}
+      </div>
+
+      <div className="scribe-player-safe" aria-label="Player-safe recap">
+        <div className="section-heading">
+          <strong>Player-Safe Recap</strong>
+          <span className="muted">Eligible context is not guaranteed safe to publish</span>
+        </div>
+        <p className="muted-block">
+          public_safe means eligible for public-safe context, not publish-safe. Shown on player display does not prove players know it.
+        </p>
+
+        <details className="scribe-details" open>
+          <summary>Curate public-safe sources</summary>
+          <div className="scribe-proposal-grid">
+            <div className="scribe-candidate">
+              <strong>Reviewed Recaps</strong>
+              <span className="muted">Review full recap text before enabling; it may summarize private memory.</span>
+              {publicSafeRecaps.slice(0, 5).map((recap) => (
+                <div key={recap.id} className="party-field-row">
+                  <span>
+                    <strong>{recap.title}</strong>
+                    <small className="muted">{recap.public_safe ? "Eligible for public-safe context" : "Private by default"}</small>
+                  </span>
+                  <button onClick={() => patchRecapSafety.mutate({ recapId: recap.id, publicSafe: !recap.public_safe })} disabled={patchRecapSafety.isPending}>
+                    {recap.public_safe ? "Mark private" : "Mark eligible"}
+                  </button>
+                </div>
+              ))}
+              {!publicSafeRecaps.length ? <span className="muted">No saved recaps for this session yet.</span> : null}
+            </div>
+            <div className="scribe-candidate">
+              <strong>Accepted Memory</strong>
+              <span className="muted">No bulk enable in v1; review each memory entry.</span>
+              {publicSafeMemoryEntries.slice(0, 5).map((entry) => (
+                <div key={entry.id} className="party-field-row">
+                  <span>
+                    <strong>{entry.title}</strong>
+                    <small className="muted">{entry.public_safe ? "Eligible for public-safe context" : "Private by default"}</small>
+                  </span>
+                  <button onClick={() => patchMemorySafety.mutate({ entryId: entry.id, publicSafe: !entry.public_safe })} disabled={patchMemorySafety.isPending}>
+                    {entry.public_safe ? "Mark private" : "Mark eligible"}
+                  </button>
+                </div>
+              ))}
+              {!publicSafeMemoryEntries.length ? <span className="muted">No accepted memory entries yet.</span> : null}
+            </div>
+          </div>
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={includeUnshownPublicSnippets}
+              onChange={(event) => {
+                setIncludeUnshownPublicSnippets(event.target.checked);
+                setPlayerSafeContextPackage(null);
+                setPlayerSafeDraft(null);
+              }}
+            />
+            Include unshown/manual public snippets
+          </label>
+          <div className="scribe-source-list">
+            {publicSnippetArtifacts.slice(0, 6).map((snippet) => (
+              <span key={snippet.id}>
+                {snippet.title || "Untitled snippet"} · {snippet.creation_source === "manual" ? "manual artifact" : "Scribe-created"} ·{" "}
+                {snippet.last_published_at ? "shown on display" : "not shown"}
+              </span>
+            ))}
+          </div>
+        </details>
+
+        <label className="scribe-instruction">
+          <span>GM instruction for player-safe draft</span>
+          <textarea
+            value={playerSafeInstruction}
+            onChange={(event) => {
+              setPlayerSafeInstruction(event.target.value);
+              setPlayerSafeContextPackage(null);
+              setPlayerSafeDraft(null);
+            }}
+            placeholder="Public-facing focus. With no curated sources, provide at least 40 characters."
+          />
+        </label>
+        <div className="token-actions">
+          <button onClick={() => previewPlayerSafeContext.mutate()} disabled={previewPlayerSafeContext.isPending}>
+            Preview Public-Safe Context
+          </button>
+          <button
+            onClick={() => reviewPlayerSafeContext.mutate()}
+            disabled={!playerSafeContextPackage || playerSafeContextPackage.review_status === "reviewed" || reviewPlayerSafeContext.isPending}
+          >
+            Review Public-Safe Context
+          </button>
+          <button
+            onClick={() => buildPlayerSafe.mutate()}
+            disabled={!selectedProvider || !playerSafeContextPackage || playerSafeContextPackage.review_status !== "reviewed" || buildPlayerSafe.isPending}
+          >
+            Run Player-Safe Recap
+          </button>
+        </div>
+        {playerSafeContextPackage ? (
+          <div className="muted-block">
+            <InfoRow
+              label="Public-safe context"
+              value={`${playerSafeContextPackage.review_status} · ${playerSafeContextPackage.source_refs.length} included · ${playerSafeContextPackage.token_estimate} est. tokens`}
+            />
+            {playerSafeContextPackage.warnings.map((warning, index) => (
+              <span key={index} className="status-pill warning">
+                {String(warning.code ?? "warning")}
+              </span>
+            ))}
+            <div className="scribe-source-list">
+              {playerSafeContextPackage.source_refs.map((ref, index) => {
+                const key = sourceRefKey(ref);
+                return (
+                  <button
+                    key={`${key}-${index}`}
+                    className="link-button"
+                    onClick={() => {
+                      setExcludedPublicSafeRefs((refs) => Array.from(new Set([...refs, key])));
+                      setPlayerSafeContextPackage(null);
+                    }}
+                  >
+                    Exclude {sourceRefLabel(ref)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {playerSafeDraft ? (
+          <div className="scribe-review-block">
+            <div className="section-heading">
+              <strong>Draft Public Snippet</strong>
+              {playerSafeDraft.warnings.some((warning) => warning.code === "instruction_only_public_safe_draft") ? (
+                <span className="status-pill warning">instruction_only_public_safe_draft</span>
+              ) : (
+                <span className="status-pill">GM review required</span>
+              )}
+            </div>
+            <input
+              value={playerSafeTitle}
+              onChange={(event) => {
+                setPlayerSafeTitle(event.target.value);
+                setPublicSafetyScan(null);
+                setPublicSafetyAckHash(null);
+              }}
+              aria-label="Player-safe snippet title"
+            />
+            <textarea
+              value={playerSafeBody}
+              onChange={(event) => {
+                setPlayerSafeBody(event.target.value);
+                setPublicSafetyScan(null);
+                setPublicSafetyAckHash(null);
+              }}
+              aria-label="Player-safe snippet body"
+            />
+            <div className="snippet-preview" aria-label="Player-safe snippet preview">
+              <span className="muted">Player display preview uses the same safe Markdown renderer.</span>
+              <SafeMarkdownRenderer body={playerSafeBody} />
+            </div>
+            <div className="token-actions">
+              <button onClick={() => scanPlayerSafeDraft.mutate()} disabled={!playerSafeBody.trim() || scanPlayerSafeDraft.isPending}>
+                Scan Warnings
+              </button>
+              {playerSafeAckRequired ? (
+                <button onClick={() => setPublicSafetyAckHash(publicSafetyScan!.content_hash)} disabled={!publicSafetyScan || publicSafetyAckHash === publicSafetyScan.content_hash}>
+                  Acknowledge Warnings
+                </button>
+              ) : null}
+              <button
+                onClick={() => createPlayerSafeSnippet.mutate()}
+                disabled={!playerSafeTitle.trim() || !playerSafeBody.trim() || !playerSafeScanCurrent || createPlayerSafeSnippet.isPending}
+              >
+                Create PublicSnippet
+              </button>
+            </div>
+            {publicSafetyScan ? (
+              <div className="scribe-source-list">
+                {publicSafetyScan.warnings.length ? (
+                  publicSafetyScan.warnings.map((warning, index) => (
+                    <span key={index} className={warning.severity === "high" || warning.severity === "medium" ? "status-pill warning" : "status-pill"}>
+                      {warning.severity}: {warning.code}
+                    </span>
+                  ))
+                ) : (
+                  <span className="status-pill success">No deterministic warnings. This is not proof of safety.</span>
+                )}
+              </div>
+            ) : (
+              <p className="muted">Warning scan is required after every title/body edit.</p>
+            )}
+            {createPlayerSafeSnippet.data ? <p className="muted-block">Created snippet. It is not published until you use the existing display action.</p> : null}
+          </div>
+        ) : null}
+
+        <details className="scribe-details">
+          <summary>Player-Safe Diagnostics</summary>
+          {playerSafeContextPackage ? (
+            <>
+              <InfoRow label="Hash" value={playerSafeContextPackage.source_ref_hash.slice(0, 16)} />
+              <InfoRow label="Source classes" value={playerSafeContextPackage.source_classes.join(", ") || "none"} />
+              <textarea readOnly value={playerSafeContextPackage.rendered_prompt || "Rendered prompt unavailable."} aria-label="Player-safe rendered prompt preview" />
+            </>
+          ) : (
+            <span className="muted">Preview public-safe context to inspect sources and prompt.</span>
+          )}
+          {playerSafeDraft ? (
+            <textarea readOnly value={JSON.stringify(playerSafeDraft, null, 2)} aria-label="Player-safe normalized output JSON" />
+          ) : null}
+        </details>
       </div>
 
       <div className="scribe-proposals" aria-label="Proposal cockpit">

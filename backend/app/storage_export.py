@@ -109,7 +109,7 @@ def _redact_llm_payloads(db_snapshot: Path) -> None:
             tables = {
                 row[0]
                 for row in connection.execute(
-                    "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('llm_runs', 'llm_context_packages')"
+                    "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('llm_runs', 'llm_context_packages', 'public_snippets')"
                 ).fetchall()
             }
             if "llm_runs" in tables:
@@ -126,7 +126,18 @@ def _redact_llm_payloads(db_snapshot: Path) -> None:
                     """
                     UPDATE llm_context_packages
                     SET rendered_prompt = '[redacted for export]',
-                        source_refs_json = '[]'
+                        source_refs_json = '[]',
+                        context_options_json = '{}'
+                    """
+                )
+            if "public_snippets" in tables:
+                connection.execute(
+                    """
+                    UPDATE public_snippets
+                    SET creation_source = 'manual',
+                        source_llm_run_id = NULL,
+                        source_draft_hash = NULL,
+                        safety_warnings_json = '[]'
                     """
                 )
             connection.commit()

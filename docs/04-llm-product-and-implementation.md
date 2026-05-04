@@ -1,7 +1,7 @@
 # Myroll LLM Product And Implementation Spec
 
 Date: 2026-05-04
-Status: First Scribe spine plus branch proposal/planning marker slice implemented; public-safe slice remains planned
+Status: First Scribe spine, branch proposal/planning marker slice, and player-safe recap gate implemented
 
 This document turns the LLM direction into implementable product slices. It assumes the current Myroll architecture:
 
@@ -36,7 +36,7 @@ Current shipped status:
 - `[shipped]` LLM-0d memory inbox: targetless memory candidates, `Accept into Memory` as one atomic apply transaction, idempotent repeated accept, and rejected/weak candidates excluded from accepted memory.
 - `[shipped]` LLM-1 first recall spine: campaign memory entries, reviewed session recaps, live capture search indexing, manual aliases, query expansion, and policy-filtered recall results. This first spine uses basic projection-table search, not the full FTS5 target described later in this document.
 - `[shipped]` LLM-2 branch proposals and planning markers: campaign/session/scene branch context preview, structured branch runs, proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection.
-- `[planned]` LLM-3 player-safe recap/snippet drafting and leak warning gate.
+- `[shipped]` LLM-3 player-safe recap/snippet drafting and leak warning gate: public-safe source curation, reviewed public-safe context packages, deterministic warning scan, player-safe structured draft runs, LLM-sourced `PublicSnippet` creation with scan/ack gating, dedicated player-display snippet serialization, publication tracking, and default export redaction of LLM snippet provenance/warnings.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
 
 Current implementation entry points are intentionally small:
@@ -51,6 +51,7 @@ Known limitations in the shipped first spine:
 - recall currently scans a `scribe_search_index` projection table over live captures, reviewed recaps, and accepted memory entries; it is not yet SQLite FTS5 and does not yet index every notes/entities/public-snippet source promised by the full recall slice;
 - the search projection has upsert behavior for current Scribe writes, but no source-level garbage collection/rebuild command beyond campaign-level cascade cleanup;
 - branch proposals are planning-only in v1: one active marker can be created per source proposal option, proposed deltas are inspection-only, and there is no proposal canonization/apply endpoint.
+- public-safe curation is conservative and manual: `public_safe=true` means eligible for public-safe context, not guaranteed safe to publish; deterministic warnings are not proof of safety; manual snippets are GM-approved public artifacts by convention, not Scribe-verified safe text; raw private recaps, private memory, private notes, planning markers, proposal bodies, live captures, and run history are excluded from player-safe context.
 
 ## 1. Product Definition
 
@@ -245,7 +246,7 @@ Inspection surfaces may include:
 
 Inspection surfaces are GM-private and never available to `/player`.
 
-The shipped `/gm` Scribe panel implements this as expandable inspection areas that show context source refs, source hash/classes, rendered prompt when retained, run status, parse failure details, normalized output JSON, proposal normalization warnings, and planning marker provenance.
+The shipped `/gm` Scribe panel implements this as expandable inspection areas that show context source refs, source hash/classes, rendered prompt when retained, run status, parse failure details, normalized output JSON, proposal normalization warnings, planning marker provenance, public-safe source curation, and deterministic leak warning results.
 
 ### 2.10 Correction Loops
 
@@ -260,7 +261,7 @@ V1 correction loops:
 
 Corrections must preserve original source evidence and audit metadata where relevant.
 
-The shipped first loop implements transcript correction, recap draft editing, candidate editing API, and one schema-repair child run. Public-safe warning correction remains planned with LLM-3.
+The shipped loop implements transcript correction, recap draft editing, candidate editing API, one schema-repair child run, and public-safe draft edit/rescan/ack before `PublicSnippet` creation.
 
 ### 2.11 No Silent Fallbacks
 
@@ -2176,22 +2177,31 @@ Shipped v1 limitations:
 
 ### LLM-3: Player-Safe Recaps And Snippet Drafting
 
+Status: `[shipped]`
+
 Goal:
 - produce public-safe drafts that still require leak review and explicit publish.
 
-Build:
-- `session.player_safe_recap` task;
-- `draft.public_snippet` task;
-- public-safe context enforcement;
-- deterministic leak warning pass;
-- create `PublicSnippet` from reviewed draft.
+Shipped build:
+- `session.player_safe_recap` task with `visibility_mode = public_safe`;
+- public-safe source curation for reviewed session recaps and accepted memory entries;
+- shown public snippets included by default, with unshown/manual snippets excluded unless explicitly included;
+- public-known entity shell projection only, using display name when available and kind;
+- reviewed context preview with hash-bound include/exclude choices;
+- deterministic leak warning pass over title/body, including English and Bulgarian spoiler/future-plan phrase starters plus explicit private-reference checks;
+- `PublicSnippet` creation from reviewed LLM draft only when the submitted title/body match the backend warning-scan hash;
+- medium/high warnings, or 3+ low warnings, require exact-content acknowledgment;
+- LLM snippet provenance and warning metadata remain GM-private and are stripped from default export and all `/player` payloads;
+- `last_published_at` and `publication_count` track text shown on the player display, not confirmed player knowledge.
 
 Tests:
-- public-safe context excludes private notes and hidden fields;
-- sensitivity reasons keep private motives/clues out of public-safe context;
+- public-safe context excludes private notes, private recaps/memory, live captures, planning markers, proposal bodies, entity notes/tags/custom fields, and LLM run output;
+- toggling public-safe state or source include/exclude choices stales reviewed previews;
 - leak warning flags suspicious phrases and private-only references;
-- draft creation does not mutate player display;
-- publish still goes through existing `show-snippet`/scene publish APIs.
+- draft creation does not create a snippet or mutate player display;
+- LLM-sourced snippet creation requires same-campaign source run, current warning scan, and acknowledgment when needed;
+- player display serialization strips provenance/warnings and sanitizes Markdown;
+- publish still goes through existing `show-snippet`/scene publish APIs and updates publication tracking.
 
 Acceptance:
 
@@ -2202,6 +2212,14 @@ run player-safe recap
   -> GM creates PublicSnippet
   -> /player changes only after explicit publish
 ```
+
+Shipped v1 limitations:
+- no LLM-assisted leak review;
+- no public draft table, so edited draft state is held in the browser until snippet creation;
+- no raw private recap filtering shortcut;
+- no raw live capture inclusion in public-safe recap;
+- full edit diff/provenance is deferred; v1 stores `source_llm_run_id`, `source_draft_hash`, and final snippet text only;
+- deterministic warning phrase lists are intentionally easy to extend and should not be treated as exhaustive.
 
 ### LLM-4: GM Assistant UI Hardening
 

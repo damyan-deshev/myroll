@@ -153,8 +153,8 @@ test("Scribe branch proposal visual inspection keeps planning private", async ({
 
   await page.route("**/*", async (route) => {
     const url = route.request().url();
-    if (url.endsWith("/health")) return route.fulfill(json({ status: "ok", db: "ok", schema_version: "20260504_0015", db_path: "data/db", time: "z" }));
-    if (url.endsWith("/api/meta")) return route.fulfill(json({ app: "myroll", version: "dev", db_path: "data/db", schema_version: "20260504_0015", seed_version: "seed", expected_seed_version: "seed" }));
+    if (url.endsWith("/health")) return route.fulfill(json({ status: "ok", db: "ok", schema_version: "20260504_0016", db_path: "data/db", time: "z" }));
+    if (url.endsWith("/api/meta")) return route.fulfill(json({ app: "myroll", version: "dev", db_path: "data/db", schema_version: "20260504_0016", seed_version: "seed", expected_seed_version: "seed" }));
     if (url.endsWith("/api/player-display")) {
       playerPayloads.push(playerState);
       return route.fulfill(json(playerState));
@@ -168,6 +168,9 @@ test("Scribe branch proposal visual inspection keeps planning private", async ({
     if (url.endsWith("/api/llm/provider-profiles")) return route.fulfill(json({ profiles: [{ id: "p1", label: "Fixture provider", vendor: "custom", base_url: "http://127.0.0.1:9999/v1", model_id: "fixture", key_source: { type: "none", ref: null }, conformance_level: "level_2_json_validated", capabilities: {}, last_probe_result: null, probed_at: "z", created_at: "z", updated_at: "z" }], updated_at: "z" }));
     if (url.endsWith("/api/campaigns/c1/scribe/memory-candidates")) return route.fulfill(json({ candidates: [], updated_at: "z" }));
     if (url.endsWith("/api/campaigns/c1/scribe/aliases")) return route.fulfill(json([]));
+    if (url.endsWith("/api/campaigns/c1/public-snippets")) return route.fulfill(json({ snippets: [], updated_at: "z" }));
+    if (url.endsWith("/api/campaigns/c1/scribe/session-recaps?session_id=s1")) return route.fulfill(json({ recaps: [], updated_at: "z" }));
+    if (url.endsWith("/api/campaigns/c1/scribe/memory-entries?session_id=s1")) return route.fulfill(json({ entries: [], updated_at: "z" }));
     if (url.endsWith("/api/campaigns/c1/proposal-sets")) return route.fulfill(json({ proposal_sets: proposalBuilt ? [proposalSet.proposal_set] : [], updated_at: "z" }));
     if (url.endsWith("/api/proposal-sets/ps1")) return route.fulfill(json(proposalSet));
     if (url.endsWith("/api/campaigns/c1/planning-markers")) return route.fulfill(json({ planning_markers: markerActive ? [activeMarker] : [], updated_at: "z" }));

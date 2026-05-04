@@ -410,6 +410,32 @@ def _build_reviewed_branch_preview(
     return body
 
 
+def _build_reviewed_player_safe_preview(
+    client: TestClient,
+    *,
+    campaign_id: str,
+    session_id: str,
+    instruction: str = "Draft a player-safe recap from curated sources.",
+    include_unshown_public_snippets: bool = False,
+    excluded_source_refs: list[str] | None = None,
+) -> dict[str, object]:
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={
+            "session_id": session_id,
+            "task_kind": "session.player_safe_recap",
+            "visibility_mode": "public_safe",
+            "gm_instruction": instruction,
+            "include_unshown_public_snippets": include_unshown_public_snippets,
+            "excluded_source_refs": excluded_source_refs or [],
+        },
+    )
+    assert preview.status_code == 201
+    body = preview.json()
+    assert client.post(f"/api/llm/context-packages/{body['id']}/review").status_code == 200
+    return body
+
+
 def test_branch_proposals_marker_context_policy_and_player_boundary(migrated_settings, monkeypatch):
     client = _client(migrated_settings)
     campaign_id, session_id = _campaign_session(client)
@@ -670,6 +696,292 @@ def test_planning_only_recap_candidate_is_rejected(migrated_settings, monkeypatc
     body = recap.json()
     assert body["candidates"] == []
     assert "planning_evidence_cannot_create_memory" in body["rejected_drafts"][0]["errors"]
+
+
+def test_player_safe_context_excludes_private_sources_and_stales_on_curation_change(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    private_recap_phrase = "PRIVATE_RECAP_PHRASE_DO_NOT_PROMPT"
+    safe_recap_phrase = "The party publicly repaired the moon gate."
+    private_memory_phrase = "PRIVATE_MEMORY_PHRASE_DO_NOT_PROMPT"
+    planning_phrase = "PRIVATE_PLANNING_MARKER_DO_NOT_PROMPT"
+    proposal_phrase = "PRIVATE_PROPOSAL_BODY_DO_NOT_PROMPT"
+    live_phrase = "PRIVATE_LIVE_CAPTURE_DO_NOT_PROMPT"
+    unshown_snippet_phrase = "UNSHOWN_MANUAL_SNIPPET_DO_NOT_PROMPT"
+    shown_snippet_phrase = "Shown public clue about the moon gate."
+
+    client.post(f"/api/campaigns/{campaign_id}/scribe/transcript-events", json={"session_id": session_id, "body": live_phrase})
+    private_recap = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/session-recaps",
+        json={"session_id": session_id, "title": "Private recap", "body_markdown": private_recap_phrase},
+    ).json()
+    safe_recap = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/session-recaps",
+        json={"session_id": session_id, "title": "Safe recap", "body_markdown": safe_recap_phrase},
+    ).json()
+    public_toggle = client.patch(
+        f"/api/scribe/session-recaps/{safe_recap['id']}/public-safety",
+        json={"campaign_id": campaign_id, "public_safe": True, "sensitivity_reason": None},
+    )
+    assert public_toggle.status_code == 200
+
+    now = "2026-05-04T12:00:00Z"
+    with sqlite3.connect(migrated_settings.db_path) as connection:
+        connection.execute(
+            """
+            INSERT INTO campaign_memory_entries
+                (id, campaign_id, session_id, source_candidate_id, title, body, evidence_refs_json, tags_json, public_safe, sensitivity_reason, created_at, updated_at)
+            VALUES (?, ?, ?, NULL, ?, ?, '[]', '[]', 0, 'private_note', ?, ?)
+            """,
+            ("private-memory-1", campaign_id, session_id, "Private memory", private_memory_phrase, now, now),
+        )
+        connection.execute(
+            """
+            INSERT INTO proposal_sets
+                (id, campaign_id, session_id, scene_id, llm_run_id, context_package_id, task_kind, scope_kind, title, status, normalization_warnings_json, created_at, updated_at)
+            VALUES ('proposal-set-private', ?, ?, NULL, NULL, NULL, 'scene.branch_directions', 'session', 'Private proposal set', 'proposed', '[]', ?, ?)
+            """,
+            (campaign_id, session_id, now, now),
+        )
+        connection.execute(
+            """
+            INSERT INTO proposal_options
+                (id, proposal_set_id, stable_option_key, title, summary, body, consequences, reveals, stays_hidden, proposed_delta_json, planning_marker_text, status, selected_at, canonized_at, created_at, updated_at)
+            VALUES ('proposal-option-private', 'proposal-set-private', 'private', 'Private option', 'Private', ?, '', '', '', '{}', 'GM is considering a private option.', 'selected', ?, NULL, ?, ?)
+            """,
+            (proposal_phrase, now, now, now),
+        )
+        connection.execute(
+            """
+            INSERT INTO planning_markers
+                (id, campaign_id, session_id, scene_id, source_proposal_option_id, scope_kind, status, title, marker_text, original_marker_text, lint_warnings_json, provenance_json, edited_at, edited_from_source, expires_at, created_at, updated_at)
+            VALUES ('planning-marker-private', ?, ?, NULL, 'proposal-option-private', 'session', 'active', 'Private plan', ?, NULL, '[]', '{}', NULL, 0, NULL, ?, ?)
+            """,
+            (campaign_id, session_id, planning_phrase, now, now),
+        )
+
+    unshown = client.post(
+        f"/api/campaigns/{campaign_id}/public-snippets",
+        json={"title": "Unshown artifact", "body": unshown_snippet_phrase, "format": "markdown"},
+    )
+    shown = client.post(
+        f"/api/campaigns/{campaign_id}/public-snippets",
+        json={"title": "Shown artifact", "body": shown_snippet_phrase, "format": "markdown"},
+    )
+    assert unshown.status_code == 201
+    assert shown.status_code == 201
+    assert client.post("/api/player-display/show-snippet", json={"snippet_id": shown.json()["id"]}).status_code == 200
+    player_before = client.get("/api/player-display").json()
+
+    preview = _build_reviewed_player_safe_preview(client, campaign_id=campaign_id, session_id=session_id)
+    rendered = preview["rendered_prompt"]
+    assert safe_recap_phrase in rendered
+    assert shown_snippet_phrase in rendered
+    assert private_recap_phrase not in rendered
+    assert private_memory_phrase not in rendered
+    assert planning_phrase not in rendered
+    assert proposal_phrase not in rendered
+    assert live_phrase not in rendered
+    assert unshown_snippet_phrase not in rendered
+    assert "public_snippet" in preview["source_classes"]
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        return json.dumps({"publicSnippetDraft": {"title": "Safe", "bodyMarkdown": "Safe public draft."}}), {}
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    changed = client.patch(
+        f"/api/scribe/session-recaps/{safe_recap['id']}/public-safety",
+        json={"campaign_id": campaign_id, "public_safe": False, "sensitivity_reason": "private_note"},
+    )
+    assert changed.status_code == 200
+    stale = client.post(
+        f"/api/campaigns/{campaign_id}/llm/player-safe-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    )
+    assert stale.status_code == 409
+    assert stale.json()["error"]["code"] == "context_preview_stale"
+    assert client.get("/api/player-display").json() == player_before
+    assert private_recap["public_safe"] is False
+
+
+def test_player_safe_run_warning_gate_snippet_creation_and_player_serializer(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/session-recaps",
+        json={"session_id": session_id, "title": "Public moon gate", "body_markdown": "The party repaired the moon gate in public."},
+    ).json()
+    assert client.patch(
+        f"/api/scribe/session-recaps/{recap['id']}/public-safety",
+        json={"campaign_id": campaign_id, "public_safe": True, "sensitivity_reason": None},
+    ).status_code == 200
+    player_before = client.get("/api/player-display").json()
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        return (
+            json.dumps({"publicSnippetDraft": {"title": "Moon Gate", "bodyMarkdown": "The party repaired the moon gate."}}),
+            {"usage": {"prompt_tokens": 80, "completion_tokens": 20}},
+        )
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    preview = _build_reviewed_player_safe_preview(client, campaign_id=campaign_id, session_id=session_id)
+    run = client.post(
+        f"/api/campaigns/{campaign_id}/llm/player-safe-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    )
+    assert run.status_code == 200
+    run_body = run.json()
+    assert run_body["public_snippet_draft"]["title"] == "Moon Gate"
+    assert client.get("/api/player-display").json() == player_before
+    with sqlite3.connect(migrated_settings.db_path) as connection:
+        assert connection.execute("SELECT count(*) FROM public_snippets").fetchone()[0] == 0
+
+    edited_body = "The party repaired the moon gate. Unknown to the party, this is still risky phrasing."
+    scan = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/public-safety-warnings",
+        json={"title": "Moon Gate", "body_markdown": edited_body},
+    )
+    assert scan.status_code == 200
+    scan_body = scan.json()
+    assert scan_body["ack_required"] is True
+    assert any(warning["code"] == "unknown_to_party" for warning in scan_body["warnings"])
+
+    invalid_manual = client.post(
+        f"/api/campaigns/{campaign_id}/public-snippets",
+        json={
+            "title": "Bad provenance",
+            "body": edited_body,
+            "format": "markdown",
+            "creation_source": "manual",
+            "source_llm_run_id": run_body["run"]["id"],
+        },
+    )
+    assert invalid_manual.status_code == 400
+    assert invalid_manual.json()["error"]["code"] == "invalid_snippet_creation_source"
+
+    without_ack = client.post(
+        f"/api/campaigns/{campaign_id}/public-snippets",
+        json={
+            "title": "Moon Gate",
+            "body": edited_body,
+            "format": "markdown",
+            "creation_source": "llm_scribe",
+            "source_llm_run_id": run_body["run"]["id"],
+            "source_draft_hash": run_body["source_draft_hash"],
+            "warning_content_hash": scan_body["content_hash"],
+        },
+    )
+    assert without_ack.status_code == 409
+    assert without_ack.json()["error"]["code"] == "public_safety_ack_required"
+
+    edited_with_markup = "# Big\n<script>alert(1)</script>\n![secret](http://image)\n[link](https://example.com)\n" + edited_body
+    stale_scan_create = client.post(
+        f"/api/campaigns/{campaign_id}/public-snippets",
+        json={
+            "title": "Moon Gate",
+            "body": edited_with_markup,
+            "format": "markdown",
+            "creation_source": "llm_scribe",
+            "source_llm_run_id": run_body["run"]["id"],
+            "source_draft_hash": run_body["source_draft_hash"],
+            "warning_content_hash": scan_body["content_hash"],
+            "warning_ack_content_hash": scan_body["content_hash"],
+        },
+    )
+    assert stale_scan_create.status_code == 409
+    assert stale_scan_create.json()["error"]["code"] == "public_safety_scan_stale"
+
+    rescanned = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/public-safety-warnings",
+        json={"title": "Moon Gate", "body_markdown": edited_with_markup},
+    ).json()
+    created = client.post(
+        f"/api/campaigns/{campaign_id}/public-snippets",
+        json={
+            "title": "Moon Gate",
+            "body": edited_with_markup,
+            "format": "markdown",
+            "creation_source": "llm_scribe",
+            "source_llm_run_id": run_body["run"]["id"],
+            "source_draft_hash": run_body["source_draft_hash"],
+            "warning_content_hash": rescanned["content_hash"],
+            "warning_ack_content_hash": rescanned["content_hash"],
+        },
+    )
+    assert created.status_code == 201
+    created_body = created.json()
+    assert created_body["creation_source"] == "llm_scribe"
+    assert created_body["source_llm_run_id"] == run_body["run"]["id"]
+    assert created_body["safety_warnings"]
+    assert "matched_text" not in created_body["safety_warnings"][0]
+    assert client.get("/api/player-display").json() == player_before
+
+    export = client.post("/api/storage/export")
+    assert export.status_code == 200
+    archive_path = migrated_settings.export_dir / export.json()["archive_name"]
+    with tarfile.open(archive_path, "r:gz") as archive:
+        db_bytes = archive.extractfile(DB_ARCHIVE_PATH).read()  # type: ignore[union-attr]
+    snapshot = migrated_settings.export_dir / "player-safe-snippet-export.sqlite3"
+    snapshot.write_bytes(db_bytes)
+    with sqlite3.connect(snapshot) as connection:
+        exported = connection.execute(
+            "SELECT creation_source, source_llm_run_id, source_draft_hash, safety_warnings_json FROM public_snippets WHERE id = ?",
+            (created_body["id"],),
+        ).fetchone()
+    assert exported == ("manual", None, None, "[]")
+
+    shown = client.post("/api/player-display/show-snippet", json={"snippet_id": created_body["id"]})
+    assert shown.status_code == 200
+    payload = shown.json()["payload"]
+    assert payload["type"] == "public_snippet"
+    assert "creation_source" not in payload
+    assert "source_llm_run_id" not in payload
+    assert "safety_warnings" not in payload
+    assert "<script>" not in payload["body"]
+    assert "http://image" not in payload["body"]
+    assert "https://example.com" not in payload["body"]
+    snippet_after_publish = client.get(f"/api/campaigns/{campaign_id}/public-snippets").json()["snippets"][0]
+    assert snippet_after_publish["last_published_at"] is not None
+    assert snippet_after_publish["publication_count"] == 1
+
+
+def test_player_safe_empty_context_instruction_only_gate(migrated_settings):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    weak = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.player_safe_recap", "visibility_mode": "public_safe", "gm_instruction": "recap pls"},
+    )
+    strong = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={
+            "session_id": session_id,
+            "task_kind": "session.player_safe_recap",
+            "visibility_mode": "public_safe",
+            "gm_instruction": "Write a short player-facing reminder that the party rested at camp and saw dawn break.",
+        },
+    )
+    assert weak.status_code == 400
+    assert weak.json()["error"]["code"] == "public_safe_context_empty"
+    assert strong.status_code == 201
+    assert strong.json()["warnings"][0]["code"] == "instruction_only_public_safe_draft"
+
+
+def test_public_safety_patch_requires_matching_campaign(migrated_settings):
+    client = _client(migrated_settings)
+    campaign_a, session_a = _campaign_session(client)
+    campaign_b, _session_b = _campaign_session(client)
+    recap = client.post(
+        f"/api/campaigns/{campaign_a}/scribe/session-recaps",
+        json={"session_id": session_a, "title": "Private recap", "body_markdown": "Private body"},
+    ).json()
+    rejected = client.patch(
+        f"/api/scribe/session-recaps/{recap['id']}/public-safety",
+        json={"campaign_id": campaign_b, "public_safe": True, "sensitivity_reason": None},
+    )
+    assert rejected.status_code == 404
+    recaps = client.get(f"/api/campaigns/{campaign_a}/scribe/session-recaps?session_id={session_a}").json()["recaps"]
+    assert recaps[0]["public_safe"] is False
 
 
 def test_branch_scope_validation_and_campaign_focus_warning(migrated_settings):

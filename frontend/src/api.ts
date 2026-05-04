@@ -9,6 +9,7 @@ import type {
   BundledMapCreateResult,
   Campaign,
   CampaignMemoryEntry,
+  CampaignMemoryEntriesResponse,
   CombatantDeleteResult,
   CombatantDisposition,
   CombatantRecord,
@@ -28,6 +29,7 @@ import type {
   MapRecord,
   Meta,
   BuildBranchResult,
+  PlayerSafeRecapResult,
   BuildRecapResult,
   LlmContextPackage,
   LlmProviderProfile,
@@ -40,6 +42,7 @@ import type {
   PlayerDisplayState,
   PublicSnippet,
   PublicSnippetsResponse,
+  PublicSafetyWarningScanResult,
   PartyTrackerConfig,
   PlanningMarker,
   PlanningMarkersResponse,
@@ -55,6 +58,7 @@ import type {
   SceneMap,
   Session,
   SessionRecap,
+  SessionRecapsResponse,
   SessionTranscriptEvent,
   StorageArtifact,
   StorageStatus,
@@ -165,7 +169,20 @@ export const api = {
     return request<Note>(`/api/campaigns/${campaignId}/notes/import-upload`, { method: "POST", body });
   },
   publicSnippets: (campaignId: string) => request<PublicSnippetsResponse>(`/api/campaigns/${campaignId}/public-snippets`),
-  createPublicSnippet: (campaignId: string, payload: { note_id?: string | null; title?: string | null; body: string; format?: "markdown" }) =>
+  createPublicSnippet: (
+    campaignId: string,
+    payload: {
+      note_id?: string | null;
+      title?: string | null;
+      body: string;
+      format?: "markdown";
+      creation_source?: "manual" | "llm_scribe";
+      source_llm_run_id?: string | null;
+      source_draft_hash?: string | null;
+      warning_content_hash?: string | null;
+      warning_ack_content_hash?: string | null;
+    }
+  ) =>
     request<PublicSnippet>(`/api/campaigns/${campaignId}/public-snippets`, {
       method: "POST",
       body: JSON.stringify(payload)
@@ -226,6 +243,8 @@ export const api = {
       scope_kind?: "campaign" | "session" | "scene";
       visibility_mode?: "gm_private" | "public_safe";
       gm_instruction?: string;
+      include_unshown_public_snippets?: boolean;
+      excluded_source_refs?: string[];
     }
   ) =>
     request<LlmContextPackage>(`/api/campaigns/${campaignId}/llm/context-preview`, {
@@ -244,6 +263,19 @@ export const api = {
     }),
   buildBranchDirections: (campaignId: string, payload: { provider_profile_id: string; context_package_id: string }) =>
     request<BuildBranchResult>(`/api/campaigns/${campaignId}/llm/branch-directions/build`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  buildPlayerSafeRecap: (
+    campaignId: string,
+    payload: { session_id: string; provider_profile_id: string; context_package_id: string }
+  ) =>
+    request<PlayerSafeRecapResult>(`/api/campaigns/${campaignId}/llm/player-safe-recap/build`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  scanPublicSafetyWarnings: (campaignId: string, payload: { title?: string | null; body_markdown: string }) =>
+    request<PublicSafetyWarningScanResult>(`/api/campaigns/${campaignId}/scribe/public-safety-warnings`, {
       method: "POST",
       body: JSON.stringify(payload)
     }),
@@ -290,6 +322,26 @@ export const api = {
   ) =>
     request<SessionRecap>(`/api/campaigns/${campaignId}/scribe/session-recaps`, {
       method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  sessionRecaps: (campaignId: string, sessionId?: string | null) =>
+    request<SessionRecapsResponse>(`/api/campaigns/${campaignId}/scribe/session-recaps${sessionId ? `?session_id=${sessionId}` : ""}`),
+  patchSessionRecapPublicSafety: (
+    recapId: string,
+    payload: { campaign_id?: string | null; public_safe: boolean; sensitivity_reason?: string | null }
+  ) =>
+    request<SessionRecap>(`/api/scribe/session-recaps/${recapId}/public-safety`, {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    }),
+  memoryEntries: (campaignId: string, sessionId?: string | null) =>
+    request<CampaignMemoryEntriesResponse>(`/api/campaigns/${campaignId}/scribe/memory-entries${sessionId ? `?session_id=${sessionId}` : ""}`),
+  patchMemoryEntryPublicSafety: (
+    entryId: string,
+    payload: { campaign_id?: string | null; public_safe: boolean; sensitivity_reason?: string | null }
+  ) =>
+    request<CampaignMemoryEntry>(`/api/scribe/memory-entries/${entryId}/public-safety`, {
+      method: "PATCH",
       body: JSON.stringify(payload)
     }),
   memoryCandidates: (campaignId: string) => request<MemoryCandidatesResponse>(`/api/campaigns/${campaignId}/scribe/memory-candidates`),

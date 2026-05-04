@@ -562,6 +562,8 @@ class PublicSnippet(Base):
     __tablename__ = "public_snippets"
     __table_args__ = (
         CheckConstraint("format in ('markdown')", name="ck_public_snippets_format"),
+        CheckConstraint("creation_source in ('manual', 'llm_scribe')", name="ck_public_snippets_creation_source"),
+        CheckConstraint("publication_count >= 0", name="ck_public_snippets_publication_count"),
     )
 
     id: Mapped[str] = mapped_column(primary_key=True)
@@ -572,6 +574,12 @@ class PublicSnippet(Base):
     title: Mapped[str | None] = mapped_column()
     body: Mapped[str] = mapped_column(Text, nullable=False)
     format: Mapped[str] = mapped_column(default="markdown", nullable=False)
+    creation_source: Mapped[str] = mapped_column(default="manual", nullable=False)
+    source_llm_run_id: Mapped[str | None] = mapped_column(ForeignKey("llm_runs.id", ondelete="SET NULL"), index=True)
+    source_draft_hash: Mapped[str | None] = mapped_column()
+    safety_warnings_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    last_published_at: Mapped[str | None] = mapped_column()
+    publication_count: Mapped[int] = mapped_column(default=0, nullable=False)
     created_at: Mapped[str] = mapped_column(nullable=False)
     updated_at: Mapped[str] = mapped_column(nullable=False)
 
@@ -675,6 +683,7 @@ class LlmContextPackage(Base):
     visibility_mode: Mapped[str] = mapped_column(default="gm_private", nullable=False)
     gm_instruction: Mapped[str] = mapped_column(Text, default="", nullable=False)
     source_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    context_options_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
     rendered_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     source_ref_hash: Mapped[str] = mapped_column(nullable=False, index=True)
     warnings_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
@@ -731,6 +740,8 @@ class SessionRecap(Base):
     title: Mapped[str] = mapped_column(nullable=False)
     body_markdown: Mapped[str] = mapped_column(Text, nullable=False)
     evidence_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    public_safe: Mapped[bool] = mapped_column(default=False, nullable=False)
+    sensitivity_reason: Mapped[str | None] = mapped_column()
     created_at: Mapped[str] = mapped_column(nullable=False)
     updated_at: Mapped[str] = mapped_column(nullable=False)
 
@@ -781,6 +792,8 @@ class CampaignMemoryEntry(Base):
     body: Mapped[str] = mapped_column(Text, nullable=False)
     evidence_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     tags_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    public_safe: Mapped[bool] = mapped_column(default=False, nullable=False)
+    sensitivity_reason: Mapped[str | None] = mapped_column()
     created_at: Mapped[str] = mapped_column(nullable=False)
     updated_at: Mapped[str] = mapped_column(nullable=False)
 
