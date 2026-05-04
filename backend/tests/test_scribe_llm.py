@@ -650,6 +650,8 @@ def test_branch_proposals_marker_context_policy_and_player_boundary(migrated_set
     assert detail["proposal_set"]["option_count"] == 3
     assert detail["proposal_set"]["degraded"] is False
     first, second, third = detail["options"]
+    assert [option["option_index"] for option in detail["options"]] == [0, 1, 2]
+    assert [option["title"] for option in detail["options"]] == ["Direction 1", "Direction 2", "Direction 3"]
 
     selected = client.post(f"/api/proposal-options/{first['id']}/select")
     assert selected.status_code == 200
@@ -737,6 +739,57 @@ def test_branch_proposals_marker_context_policy_and_player_boundary(migrated_set
         assert connection.execute("SELECT count(*) FROM session_recaps").fetchone()[0] == 0
     finally:
         connection.close()
+
+
+def test_proposal_detail_uses_stable_option_index_order(migrated_settings):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    proposal_set_id = "11111111-1111-4111-8111-111111111111"
+    now = "2026-05-04T00:00:00Z"
+    with sqlite3.connect(migrated_settings.db_path) as connection:
+        connection.execute(
+            """
+            INSERT INTO proposal_sets
+                (id, campaign_id, session_id, scene_id, llm_run_id, context_package_id, task_kind, scope_kind, title, status, normalization_warnings_json, created_at, updated_at)
+            VALUES (?, ?, ?, NULL, NULL, NULL, 'scene.branch_directions', 'session', 'Manual order fixture', 'proposed', '[]', ?, ?)
+            """,
+            (proposal_set_id, campaign_id, session_id, now, now),
+        )
+        for option_id, option_index, title in [
+            ("99999999-9999-4999-8999-999999999999", 0, "First model option"),
+            ("11111111-2222-4222-8222-222222222222", 1, "Second model option"),
+            ("55555555-5555-4555-8555-555555555555", 2, "Third model option"),
+        ]:
+            connection.execute(
+                """
+                INSERT INTO proposal_options
+                    (id, proposal_set_id, option_index, stable_option_key, title, summary, body, consequences, reveals, stays_hidden, proposed_delta_json, planning_marker_text, status, selected_at, canonized_at, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, '', '', '', '{}', ?, 'proposed', NULL, NULL, ?, ?)
+                """,
+                (
+                    option_id,
+                    proposal_set_id,
+                    option_index,
+                    f"key-{option_index}",
+                    title,
+                    f"Summary {option_index}",
+                    f"Body {option_index}",
+                    f"GM is considering option {option_index}.",
+                    now,
+                    now,
+                ),
+            )
+        connection.commit()
+
+    detail = client.get(f"/api/proposal-sets/{proposal_set_id}")
+    assert detail.status_code == 200
+    options = detail.json()["options"]
+    assert [option["id"] for option in options] == [
+        "99999999-9999-4999-8999-999999999999",
+        "11111111-2222-4222-8222-222222222222",
+        "55555555-5555-4555-8555-555555555555",
+    ]
+    assert [option["option_index"] for option in options] == [0, 1, 2]
 
 
 def test_branch_repair_degraded_warnings_and_single_child_proposal_set(migrated_settings, monkeypatch):

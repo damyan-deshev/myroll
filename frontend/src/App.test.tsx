@@ -555,6 +555,7 @@ describe("GM shell widgets", () => {
         {
           id: "opt1",
           proposal_set_id: "ps1",
+          option_index: 0,
           stable_option_key: "option_1",
           title: "Political debt",
           summary: "Make Varos useful but costly.",

@@ -638,6 +638,7 @@ class BuildBranchIn(BaseModel):
 class ProposalOptionOut(BaseModel):
     id: str
     proposal_set_id: str
+    option_index: int
     stable_option_key: str
     title: str
     summary: str
@@ -968,6 +969,7 @@ def _option_out(option: ProposalOption, markers_by_option: dict[str, PlanningMar
     return ProposalOptionOut(
         id=option.id,
         proposal_set_id=option.proposal_set_id,
+        option_index=option.option_index,
         stable_option_key=option.stable_option_key,
         title=option.title,
         summary=option.summary,
@@ -1028,7 +1030,7 @@ def _proposal_summary_out(
 
 
 def _proposal_detail_out(db: Session, proposal_set: ProposalSet) -> ProposalSetDetailOut:
-    options = list(db.scalars(select(ProposalOption).where(ProposalOption.proposal_set_id == proposal_set.id).order_by(ProposalOption.created_at, ProposalOption.id)))
+    options = list(db.scalars(select(ProposalOption).where(ProposalOption.proposal_set_id == proposal_set.id).order_by(ProposalOption.option_index, ProposalOption.id)))
     markers = list(
         db.scalars(
             select(PlanningMarker)
@@ -2469,11 +2471,12 @@ def _persist_proposal_set(
     )
     db.add(proposal_set)
     db.flush()
-    for option in options:
+    for index, option in enumerate(options):
         db.add(
             ProposalOption(
                 id=_new_id(),
                 proposal_set_id=proposal_set.id,
+                option_index=index,
                 stable_option_key=str(option["stableOptionKey"]),
                 title=str(option["title"])[:200],
                 summary=str(option["summary"]),
@@ -3536,7 +3539,7 @@ def list_proposal_sets(campaign_id: UUID, db: DbSession) -> ProposalSetsOut:
     sets = list(db.scalars(select(ProposalSet).where(ProposalSet.campaign_id == str(campaign_id)).order_by(ProposalSet.updated_at.desc(), ProposalSet.id)))
     summaries: list[ProposalSetSummaryOut] = []
     for proposal_set in sets:
-        options = list(db.scalars(select(ProposalOption).where(ProposalOption.proposal_set_id == proposal_set.id)))
+        options = list(db.scalars(select(ProposalOption).where(ProposalOption.proposal_set_id == proposal_set.id).order_by(ProposalOption.option_index, ProposalOption.id)))
         markers = list(
             db.scalars(
                 select(PlanningMarker).where(PlanningMarker.source_proposal_option_id.in_([option.id for option in options]))

@@ -801,6 +801,7 @@ export type BuildRecapResult = {
 export type ProposalOption = {
   id: string;
   proposal_set_id: string;
+  option_index: number;
   stable_option_key: string;
   title: string;
   summary: string;

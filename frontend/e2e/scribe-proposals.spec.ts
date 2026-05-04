@@ -88,6 +88,7 @@ test("Scribe branch proposal visual inspection keeps planning private", async ({
       {
         id: "opt1",
         proposal_set_id: "ps1",
+        option_index: 0,
         stable_option_key: "political_debt",
         title: "Political debt",
         summary: "Make Varos helpful but costly.",
@@ -107,6 +108,7 @@ test("Scribe branch proposal visual inspection keeps planning private", async ({
       {
         id: "opt2",
         proposal_set_id: "ps1",
+        option_index: 1,
         stable_option_key: "broken_bridge",
         title: "Broken bridge",
         summary: "Move the tension to the bridge itself.",

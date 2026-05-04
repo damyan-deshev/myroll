@@ -43,6 +43,7 @@ type BuildBranchResult = {
 };
 type ProposalOption = {
   id: string;
+  option_index: number;
   title: string;
   summary: string;
   body: string;
@@ -102,7 +103,7 @@ type JourneyReport = {
   notes: Array<{ label: string; campaignClock: string; eventId: string; orderIndex: number; body: string }>;
   branch: {
     instruction?: string;
-    options: Array<Pick<ProposalOption, "title" | "summary" | "body" | "consequences" | "reveals" | "stays_hidden" | "planning_marker_text" | "status">>;
+    options: Array<Pick<ProposalOption, "option_index" | "title" | "summary" | "body" | "consequences" | "reveals" | "stays_hidden" | "planning_marker_text" | "status">>;
     chosenOptionIndex?: number;
     chosenMarker?: PlanningMarker;
     selectedWithoutMarkerPromptExcerpt?: string;
@@ -642,6 +643,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     expect(branchBuild.proposal_set, "branch output should create a proposal set").not.toBeNull();
     const branchDetail = branchBuild.proposal_set!;
     report.branch.options = branchDetail.options.map((option) => ({
+      option_index: option.option_index,
       title: option.title,
       summary: option.summary,
       body: option.body,

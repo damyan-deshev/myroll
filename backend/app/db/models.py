@@ -899,6 +899,7 @@ class ProposalOption(Base):
 
     id: Mapped[str] = mapped_column(primary_key=True)
     proposal_set_id: Mapped[str] = mapped_column(ForeignKey("proposal_sets.id", ondelete="CASCADE"), nullable=False, index=True)
+    option_index: Mapped[int] = mapped_column(default=0, nullable=False)
     stable_option_key: Mapped[str] = mapped_column(nullable=False)
     title: Mapped[str] = mapped_column(nullable=False)
     summary: Mapped[str] = mapped_column(Text, nullable=False)
