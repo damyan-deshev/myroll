@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 
 from backend.app.db.engine import get_engine
-from backend.app.db.models import CampaignMemoryEntry, Entity, Note, PlanningMarker, SessionRecap
+from backend.app.db.models import CampaignMemoryEntry, Entity, LlmProviderProfile, Note, PlanningMarker, SessionRecap
 from backend.app.factory import create_app
 from backend.app.storage_export import DB_ARCHIVE_PATH, EXPORT_MANIFEST
 from backend.app.time import utc_now_z
@@ -83,6 +83,58 @@ def test_json_parser_preserves_structural_quote_before_object_comma():
 
     assert parsed["privateRecap"]["title"] == "Огледален лазарет"
     assert parsed["memoryCandidateDrafts"][0]["title"] == "Пакт"
+
+
+def test_provider_probe_retains_raw_payloads_in_debug(monkeypatch):
+    from backend.app.api import routes_llm
+
+    class FakeModelsResponse:
+        status_code = 200
+
+    class FakeHttpClient:
+        def __init__(self, *, timeout: float) -> None:
+            self.timeout = timeout
+
+        def __enter__(self):  # noqa: ANN204
+            return self
+
+        def __exit__(self, exc_type, exc, traceback) -> None:  # noqa: ANN001
+            return None
+
+        def get(self, url: str, *, headers: dict[str, str]) -> FakeModelsResponse:
+            assert url == "http://provider.test/v1/models"
+            assert headers == {}
+            return FakeModelsResponse()
+
+    def fake_send_chat(profile: LlmProviderProfile, payload: dict[str, object], *, timeout: float):  # noqa: ANN001
+        assert profile.model_id == "fixture-model"
+        if "response_format" in payload:
+            return '{"ok": false, "mode": "wrong"}', {"usage": {"prompt_tokens": 1}}
+        raise routes_llm.api_error(504, "provider_timeout", "Provider request timed out")
+
+    now = utc_now_z()
+    profile = LlmProviderProfile(
+        id=_id(),
+        label="Probe",
+        vendor="custom",
+        base_url="http://provider.test/v1",
+        model_id="fixture-model",
+        key_source_type="none",
+        created_at=now,
+        updated_at=now,
+    )
+    monkeypatch.setenv("MYROLL_LLM_PAYLOAD_RETENTION", "debug")
+    monkeypatch.setattr(routes_llm.httpx, "Client", FakeHttpClient)
+    monkeypatch.setattr(routes_llm, "_send_chat", fake_send_chat)
+
+    level, metadata, _message = routes_llm._probe_provider(profile)
+
+    assert level == "level_0_text_only"
+    probe_payloads = metadata["probePayloads"]
+    assert probe_payloads["json_probe"]["request"]["response_format"] == {"type": "json_object"}
+    assert probe_payloads["json_probe"]["responseText"] == '{"ok": false, "mode": "wrong"}'
+    assert probe_payloads["text_json_probe"]["request"]["model"] == "fixture-model"
+    assert probe_payloads["text_json_probe"]["error"]["code"] == "provider_timeout"
 
 
 def test_live_capture_orders_and_correction_projection(migrated_settings):
@@ -264,6 +316,7 @@ def test_recap_memory_recall_and_export_redaction(migrated_settings, monkeypatch
             "[redacted for export]",
             "[]",
         )
+        assert connection.execute("SELECT last_probe_result_json FROM llm_provider_profiles").fetchone() == (None,)
     finally:
         connection.close()
 

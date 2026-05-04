@@ -1221,6 +1221,33 @@ def _send_chat(profile: LlmProviderProfile, payload: dict[str, object], *, timeo
     return text, {"usage": usage or {}, "response_id": data.get("id") if isinstance(data, dict) else None}
 
 
+def _record_probe_debug_payload(
+    metadata: dict[str, object],
+    probe_name: str,
+    *,
+    request_payload: dict[str, object] | None = None,
+    response_text: str | None = None,
+    response_metadata: dict[str, object] | None = None,
+    error: Exception | None = None,
+) -> None:
+    if not _retain_llm_payloads():
+        return
+    probe_payloads = metadata.setdefault("probePayloads", {})
+    if not isinstance(probe_payloads, dict):
+        return
+    probe = probe_payloads.setdefault(probe_name, {})
+    if not isinstance(probe, dict):
+        return
+    if request_payload is not None:
+        probe["request"] = request_payload
+    if response_text is not None:
+        probe["responseText"] = response_text
+    if response_metadata is not None:
+        probe["responseMetadata"] = response_metadata
+    if error is not None:
+        probe["error"] = getattr(error, "detail", None) or str(error)
+
+
 def _probe_provider(profile: LlmProviderProfile) -> tuple[str, dict[str, object], str]:
     metadata: dict[str, object] = {"models_endpoint": "not_checked", "json_probe": "not_checked"}
     headers = _headers_for_profile(profile)
@@ -1235,8 +1262,11 @@ def _probe_provider(profile: LlmProviderProfile) -> tuple[str, dict[str, object]
         {"role": "system", "content": "Return JSON only."},
         {"role": "user", "content": 'Return exactly {"ok": true, "mode": "json_probe"} as JSON.'},
     ]
+    json_probe_payload = _chat_request(profile, messages, response_format=True)
+    _record_probe_debug_payload(metadata, "json_probe", request_payload=json_probe_payload)
     try:
-        text, response_metadata = _send_chat(profile, _chat_request(profile, messages, response_format=True), timeout=20.0)
+        text, response_metadata = _send_chat(profile, json_probe_payload, timeout=20.0)
+        _record_probe_debug_payload(metadata, "json_probe", response_text=text, response_metadata=response_metadata)
         parsed = _parse_json_object(text)
         if parsed.get("ok") is True:
             metadata["json_probe"] = "ok"
@@ -1245,9 +1275,13 @@ def _probe_provider(profile: LlmProviderProfile) -> tuple[str, dict[str, object]
         metadata["json_probe"] = "invalid_shape"
     except Exception as error:  # noqa: BLE001
         metadata["json_probe"] = getattr(error, "detail", None) or str(error)
+        _record_probe_debug_payload(metadata, "json_probe", error=error)
 
+    text_probe_payload = _chat_request(profile, messages, response_format=False)
+    _record_probe_debug_payload(metadata, "text_json_probe", request_payload=text_probe_payload)
     try:
-        text, response_metadata = _send_chat(profile, _chat_request(profile, messages, response_format=False), timeout=20.0)
+        text, response_metadata = _send_chat(profile, text_probe_payload, timeout=20.0)
+        _record_probe_debug_payload(metadata, "text_json_probe", response_text=text, response_metadata=response_metadata)
         parsed = _parse_json_object(text)
         if parsed.get("ok") is True:
             metadata["text_json_probe"] = "ok"
@@ -1255,6 +1289,7 @@ def _probe_provider(profile: LlmProviderProfile) -> tuple[str, dict[str, object]
             return "level_1_json_best_effort", metadata, "Provider returned parseable JSON without JSON mode."
     except Exception as error:  # noqa: BLE001
         metadata["text_json_probe"] = getattr(error, "detail", None) or str(error)
+        _record_probe_debug_payload(metadata, "text_json_probe", error=error)
     return "level_0_text_only", metadata, "Provider answered, but structured JSON was not validated."
 
 
