@@ -1918,7 +1918,7 @@ def _render_recap_prompt(source_refs: list[dict[str, object]], gm_instruction: s
             ("PLAYED EVIDENCE", lambda ref: ref.get("lane") == "played_evidence"),
             ("SCOPED GM NOTES ELIGIBLE FOR RECALL", lambda ref: ref.get("lane") == "gm_note"),
             (
-                "GM PLANNING INTENT, NOT PLAYED EVIDENCE (GM PLANNING CONTEXT, NOT PLAYED EVENTS)",
+                "GM PLANNING INTENT, NOT PLAYED EVIDENCE (GM intent, not played history; GM PLANNING CONTEXT, NOT PLAYED EVENTS)",
                 lambda ref: ref.get("claimRole") == "planning_intent" or ref.get("lane") == "planning",
             ),
         ],
@@ -1999,7 +1999,7 @@ def _render_recap_verification_prompt(
             ("PLAYED EVIDENCE", lambda ref: ref.get("lane") == "played_evidence"),
             ("SCOPED GM NOTES ELIGIBLE FOR RECALL", lambda ref: ref.get("lane") == "gm_note"),
             (
-                "GM PLANNING INTENT, NOT PLAYED EVIDENCE (GM PLANNING CONTEXT, NOT PLAYED EVENTS)",
+                "GM PLANNING INTENT, NOT PLAYED EVIDENCE (GM intent, not played history; GM PLANNING CONTEXT, NOT PLAYED EVENTS)",
                 lambda ref: ref.get("claimRole") == "planning_intent" or ref.get("lane") == "planning",
             ),
         ],
@@ -2078,7 +2078,7 @@ def _render_branch_prompt(source_refs: list[dict[str, object]], gm_instruction: 
             ("RECENT PLAYED EVIDENCE", lambda ref: ref.get("lane") == "played_evidence"),
             ("SCOPED GM NOTES ELIGIBLE FOR RECALL", lambda ref: ref.get("lane") == "gm_note"),
             (
-                "ACTIVE GM PLANNING INTENT, NOT PLAYED EVIDENCE (GM PLANNING CONTEXT, NOT PLAYED EVENTS)",
+                "ACTIVE GM PLANNING INTENT, NOT PLAYED EVIDENCE (GM intent, not played history; GM PLANNING CONTEXT, NOT PLAYED EVENTS)",
                 lambda ref: ref.get("claimRole") == "planning_intent" or ref.get("lane") == "planning",
             ),
         ],
