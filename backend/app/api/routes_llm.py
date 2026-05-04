@@ -76,6 +76,31 @@ SPECULATIVE_EVIDENCE_PATTERNS = (
     r"\bmust choose\b",
     r"\bwould\b",
     r"\bGM is considering\b",
+    r"\bако се изиграе\b",
+    r"\bако бъде изиграно\b",
+    r"\bвъзможна последица\b",
+    r"\bможе\b",
+    r"\bби мог(ъл|ла|ло|ли)\b",
+    r"\bби\b",
+    r"\bевентуално\b",
+    r"\bвъзможно е\b",
+    r"\bGM обмисля\b",
+    r"\bДМ обмисля\b",
+)
+DIRECT_SPECULATIVE_EVIDENCE_PATTERNS = (
+    r"\bif played\b",
+    r"\bpossible consequence",
+    r"\bGM is considering\b",
+    r"\bако се изиграе\b",
+    r"\bако бъде изиграно\b",
+    r"\bвъзможна последица\b",
+    r"\bможе\b",
+    r"\bби мог(ъл|ла|ло|ли)\b",
+    r"\bби\b",
+    r"\bевентуално\b",
+    r"\bвъзможно е\b",
+    r"\bGM обмисля\b",
+    r"\bДМ обмисля\b",
 )
 CANONISH_MARKER_PATTERNS = (
     r"\bhappened\b",
@@ -1690,7 +1715,7 @@ def _render_recap_prompt(source_refs: list[dict[str, object]], gm_instruction: s
                 "title": "string",
                 "body": "string",
                 "claimStrength": "directly_evidenced|strong_inference|weak_inference|gm_review_required",
-                "evidenceRefs": [{"kind": "source kind", "id": "source id", "quote": "short exact quote"}],
+                "evidenceRefs": [{"kind": "copy evidenceRefKind", "id": "copy evidenceRefId", "quote": "short exact quote"}],
                 "relatedPlanningMarkerId": "optional planning marker id copied exactly from a planning source block when later played evidence confirms it",
             }
         ],
@@ -2086,8 +2111,8 @@ def _evidence_ref_analysis(evidence_refs: list[object], source_refs: list[dict[s
         if not isinstance(ref, dict):
             errors.append("evidence_ref_not_object")
             continue
-        kind = str(ref.get("kind") or "").strip()
-        source_id = str(ref.get("id") or "").strip()
+        kind = str(ref.get("kind") or ref.get("evidenceRefKind") or "").strip()
+        source_id = str(ref.get("id") or ref.get("evidenceRefId") or "").strip()
         quote = str(ref.get("quote") or "").strip()
         if not kind or not source_id:
             errors.append("evidence_ref_missing_source")
@@ -2113,7 +2138,7 @@ def _evidence_ref_analysis(evidence_refs: list[object], source_refs: list[dict[s
                 if requires_direct_quote and source_is_planning and _has_speculative_language(quote):
                     errors.append("speculative_evidence_for_direct_claim")
                 elif requires_direct_quote and not source_is_planning and _has_speculative_language(quote):
-                    for pattern in (r"\bif played\b", r"\bpossible consequence", r"\bGM is considering\b"):
+                    for pattern in DIRECT_SPECULATIVE_EVIDENCE_PATTERNS:
                         if re.search(pattern, quote, flags=re.IGNORECASE):
                             errors.append("speculative_evidence_for_direct_claim")
                             break

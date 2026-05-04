@@ -2335,6 +2335,7 @@ Shipped v1 limitations:
 - one marker can be canonized by at most one memory entry;
 - manual relinking is deferred;
 - entity patching and proposal-body canonization remain deferred;
+- `candidate_body_resembles_planning_marker` is a conservative exact/substring warning after normalization, not semantic paraphrase detection; GM review remains the authority for whether a candidate describes played events rather than planning intent;
 - hard delete may sever marker/option provenance because new provenance FKs use `ON DELETE SET NULL`.
 
 ### LLM-5: Vector Retrieval And Embeddings

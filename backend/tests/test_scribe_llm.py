@@ -363,6 +363,105 @@ def _fixture_provider(client: TestClient, monkeypatch, fake_send_chat, *, level:
     return provider_id
 
 
+def test_recap_accepts_canonical_evidence_ref_alias_keys(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    event = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "Aureon returned the moon-silver coin at dawn."},
+    ).json()
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        return (
+            json.dumps(
+                {
+                    "privateRecap": {"title": "Returned coin", "bodyMarkdown": "Aureon returned the moon-silver coin."},
+                    "memoryCandidateDrafts": [
+                        {
+                            "title": "Aureon returned the coin",
+                            "body": "Aureon returned the moon-silver coin at dawn.",
+                            "claimStrength": "directly_evidenced",
+                            "evidenceRefs": [
+                                {
+                                    "evidenceRefKind": "session_transcript_event",
+                                    "evidenceRefId": event["id"],
+                                    "quote": "Aureon returned the moon-silver coin at dawn.",
+                                }
+                            ],
+                        }
+                    ],
+                    "continuityWarnings": [],
+                    "unresolvedThreads": [],
+                }
+            ),
+            {"usage": {"prompt_tokens": 80, "completion_tokens": 40}},
+        )
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Use canonical evidence refs."},
+    ).json()
+    assert client.post(f"/api/llm/context-packages/{preview['id']}/review").status_code == 200
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    )
+    assert recap.status_code == 200
+    assert len(recap.json()["candidates"]) == 1
+    assert recap.json()["rejected_drafts"] == []
+
+
+def test_recap_rejects_bulgarian_speculative_direct_evidence(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    event = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "Възможно е монетата да е прокълната."},
+    ).json()
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        return (
+            json.dumps(
+                {
+                    "privateRecap": {"title": "Монетата", "bodyMarkdown": "Групата обсъди монетата."},
+                    "memoryCandidateDrafts": [
+                        {
+                            "title": "Монетата е прокълната",
+                            "body": "Монетата е прокълната.",
+                            "claimStrength": "directly_evidenced",
+                            "evidenceRefs": [
+                                {
+                                    "kind": "session_transcript_event",
+                                    "id": event["id"],
+                                    "quote": "Възможно е монетата да е прокълната.",
+                                }
+                            ],
+                        }
+                    ],
+                    "continuityWarnings": [],
+                    "unresolvedThreads": [],
+                }
+            ),
+            {"usage": {"prompt_tokens": 80, "completion_tokens": 40}},
+        )
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Reject speculative claims."},
+    ).json()
+    assert client.post(f"/api/llm/context-packages/{preview['id']}/review").status_code == 200
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": preview["id"]},
+    )
+    assert recap.status_code == 200
+    body = recap.json()
+    assert body["candidates"] == []
+    assert "speculative_evidence_for_direct_claim" in body["rejected_drafts"][0]["errors"]
+
+
 def _proposal_fixture(option_count: int = 3) -> dict[str, object]:
     options = []
     for index in range(option_count):
