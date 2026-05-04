@@ -1547,6 +1547,162 @@ def test_linked_recap_candidate_accept_canonizes_marker_option_and_context(migra
     assert recall.json()["hits"][0]["source_kind"] == "campaign_memory_entry"
 
 
+def test_recap_adds_deterministic_link_candidate_when_played_source_names_active_marker(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    scene = client.post(
+        f"/api/campaigns/{campaign_id}/scenes",
+        json={"title": "Auction", "session_id": session_id},
+    ).json()
+    mode: dict[str, object] = {"task": "branch"}
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        if mode["task"] == "branch":
+            return json.dumps(_proposal_fixture(3)), {"usage": {"prompt_tokens": 120, "completion_tokens": 90}}
+        return (
+            json.dumps(
+                {
+                    "privateRecap": {
+                        "title": "Auction recap",
+                        "bodyMarkdown": "The structured branch outcome was recorded, but the model omitted the marker-linked candidate.",
+                    },
+                    "memoryCandidateDrafts": [
+                        {
+                            "title": "The blue seal darkened",
+                            "body": "The blue seal darkened at the third bell.",
+                            "claimStrength": "directly_evidenced",
+                            "evidenceRefs": [
+                                {
+                                    "kind": "session_transcript_event",
+                                    "id": mode["side_event_id"],
+                                    "quote": "The blue seal darkened at the third bell.",
+                                }
+                            ],
+                        }
+                    ],
+                    "continuityWarnings": [],
+                    "unresolvedThreads": [],
+                }
+            ),
+            {"usage": {"prompt_tokens": 100, "completion_tokens": 60}},
+        )
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    branch_preview = _build_reviewed_branch_preview(
+        client,
+        campaign_id=campaign_id,
+        session_id=session_id,
+        scene_id=scene["id"],
+        scope_kind="scene",
+    )
+    branch = client.post(
+        f"/api/campaigns/{campaign_id}/llm/branch-directions/build",
+        json={"provider_profile_id": provider_id, "context_package_id": branch_preview["id"]},
+    ).json()
+    option = branch["proposal_set"]["options"][1]
+    marker = client.post(
+        f"/api/proposal-options/{option['id']}/create-planning-marker",
+        json={"title": option["title"], "marker_text": option["planning_marker_text"]},
+    ).json()
+    played = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={
+            "session_id": session_id,
+            "scene_id": scene["id"],
+            "body": f'Structured branch outcome: "{marker["title"]}". Mira negotiated the bridge toll in public.',
+            "source": "played_branch_outcome",
+        },
+    ).json()
+    side_event = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "scene_id": scene["id"], "body": "The blue seal darkened at the third bell."},
+    ).json()
+    mode.update({"task": "recap", "played_event_id": played["id"], "side_event_id": side_event["id"]})
+
+    recap_preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={"session_id": session_id, "task_kind": "session.build_recap", "gm_instruction": "Extract confirmed played outcomes."},
+    ).json()
+    assert marker["title"] in recap_preview["rendered_prompt"]
+    assert client.post(f"/api/llm/context-packages/{recap_preview['id']}/review").status_code == 200
+
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/llm/session-recap/build",
+        json={"session_id": session_id, "provider_profile_id": provider_id, "context_package_id": recap_preview["id"]},
+    )
+
+    assert recap.status_code == 200
+    linked = [candidate for candidate in recap.json()["candidates"] if candidate["source_planning_marker_id"] == marker["id"]]
+    assert len(linked) == 1
+    assert linked[0]["source_proposal_option_id"] == option["id"]
+    assert "deterministic_planning_marker_candidate" in linked[0]["normalization_warnings"]
+    assert linked[0]["evidence_refs"][0]["id"] == played["id"]
+
+
+def test_deterministic_link_candidate_requires_structured_branch_outcome_source(migrated_settings):
+    from backend.app.api import routes_llm
+
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    now = utc_now_z()
+    marker_id = _id()
+    marker_title = "Option 2: Social blackmail with Orso"
+    factory = sessionmaker(bind=get_engine(migrated_settings), autoflush=False, expire_on_commit=False)
+    with factory() as db, db.begin():
+        db.add(
+            PlanningMarker(
+                id=marker_id,
+                campaign_id=campaign_id,
+                session_id=session_id,
+                scene_id=None,
+                source_proposal_option_id=None,
+                scope_kind="session",
+                status="active",
+                title=marker_title,
+                marker_text="GM is considering Orso as a social leverage path.",
+                lint_warnings_json="[]",
+                provenance_json="{}",
+                edited_from_source=False,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+    source_refs = [
+        {
+            "kind": "planning_marker",
+            "id": marker_id,
+            "relatedPlanningMarkerId": marker_id,
+            "lane": "planning",
+            "claimRole": "planning_intent",
+            "title": marker_title,
+            "body": "GM is considering Orso as a social leverage path.",
+        },
+        {
+            "kind": "session_transcript_event",
+            "id": "played-discussion-1",
+            "lane": "played_evidence",
+            "claimRole": "played_evidence",
+            "title": "Table discussion",
+            "body": f'The table discussed "{marker_title}" as a possible future route.',
+            "source": "typed",
+            "evidenceRefKind": "session_transcript_event",
+            "evidenceRefId": "played-discussion-1",
+        },
+    ]
+
+    with factory() as db:
+        supplemental = routes_llm._supplemental_marker_link_candidates(
+            db,
+            [],
+            source_refs,
+            campaign_id=campaign_id,
+            session_id=session_id,
+        )
+
+    assert supplemental == []
+
+
 def test_corpus_context_bundle_metadata_and_prompt_sections(migrated_settings):
     client = _client(migrated_settings)
     campaign_id, session_id = _campaign_session(client)

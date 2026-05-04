@@ -2297,6 +2297,17 @@ The matrix also introduced an advisory recap verifier loop. When enabled, `sessi
 
 Prompt discipline from the matrix is deliberately concrete. Branch and recap prompts include canonical final JSON examples, and the repair prompt is stricter about returning only valid JSON. This addresses structured-output drift without weakening backend validation. If a model still fails to produce valid schema, the run fails visibly or records a repair failure; Myroll does not silently downgrade structured work to prose.
 
+The matrix also surfaced the boundary between useful hardening and diminishing returns. After LLM-5b, a six-scenario Bulgarian-heavy matrix with debug payload retention passed all backend contract checks (`96/96`) and all model-behavior linkage checks (`6/6`). The remaining failures were product-quality review signals where the model's second branch option did not match the requested scenario anchor closely enough. Those are useful GM/developer prompts, but they are not evidence-admissibility failures.
+
+One tempting fix was to infer "the table chose option N" from natural-language phrases such as "followed option", "избра вариант", or "масата следва". We rejected that direction. DMs will use arbitrary vocabulary, languages, shorthand, and table idioms; a growing phrase ontology would recreate the language-specific rule-pack problem inside canonization. The deterministic supplement for missed marker linkage is therefore allowed only for explicitly structured played-branch outcome captures, currently represented as transcript event `source = "played_branch_outcome"`, plus an exact active marker title match and the normal source/lane/scope checks. Ordinary typed/dictated captures that merely mention a marker title do not create supplemental linked candidates.
+
+Current stop criterion for this family of work:
+
+- fix backend contract failures, prompt/rendered-payload leaks, JSON normalization failures, and `/player` boundary regressions immediately;
+- keep product-quality/model-behavior warnings visible in reports and GM UI;
+- do not add language-specific or style-specific deterministic rules solely to improve synthetic scenario prose scores;
+- prefer collecting real campaign failures before tightening more heuristics.
+
 Testing layers for advisory language rules must stay separate:
 
 - Hard contract tests assert language-agnostic structure with empty and counterfactual rule packs: planning/proposal lanes cannot become evidence, quotes must match real source text, unknown source kinds reject, and `/player` serializers strip Scribe state.

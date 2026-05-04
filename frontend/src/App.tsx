@@ -1396,6 +1396,10 @@ function ScribeWidget(props: SharedWidgetProps) {
   const pendingCandidates = (candidatesQuery.data?.candidates ?? []).filter((candidate) => candidate.status !== "accepted" && candidate.status !== "rejected");
   const proposalSets = proposalSetsQuery.data?.proposal_sets ?? [];
   const currentProposalDetail = branchDraft?.proposal_set ?? proposalDetailQuery.data ?? null;
+  const proposalWarningsForOption = (option: ProposalOption) =>
+    (currentProposalDetail?.normalization_warnings ?? []).filter(
+      (warning) => warning.code === "requested_slot_may_not_match" && Number(warning.slot) - 1 === option.option_index
+    );
   const activeMarkers = (planningMarkersQuery.data?.planning_markers ?? []).filter((marker) => marker.status === "active");
   const canonizedMarkers = (planningMarkersQuery.data?.planning_markers ?? []).filter((marker) => marker.status === "canonized");
   const publicSafeRecaps = sessionRecapsQuery.data?.recaps ?? [];
@@ -2021,49 +2025,62 @@ function ScribeWidget(props: SharedWidgetProps) {
               </div>
             ) : null}
             <div className="scribe-proposal-grid">
-              {currentProposalDetail.options.map((option: ProposalOption) => (
-                <div key={option.id} className="scribe-proposal-card">
-                  <div className="section-heading">
-                    <strong>{option.title}</strong>
-                    <span className={option.active_planning_marker_id ? "status-pill success" : option.status === "rejected" ? "status-pill danger" : "status-pill"}>
-                      {option.active_planning_marker_id ? "Active planning" : proposalOptionLabel(option.status)}
-                    </span>
+              {currentProposalDetail.options.map((option: ProposalOption) => {
+                const optionWarnings = proposalWarningsForOption(option);
+                return (
+                  <div key={option.id} className="scribe-proposal-card">
+                    <div className="section-heading">
+                      <strong>{option.title}</strong>
+                      <span className={option.active_planning_marker_id ? "status-pill success" : option.status === "rejected" ? "status-pill danger" : "status-pill"}>
+                        {option.active_planning_marker_id ? "Active planning" : proposalOptionLabel(option.status)}
+                      </span>
+                    </div>
+                    {optionWarnings.length ? (
+                      <div className="muted-block">
+                        <strong>Review this option before adopting</strong>
+                        <ul>
+                          {optionWarnings.map((warning, index) => (
+                            <li key={`${String(warning.code ?? "warning")}-${index}`}>{proposalWarningLabel(warning)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    <p>{option.summary}</p>
+                    <InfoRow label="Possible consequences if played" value={option.consequences || "Not specified"} />
+                    <InfoRow label="May reveal" value={option.reveals || "Not specified"} />
+                    <InfoRow label="Stays hidden" value={option.stays_hidden || "Not specified"} />
+                    <details>
+                      <summary>Draft body</summary>
+                      <p>{option.body}</p>
+                    </details>
+                    <div className="muted-block">
+                      <strong>Marker preview</strong>
+                      <p>{option.planning_marker_text}</p>
+                    </div>
+                    <div className="token-actions">
+                      <button
+                        disabled={option.status === "canonized"}
+                        onClick={() => {
+                          setAdoptOption(option);
+                          setMarkerTitle(option.title);
+                          setMarkerText(option.planning_marker_text);
+                          setMarkerConfirmWarnings(false);
+                        }}
+                      >
+                        Adopt as Planning Direction
+                      </button>
+                      <button onClick={() => saveOptionForLater.mutate(option.id)} disabled={saveOptionForLater.isPending || Boolean(option.active_planning_marker_id) || option.status === "canonized"}>
+                        Save for later
+                      </button>
+                      <button onClick={() => rejectOption.mutate(option.id)} disabled={rejectOption.isPending || Boolean(option.active_planning_marker_id) || option.status === "canonized"}>
+                        Reject
+                      </button>
+                    </div>
+                    {option.status === "canonized" ? <span className="muted">Canonized via memory; proposal actions are closed.</span> : null}
+                    {option.active_planning_marker_id ? <span className="muted">Expire or discard the active marker before rejecting or saving this option.</span> : null}
                   </div>
-                  <p>{option.summary}</p>
-                  <InfoRow label="Possible consequences if played" value={option.consequences || "Not specified"} />
-                  <InfoRow label="May reveal" value={option.reveals || "Not specified"} />
-                  <InfoRow label="Stays hidden" value={option.stays_hidden || "Not specified"} />
-                  <details>
-                    <summary>Draft body</summary>
-                    <p>{option.body}</p>
-                  </details>
-                  <div className="muted-block">
-                    <strong>Marker preview</strong>
-                    <p>{option.planning_marker_text}</p>
-                  </div>
-                  <div className="token-actions">
-                    <button
-                      disabled={option.status === "canonized"}
-                      onClick={() => {
-                        setAdoptOption(option);
-                        setMarkerTitle(option.title);
-                        setMarkerText(option.planning_marker_text);
-                        setMarkerConfirmWarnings(false);
-                      }}
-                    >
-                      Adopt as Planning Direction
-                    </button>
-                    <button onClick={() => saveOptionForLater.mutate(option.id)} disabled={saveOptionForLater.isPending || Boolean(option.active_planning_marker_id) || option.status === "canonized"}>
-                      Save for later
-                    </button>
-                    <button onClick={() => rejectOption.mutate(option.id)} disabled={rejectOption.isPending || Boolean(option.active_planning_marker_id) || option.status === "canonized"}>
-                      Reject
-                    </button>
-                  </div>
-                  {option.status === "canonized" ? <span className="muted">Canonized via memory; proposal actions are closed.</span> : null}
-                  {option.active_planning_marker_id ? <span className="muted">Expire or discard the active marker before rejecting or saving this option.</span> : null}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ) : null}

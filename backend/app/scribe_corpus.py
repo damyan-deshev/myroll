@@ -274,6 +274,7 @@ def compile_campaign_cards(db: Session, campaign_id: str) -> list[CorpusCardDraf
                     "evidenceRefId": event.id,
                     "correctsEventId": event.corrects_event_id,
                     "orderIndex": event.order_index,
+                    "source": event.source,
                 },
             )
         )

@@ -709,11 +709,12 @@ async function createTimedCapture(
   label: string,
   campaignClock: string,
   body: string,
+  source = "dictation",
 ): Promise<TranscriptEvent> {
   const event = await apiPost<TranscriptEvent>(
     request,
     `/api/campaigns/${campaignId}/scribe/transcript-events`,
-    { session_id: sessionId, scene_id: sceneId, body, source: "dictation" },
+    { session_id: sessionId, scene_id: sceneId, body, source },
     `capture ${label}`,
   );
   stampTranscriptEvent(event.id, campaignClock);
@@ -1148,6 +1149,7 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       scenario.labels.playedBranch,
       "2026-05-04T21:10:00Z",
       scenario.notes.playedBranch(chosen.title),
+      "played_branch_outcome",
     );
     await createTimedCapture(
       request,

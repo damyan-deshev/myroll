@@ -889,3 +889,18 @@ Consequences:
 - Prompt renderers section sources by claim role so canon memory, reviewed summaries, played evidence, GM notes, planning intent, and public artifacts stay distinct.
 - Public-safe context metadata is allowlist-built and must not expose private excluded source details.
 - Full Evidence Board UX, vectors, embeddings, and semantic graph edges remain deferred.
+
+## DR-060: Played-Branch Outcome Linkage Uses Structural Metadata
+
+Decision: deterministic supplemental linkage from a played capture to an active planning marker requires explicit structured source metadata, not natural-language phrase matching.
+
+Rationale:
+- Real-provider matrix runs showed that local models can occasionally omit `relatedPlanningMarkerId` even when the played capture names the chosen marker.
+- Inferring "the table chose option N" from phrase lists such as "followed option", "избра вариант", or table-specific shorthand would create an unbounded language/style ontology.
+- The durable invariant is source/lane/provenance structure, not the GM's wording.
+
+Consequences:
+- The deterministic supplement only runs for transcript refs marked with the structural source `played_branch_outcome`, plus exact active marker title match and normal campaign/session/scope checks.
+- Ordinary typed or dictated captures that merely mention a marker title do not create linked candidates.
+- The supplement creates only a memory candidate draft with visible `deterministic_planning_marker_candidate` normalization warning. It does not canonize anything; GM `Accept into Memory` remains the only canon write.
+- Synthetic matrix product-quality warnings are allowed to remain review signals once backend contracts, model linkage checks, JSON normalization, and `/player` boundaries pass.
