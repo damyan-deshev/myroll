@@ -21,6 +21,8 @@ Implementation planning:
 - `ROADMAP.md`
 - `BACKLOG.md`
 - `DECISION-REGISTER.md`
+- `SCRIBE-GM-FAQ.md`
+  - GM-facing Scribe field guide for model-quality warnings, screenshots, and manual recovery paths that may later become contextual UI hints.
 - `SECURITY-REVIEW-FOLLOWUP.md`
 - `BATTLE-MAP-ASSET-HANDOFF.md`
   - Current curated battle-map production pack location, bundled asset-pack requirement, manifest contract, importer starting point, and gridless-map calibration requirements.
