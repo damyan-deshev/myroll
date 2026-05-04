@@ -77,6 +77,7 @@ import type {
   ProposalOption,
   ProposalSetDetail,
   ProposalSetSummary,
+  PublicSafetyWarning,
   PublicSnippet,
   PublicMapToken,
   RuntimeState,
@@ -93,6 +94,12 @@ import type {
 } from "./types";
 
 type SaveStatus = "saved" | "saving" | "error";
+type PublicSafetyCurationAck = {
+  kind: "recap" | "memory";
+  id: string;
+  contentHash: string;
+  warnings: PublicSafetyWarning[];
+};
 type WidgetStatusMap = Record<string, SaveStatus>;
 
 const placeholderCopy: Record<string, string> = {
@@ -935,6 +942,7 @@ function ScribeWidget(props: SharedWidgetProps) {
   const [playerSafeSourceDraftHash, setPlayerSafeSourceDraftHash] = useState<string | null>(null);
   const [publicSafetyScan, setPublicSafetyScan] = useState<Awaited<ReturnType<typeof api.scanPublicSafetyWarnings>> | null>(null);
   const [publicSafetyAckHash, setPublicSafetyAckHash] = useState<string | null>(null);
+  const [publicSafetyCurationAck, setPublicSafetyCurationAck] = useState<PublicSafetyCurationAck | null>(null);
 
   const transcriptQuery = useQuery({
     queryKey: ["scribe-transcript", props.selectedCampaignId, props.selectedSessionId],
@@ -1104,6 +1112,15 @@ function ScribeWidget(props: SharedWidgetProps) {
     mutationFn: () => api.reviewContextPackage(playerSafeContextPackage!.id),
     onSuccess: (preview) => setPlayerSafeContextPackage(preview)
   });
+  const publicSafetyAckFromError = (error: unknown, kind: PublicSafetyCurationAck["kind"], id: string): boolean => {
+    if (!(error instanceof ApiError) || error.code !== "public_safety_ack_required") return false;
+    const detail = error.details?.[0];
+    const contentHash = typeof detail?.content_hash === "string" ? detail.content_hash : null;
+    const warnings = Array.isArray(detail?.warnings) ? (detail.warnings as PublicSafetyWarning[]) : [];
+    if (!contentHash) return false;
+    setPublicSafetyCurationAck({ kind, id, contentHash, warnings });
+    return true;
+  };
   const buildRecap = useMutation({
     mutationFn: () =>
       api.buildSessionRecap(props.selectedCampaignId!, {
@@ -1185,28 +1202,36 @@ function ScribeWidget(props: SharedWidgetProps) {
     }
   });
   const patchRecapSafety = useMutation({
-    mutationFn: ({ recapId, publicSafe }: { recapId: string; publicSafe: boolean }) =>
+    mutationFn: ({ recapId, publicSafe, warningHash }: { recapId: string; publicSafe: boolean; warningHash?: string | null }) =>
       api.patchSessionRecapPublicSafety(recapId, {
         campaign_id: props.selectedCampaignId,
         public_safe: publicSafe,
-        sensitivity_reason: publicSafe ? null : "private_note"
+        sensitivity_reason: publicSafe ? null : "private_note",
+        warning_content_hash: warningHash ?? null,
+        warning_ack_content_hash: warningHash ?? null
       }),
     onSuccess: () => {
       setPlayerSafeContextPackage(null);
+      setPublicSafetyCurationAck(null);
       void queryClient.invalidateQueries({ queryKey: ["session-recaps", props.selectedCampaignId, props.selectedSessionId] });
-    }
+    },
+    onError: (error, variables) => publicSafetyAckFromError(error, "recap", variables.recapId)
   });
   const patchMemorySafety = useMutation({
-    mutationFn: ({ entryId, publicSafe }: { entryId: string; publicSafe: boolean }) =>
+    mutationFn: ({ entryId, publicSafe, warningHash }: { entryId: string; publicSafe: boolean; warningHash?: string | null }) =>
       api.patchMemoryEntryPublicSafety(entryId, {
         campaign_id: props.selectedCampaignId,
         public_safe: publicSafe,
-        sensitivity_reason: publicSafe ? null : "private_note"
+        sensitivity_reason: publicSafe ? null : "private_note",
+        warning_content_hash: warningHash ?? null,
+        warning_ack_content_hash: warningHash ?? null
       }),
     onSuccess: () => {
       setPlayerSafeContextPackage(null);
+      setPublicSafetyCurationAck(null);
       void queryClient.invalidateQueries({ queryKey: ["memory-entries", props.selectedCampaignId, props.selectedSessionId] });
-    }
+    },
+    onError: (error, variables) => publicSafetyAckFromError(error, "memory", variables.entryId)
   });
   const acceptCandidate = useMutation({
     mutationFn: (candidateId: string) => api.acceptMemoryCandidate(candidateId),
@@ -1590,6 +1615,30 @@ function ScribeWidget(props: SharedWidgetProps) {
               {!publicSafeMemoryEntries.length ? <span className="muted">No accepted memory entries yet.</span> : null}
             </div>
           </div>
+          {publicSafetyCurationAck ? (
+            <div className="muted-block">
+              <strong>Public-safety warnings require explicit acknowledgment.</strong>
+              <div className="scribe-source-list">
+                {publicSafetyCurationAck.warnings.map((warning, index) => (
+                  <span key={index} className={warning.severity === "high" || warning.severity === "medium" ? "status-pill warning" : "status-pill"}>
+                    {warning.severity}: {warning.code}
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  if (publicSafetyCurationAck.kind === "recap") {
+                    patchRecapSafety.mutate({ recapId: publicSafetyCurationAck.id, publicSafe: true, warningHash: publicSafetyCurationAck.contentHash });
+                  } else {
+                    patchMemorySafety.mutate({ entryId: publicSafetyCurationAck.id, publicSafe: true, warningHash: publicSafetyCurationAck.contentHash });
+                  }
+                }}
+                disabled={patchRecapSafety.isPending || patchMemorySafety.isPending}
+              >
+                Acknowledge and mark eligible
+              </button>
+            </div>
+          ) : null}
           <label className="checkbox-row">
             <input
               type="checkbox"
@@ -1650,6 +1699,7 @@ function ScribeWidget(props: SharedWidgetProps) {
             {playerSafeContextPackage.warnings.map((warning, index) => (
               <span key={index} className="status-pill warning">
                 {String(warning.code ?? "warning")}
+                {warning.message ? `: ${String(warning.message)}` : ""}
               </span>
             ))}
             <div className="scribe-source-list">

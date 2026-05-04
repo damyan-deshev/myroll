@@ -12,7 +12,7 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import delete, select, text, update
+from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.orm import Session
 
 from backend.app.api.errors import api_error
@@ -416,8 +416,10 @@ class PublicSafetyPatchIn(BaseModel):
     campaign_id: UUID
     public_safe: bool
     sensitivity_reason: str | None = Field(default=None, max_length=80)
+    warning_content_hash: str | None = Field(default=None, max_length=128)
+    warning_ack_content_hash: str | None = Field(default=None, max_length=128)
 
-    @field_validator("sensitivity_reason", mode="before")
+    @field_validator("sensitivity_reason", "warning_content_hash", "warning_ack_content_hash", mode="before")
     @classmethod
     def trim_reason(cls, value: object) -> object:
         return _trim_optional(value)
@@ -1444,10 +1446,31 @@ def _source_refs_for_player_safe(
     refs: list[dict[str, object]] = []
     warnings: list[dict[str, object]] = []
 
+    def limit_warning(source_class: str, included: int, total: int, limit: int) -> None:
+        if total <= included:
+            return
+        warnings.append(
+            {
+                "code": "public_safe_source_limit",
+                "severity": "low",
+                "sourceClass": source_class,
+                "included": included,
+                "totalEligible": total,
+                "limit": limit,
+                "message": f"{included} of {total} eligible {source_class} sources included; most recent sources were used.",
+            }
+        )
+
+    recap_filters = [
+        SessionRecap.campaign_id == campaign_id,
+        SessionRecap.session_id == session_id,
+        SessionRecap.public_safe.is_(True),
+    ]
+    recap_total = db.scalar(select(func.count()).select_from(SessionRecap).where(*recap_filters)) or 0
     recaps = list(
         db.scalars(
             select(SessionRecap)
-            .where(SessionRecap.campaign_id == campaign_id, SessionRecap.session_id == session_id, SessionRecap.public_safe.is_(True))
+            .where(*recap_filters)
             .order_by(SessionRecap.updated_at.desc(), SessionRecap.id)
             .limit(4)
         )
@@ -1456,15 +1479,18 @@ def _source_refs_for_player_safe(
         _base_ref("session_recap", recap.id, recap.updated_at, "canon", recap.title, recap.body_markdown, visibility="public_safe", sourceClass="memory_entry")
         for recap in recaps
     )
+    limit_warning("session_recap", len(recaps), int(recap_total), 4)
 
+    entry_filters = [
+        CampaignMemoryEntry.campaign_id == campaign_id,
+        CampaignMemoryEntry.public_safe.is_(True),
+        (CampaignMemoryEntry.session_id == session_id) | (CampaignMemoryEntry.session_id.is_(None)),
+    ]
+    entry_total = db.scalar(select(func.count()).select_from(CampaignMemoryEntry).where(*entry_filters)) or 0
     entries = list(
         db.scalars(
             select(CampaignMemoryEntry)
-            .where(
-                CampaignMemoryEntry.campaign_id == campaign_id,
-                CampaignMemoryEntry.public_safe.is_(True),
-                (CampaignMemoryEntry.session_id == session_id) | (CampaignMemoryEntry.session_id.is_(None)),
-            )
+            .where(*entry_filters)
             .order_by(CampaignMemoryEntry.updated_at.desc(), CampaignMemoryEntry.id)
             .limit(10)
         )
@@ -1473,10 +1499,14 @@ def _source_refs_for_player_safe(
         _base_ref("campaign_memory_entry", entry.id, entry.updated_at, "canon", entry.title, entry.body, visibility="public_safe", sourceClass="memory_entry")
         for entry in entries
     )
+    limit_warning("memory_entry", len(entries), int(entry_total), 10)
 
     snippet_statement = select(PublicSnippet).where(PublicSnippet.campaign_id == campaign_id)
+    snippet_count_statement = select(func.count()).select_from(PublicSnippet).where(PublicSnippet.campaign_id == campaign_id)
     if not include_unshown_public_snippets:
         snippet_statement = snippet_statement.where(PublicSnippet.last_published_at.is_not(None))
+        snippet_count_statement = snippet_count_statement.where(PublicSnippet.last_published_at.is_not(None))
+    snippet_total = db.scalar(snippet_count_statement) or 0
     snippets = list(db.scalars(snippet_statement.order_by(PublicSnippet.updated_at.desc(), PublicSnippet.id).limit(8)))
     for snippet in snippets:
         shown = snippet.last_published_at is not None
@@ -1503,7 +1533,11 @@ def _source_refs_for_player_safe(
                     "message": "Unshown public snippets are manual public artifacts, not Scribe-verified safe text.",
                 }
             )
+    limit_warning("public_snippet", len(snippets), int(snippet_total), 8)
 
+    entity_total = (
+        db.scalar(select(func.count()).select_from(Entity).where(Entity.campaign_id == campaign_id, Entity.visibility == "public_known")) or 0
+    )
     entities = list(
         db.scalars(
             select(Entity)
@@ -1527,6 +1561,7 @@ def _source_refs_for_player_safe(
             )
         )
 
+    limit_warning("entity", len(entities), int(entity_total), 12)
     return refs, warnings
 
 
@@ -1902,6 +1937,14 @@ def _finalize_run_failed(db: Session, run: LlmRun, *, code: str, message: str, d
     db.flush()
 
 
+def _finalize_running_failed_if_needed(db: Session, run_id: str | None, *, code: str, message: str, duration_ms: int | None = None) -> None:
+    if run_id is None:
+        return
+    run = db.get(LlmRun, str(run_id))
+    if run is not None and run.status == "running":
+        _finalize_run_failed(db, run, code=code, message=message, duration_ms=duration_ms)
+
+
 def _repair_prompt(original_prompt: str, bad_response: str, reason: str) -> str:
     return (
         "SYSTEM:\n"
@@ -2039,11 +2082,39 @@ def _validate_player_safe_bundle(bundle: dict[str, object]) -> dict[str, str]:
     return {"title": title[:200], "bodyMarkdown": body[:20000]}
 
 
-def _apply_public_safety_patch(record: SessionRecap | CampaignMemoryEntry, payload: PublicSafetyPatchIn) -> None:
+def _public_safety_record_content(record: SessionRecap | CampaignMemoryEntry) -> tuple[str | None, str]:
+    if isinstance(record, SessionRecap):
+        return record.title, record.body_markdown
+    return record.title, record.body
+
+
+def _raise_public_safety_ack_required(warnings: list[dict[str, str]], content_hash: str) -> None:
+    raise api_error(
+        409,
+        "public_safety_ack_required",
+        "Public-safety warnings must be acknowledged before this source can be marked eligible",
+        details=[{"warnings": warnings, "content_hash": content_hash, "ack_required": True}],
+    )
+
+
+def _apply_public_safety_patch(db: Session, record: SessionRecap | CampaignMemoryEntry, payload: PublicSafetyPatchIn) -> None:
     reason = payload.sensitivity_reason
     if payload.public_safe:
         if reason is not None:
             raise api_error(400, "public_safe_requires_null_reason", "Public-safe records cannot keep a private sensitivity reason")
+        title, body = _public_safety_record_content(record)
+        self_terms = {title.strip().casefold()} if title else set()
+        private_terms = [term for term in private_reference_terms(db, record.campaign_id) if term.strip().casefold() not in self_terms]
+        warnings, content_hash = scan_public_safety_text(
+            title=title,
+            body_markdown=body,
+            private_terms=private_terms,
+        )
+        if warning_ack_required(warnings):
+            if payload.warning_content_hash != content_hash:
+                _raise_public_safety_ack_required(warnings, content_hash)
+            if payload.warning_ack_content_hash != content_hash:
+                _raise_public_safety_ack_required(warnings, content_hash)
         record.public_safe = True
         record.sensitivity_reason = None
     else:
@@ -2469,6 +2540,7 @@ def scan_public_safety_warnings(campaign_id: UUID, payload: PublicSafetyWarningS
 @router.post("/api/campaigns/{campaign_id}/llm/session-recap/build", response_model=BuildRecapOut)
 def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession) -> BuildRecapOut:
     started = time.perf_counter()
+    active_child_run_id: str | None = None
     with db.begin():
         _require_campaign(db, campaign_id)
         session = _require_session(db, payload.session_id)
@@ -2550,6 +2622,7 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
                     request_payload=repair_payload,
                     prompt_tokens_estimate=_rough_token_estimate(_repair_prompt(package.rendered_prompt, response_text, str(parse_error))),
                 )
+                active_child_run_id = child.id
             repair_started = time.perf_counter()
             try:
                 repair_text, repair_metadata = _send_chat(profile, repair_payload, timeout=90.0)
@@ -2595,22 +2668,17 @@ def build_session_recap(campaign_id: UUID, payload: BuildRecapIn, db: DbSession)
                 candidates = _persist_memory_candidates(db, campaign_id=str(campaign_id), session_id=session.id, run_id=child.id, drafts=candidate_drafts)
                 return BuildRecapOut(run=_run_out(child), bundle=bundle, candidates=[_candidate_out(candidate) for candidate in candidates], rejected_drafts=rejected_drafts)
     except Exception as error:
+        code = _exception_code(error) if getattr(error, "status_code", None) else "provider_error"
+        message = _exception_message(error) if getattr(error, "status_code", None) else str(error)
+        duration_ms = int((time.perf_counter() - started) * 1000)
         if getattr(error, "status_code", None):
             with db.begin():
-                current = _require_run(db, run.id)
-                if current.status == "running":
-                    _finalize_run_failed(
-                        db,
-                        current,
-                        code=_exception_code(error),
-                        message=_exception_message(error),
-                        duration_ms=int((time.perf_counter() - started) * 1000),
-                    )
+                _finalize_running_failed_if_needed(db, run.id, code=code, message=message, duration_ms=duration_ms)
+                _finalize_running_failed_if_needed(db, active_child_run_id, code=code, message=message, duration_ms=duration_ms)
             raise
         with db.begin():
-            current = _require_run(db, run.id)
-            if current.status == "running":
-                _finalize_run_failed(db, current, code="provider_error", message=str(error), duration_ms=int((time.perf_counter() - started) * 1000))
+            _finalize_running_failed_if_needed(db, run.id, code=code, message=message, duration_ms=duration_ms)
+            _finalize_running_failed_if_needed(db, active_child_run_id, code=code, message=message, duration_ms=duration_ms)
         raise
 
 
@@ -2775,6 +2843,7 @@ def build_player_safe_recap(campaign_id: UUID, payload: BuildPlayerSafeRecapIn, 
 @router.post("/api/campaigns/{campaign_id}/llm/branch-directions/build", response_model=BuildBranchOut)
 def build_branch_directions(campaign_id: UUID, payload: BuildBranchIn, db: DbSession) -> BuildBranchOut:
     started = time.perf_counter()
+    active_child_run_id: str | None = None
     with db.begin():
         _require_campaign(db, campaign_id)
         profile = _require_provider(db, payload.provider_profile_id)
@@ -2865,6 +2934,7 @@ def build_branch_directions(campaign_id: UUID, payload: BuildBranchIn, db: DbSes
                     request_payload=repair_payload,
                     prompt_tokens_estimate=_rough_token_estimate(_repair_prompt(package.rendered_prompt, response_text, str(parse_error))),
                 )
+                active_child_run_id = child.id
             repair_started = time.perf_counter()
             try:
                 repair_text, repair_metadata = _send_chat(profile, repair_payload, timeout=90.0)
@@ -2919,16 +2989,17 @@ def build_branch_directions(campaign_id: UUID, payload: BuildBranchIn, db: DbSes
                 detail = _proposal_detail_out(db, proposal_set) if proposal_set else None
                 return BuildBranchOut(run=_run_out(child), proposal_set=detail, rejected_options=rejected_options, warnings=warnings)
     except Exception as error:
+        code = _exception_code(error) if getattr(error, "status_code", None) else "provider_error"
+        message = _exception_message(error) if getattr(error, "status_code", None) else str(error)
+        duration_ms = int((time.perf_counter() - started) * 1000)
         if getattr(error, "status_code", None):
             with db.begin():
-                current = _require_run(db, run.id)
-                if current.status == "running":
-                    _finalize_run_failed(db, current, code=_exception_code(error), message=_exception_message(error), duration_ms=int((time.perf_counter() - started) * 1000))
+                _finalize_running_failed_if_needed(db, run.id, code=code, message=message, duration_ms=duration_ms)
+                _finalize_running_failed_if_needed(db, active_child_run_id, code=code, message=message, duration_ms=duration_ms)
             raise
         with db.begin():
-            current = _require_run(db, run.id)
-            if current.status == "running":
-                _finalize_run_failed(db, current, code="provider_error", message=str(error), duration_ms=int((time.perf_counter() - started) * 1000))
+            _finalize_running_failed_if_needed(db, run.id, code=code, message=message, duration_ms=duration_ms)
+            _finalize_running_failed_if_needed(db, active_child_run_id, code=code, message=message, duration_ms=duration_ms)
         raise
 
 
@@ -3010,7 +3081,7 @@ def patch_session_recap_public_safety(recap_id: UUID, payload: PublicSafetyPatch
             raise api_error(404, "session_recap_not_found", "Session recap not found")
         if recap.campaign_id != str(payload.campaign_id):
             raise api_error(404, "session_recap_not_found", "Session recap not found")
-        _apply_public_safety_patch(recap, payload)
+        _apply_public_safety_patch(db, recap, payload)
     return _recap_out(recap)
 
 
@@ -3022,7 +3093,7 @@ def patch_memory_entry_public_safety(entry_id: UUID, payload: PublicSafetyPatchI
             raise api_error(404, "memory_entry_not_found", "Memory entry not found")
         if entry.campaign_id != str(payload.campaign_id):
             raise api_error(404, "memory_entry_not_found", "Memory entry not found")
-        _apply_public_safety_patch(entry, payload)
+        _apply_public_safety_patch(db, entry, payload)
     return _memory_entry_out(entry)
 
 

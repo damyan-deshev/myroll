@@ -618,6 +618,50 @@ def test_branch_repair_degraded_warnings_and_single_child_proposal_set(migrated_
     assert rows[1][3] is not None
 
 
+def test_branch_repair_persistence_error_finalizes_child_run(migrated_settings, monkeypatch):
+    from backend.app.api import routes_llm
+
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "The party asked Varos for alternate routes."},
+    )
+    calls = {"count": 0}
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return "not json", {"usage": {"prompt_tokens": 50, "completion_tokens": 5}}
+        return json.dumps(_proposal_fixture(1)), {"usage": {"prompt_tokens": 100, "completion_tokens": 60}}
+
+    def fake_persist(*args, **kwargs):  # noqa: ANN002, ANN003
+        raise routes_llm.api_error(500, "persist_failed", "Proposal persistence failed")
+
+    monkeypatch.setattr(routes_llm, "_persist_proposal_set", fake_persist)
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    preview_body = _build_reviewed_branch_preview(client, campaign_id=campaign_id, session_id=session_id)
+
+    branch = client.post(
+        f"/api/campaigns/{campaign_id}/llm/branch-directions/build",
+        json={"provider_profile_id": provider_id, "context_package_id": preview_body["id"]},
+    )
+    assert branch.status_code == 500
+    assert branch.json()["error"]["code"] == "persist_failed"
+
+    connection = sqlite3.connect(migrated_settings.db_path)
+    try:
+        assert connection.execute("SELECT count(*) FROM proposal_sets").fetchone()[0] == 0
+        rows = connection.execute(
+            "SELECT id, task_kind, status, error_code, parent_run_id FROM llm_runs ORDER BY created_at, task_kind"
+        ).fetchall()
+    finally:
+        connection.close()
+    parent_id = rows[0][0]
+    assert rows[0][1:] == ("scene.branch_directions", "failed", "parse_failed", None)
+    assert rows[1][1:] == ("scene.branch_directions.repair", "failed", "persist_failed", parent_id)
+
+
 def test_planning_only_recap_candidate_is_rejected(migrated_settings, monkeypatch):
     client = _client(migrated_settings)
     campaign_id, session_id = _campaign_session(client)
@@ -982,6 +1026,82 @@ def test_public_safety_patch_requires_matching_campaign(migrated_settings):
     assert rejected.status_code == 404
     recaps = client.get(f"/api/campaigns/{campaign_a}/scribe/session-recaps?session_id={session_a}").json()["recaps"]
     assert recaps[0]["public_safe"] is False
+
+
+def test_public_safety_patch_requires_ack_for_risky_source_text(migrated_settings):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    recap = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/session-recaps",
+        json={"session_id": session_id, "title": "Mira's private turn", "body_markdown": "Mira secretly plans to betray the party."},
+    ).json()
+
+    rejected = client.patch(
+        f"/api/scribe/session-recaps/{recap['id']}/public-safety",
+        json={"campaign_id": campaign_id, "public_safe": True, "sensitivity_reason": None},
+    )
+    assert rejected.status_code == 409
+    assert rejected.json()["error"]["code"] == "public_safety_ack_required"
+    detail = rejected.json()["error"]["details"][0]
+    assert detail["ack_required"] is True
+    assert any(warning["code"] == "secret_language" for warning in detail["warnings"])
+    recaps = client.get(f"/api/campaigns/{campaign_id}/scribe/session-recaps?session_id={session_id}").json()["recaps"]
+    assert recaps[0]["public_safe"] is False
+
+    accepted = client.patch(
+        f"/api/scribe/session-recaps/{recap['id']}/public-safety",
+        json={
+            "campaign_id": campaign_id,
+            "public_safe": True,
+            "sensitivity_reason": None,
+            "warning_content_hash": detail["content_hash"],
+            "warning_ack_content_hash": detail["content_hash"],
+        },
+    )
+    assert accepted.status_code == 200
+    assert accepted.json()["public_safe"] is True
+
+
+def test_player_safe_preview_reports_source_limit_overflow(migrated_settings):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    now = "2026-05-04T12:00:00Z"
+    with sqlite3.connect(migrated_settings.db_path) as connection:
+        for index in range(12):
+            connection.execute(
+                """
+                INSERT INTO campaign_memory_entries
+                    (id, campaign_id, session_id, source_candidate_id, title, body, evidence_refs_json, tags_json, public_safe, sensitivity_reason, created_at, updated_at)
+                VALUES (?, ?, ?, NULL, ?, ?, '[]', '[]', 1, NULL, ?, ?)
+                """,
+                (
+                    f"public-memory-{index}",
+                    campaign_id,
+                    session_id,
+                    f"Public memory {index}",
+                    f"Public-safe memory body {index}.",
+                    now,
+                    now,
+                ),
+            )
+
+    preview = client.post(
+        f"/api/campaigns/{campaign_id}/llm/context-preview",
+        json={
+            "session_id": session_id,
+            "task_kind": "session.player_safe_recap",
+            "visibility_mode": "public_safe",
+            "gm_instruction": "Draft a concise player-safe recap from curated public-safe memory.",
+        },
+    )
+    assert preview.status_code == 201
+    body = preview.json()
+    assert len([ref for ref in body["source_refs"] if ref["kind"] == "campaign_memory_entry"]) == 10
+    overflow = [warning for warning in body["warnings"] if warning["code"] == "public_safe_source_limit"]
+    assert overflow
+    assert overflow[0]["sourceClass"] == "memory_entry"
+    assert overflow[0]["included"] == 10
+    assert overflow[0]["totalEligible"] == 12
 
 
 def test_branch_scope_validation_and_campaign_focus_warning(migrated_settings):

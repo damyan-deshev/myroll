@@ -2185,9 +2185,11 @@ Goal:
 Shipped build:
 - `session.player_safe_recap` task with `visibility_mode = public_safe`;
 - public-safe source curation for reviewed session recaps and accepted memory entries;
+- marking a recap or memory entry public-safe runs the deterministic warning scan server-side; warning-bearing text requires exact-content acknowledgment before it becomes eligible;
 - shown public snippets included by default, with unshown/manual snippets excluded unless explicitly included;
 - public-known entity shell projection only, using display name when available and kind;
 - reviewed context preview with hash-bound include/exclude choices;
+- public-safe context preview reports source-class overflow when only the newest capped sources are included;
 - deterministic leak warning pass over title/body, including English and Bulgarian spoiler/future-plan phrase starters plus explicit private-reference checks;
 - `PublicSnippet` creation from reviewed LLM draft only when the submitted title/body match the backend warning-scan hash;
 - medium/high warnings, or 3+ low warnings, require exact-content acknowledgment;
@@ -2197,6 +2199,7 @@ Shipped build:
 Tests:
 - public-safe context excludes private notes, private recaps/memory, live captures, planning markers, proposal bodies, entity notes/tags/custom fields, and LLM run output;
 - toggling public-safe state or source include/exclude choices stales reviewed previews;
+- risky recap/memory text cannot be marked public-safe without warning acknowledgment;
 - leak warning flags suspicious phrases and private-only references;
 - draft creation does not create a snippet or mutate player display;
 - LLM-sourced snippet creation requires same-campaign source run, current warning scan, and acknowledgment when needed;

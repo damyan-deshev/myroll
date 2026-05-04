@@ -328,7 +328,13 @@ export const api = {
     request<SessionRecapsResponse>(`/api/campaigns/${campaignId}/scribe/session-recaps${sessionId ? `?session_id=${sessionId}` : ""}`),
   patchSessionRecapPublicSafety: (
     recapId: string,
-    payload: { campaign_id?: string | null; public_safe: boolean; sensitivity_reason?: string | null }
+    payload: {
+      campaign_id?: string | null;
+      public_safe: boolean;
+      sensitivity_reason?: string | null;
+      warning_content_hash?: string | null;
+      warning_ack_content_hash?: string | null;
+    }
   ) =>
     request<SessionRecap>(`/api/scribe/session-recaps/${recapId}/public-safety`, {
       method: "PATCH",
@@ -338,7 +344,13 @@ export const api = {
     request<CampaignMemoryEntriesResponse>(`/api/campaigns/${campaignId}/scribe/memory-entries${sessionId ? `?session_id=${sessionId}` : ""}`),
   patchMemoryEntryPublicSafety: (
     entryId: string,
-    payload: { campaign_id?: string | null; public_safe: boolean; sensitivity_reason?: string | null }
+    payload: {
+      campaign_id?: string | null;
+      public_safe: boolean;
+      sensitivity_reason?: string | null;
+      warning_content_hash?: string | null;
+      warning_ack_content_hash?: string | null;
+    }
   ) =>
     request<CampaignMemoryEntry>(`/api/scribe/memory-entries/${entryId}/public-safety`, {
       method: "PATCH",
