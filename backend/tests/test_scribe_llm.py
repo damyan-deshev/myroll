@@ -20,6 +20,24 @@ def _campaign_session(client: TestClient) -> tuple[str, str]:
     return campaign["id"], session["id"]
 
 
+def test_json_parser_repairs_unescaped_inner_quotes():
+    from backend.app.api.routes_llm import _parse_json_object
+
+    parsed = _parse_json_object(
+        '{'
+        '"privateRecap": {'
+        '"title": "Черния фар",'
+        '"bodyMarkdown": "Лаврена закотвя „Сребърната чайка" до фара и вижда «Нарвал»."'
+        '},'
+        '"memoryCandidateDrafts": [],'
+        '"continuityWarnings": [],'
+        '"unresolvedThreads": []'
+        '}'
+    )
+
+    assert parsed["privateRecap"]["bodyMarkdown"] == 'Лаврена закотвя "Сребърната чайка" до фара и вижда "Нарвал".'
+
+
 def test_live_capture_orders_and_correction_projection(migrated_settings):
     client = _client(migrated_settings)
     campaign_id, session_id = _campaign_session(client)

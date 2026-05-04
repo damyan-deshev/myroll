@@ -858,3 +858,18 @@ Consequences:
 - Recap evidence rejection depends on source lane, known source IDs, and quote validity, not on language-specific phrase content.
 - Public-safety phrase warnings are advisory; private-reference/source-policy checks stay separate.
 - V1 ships bundled JSON rule packs only. Campaign overrides, import/export, and GM editing UI are deferred.
+
+## DR-058: Structured LLM JSON Gets Bounded Syntax Repair Before Model Repair
+
+Decision: structured Scribe tasks first attempt strict JSON parsing, then a small local syntax repair for malformed quote characters inside JSON string values, before escalating to an LLM repair child run. Parsed model output normalizes double-quote glyphs to ASCII double quotes for consistent GM-visible copy/paste behavior.
+
+Rationale:
+- Real-provider Bulgarian Scribe runs exposed a narrow failure mode where the model produced JSON-looking output with typographic opening quotes and an unescaped ASCII closing quote inside prose, for example a ship name inside `bodyMarkdown`.
+- This is a syntactic serialization problem, not a campaign-safety or evidence-semantics problem.
+- A bounded local repair is cheaper and more predictable than asking the model to repair the same malformed text when the model may repeat it exactly.
+
+Consequences:
+- Structural JSON delimiters remain ASCII quotes; non-delimiter ASCII quotes encountered inside a JSON string are repaired so the payload can be parsed.
+- Parsed model string values normalize common double-quote glyphs (`„`, `“`, `”`, `«`, `»`, and related variants) to ASCII `"`. Single quotes and apostrophes are left alone.
+- The repaired result still goes through the same schema, evidence-ref, lane, and canon/public-safety validation. Local syntax repair never authorizes partial output.
+- Default payload retention remains metadata-only. Debug payload retention can be enabled explicitly for local forensic runs.

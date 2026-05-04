@@ -283,7 +283,7 @@ Allowed:
 - explicit map-reduce mode with visible budget explanation;
 - explicit fallback task selected by the GM.
 
-The shipped recap and branch paths block unverified/low-conformance providers, require reviewed context, reject stale previews, reject malformed structured output after one repair attempt, and never partially apply failed output.
+The shipped recap and branch paths block unverified/low-conformance providers, require reviewed context, reject stale previews, run a bounded local syntax repair for malformed quotes inside JSON string values before model repair, normalize model-produced double-quote glyphs to ASCII quotes for consistent GM-visible text, reject malformed structured output after one repair attempt, and never partially apply failed output.
 
 ## 3. State Lanes
 

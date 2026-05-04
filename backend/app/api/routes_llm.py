@@ -1244,10 +1244,92 @@ def _parse_json_object(text: str) -> dict[str, object]:
         end = stripped.rfind("}")
         if start >= 0 and end > start:
             stripped = stripped[start : end + 1]
-    parsed = json.loads(stripped)
+    try:
+        parsed = json.loads(stripped)
+    except json.JSONDecodeError as exc:
+        repaired = _repair_unescaped_json_string_quotes(stripped)
+        if repaired == stripped:
+            raise
+        try:
+            parsed = json.loads(repaired)
+        except json.JSONDecodeError:
+            raise exc
     if not isinstance(parsed, dict):
         raise ValueError("JSON response is not an object")
-    return parsed
+    return _normalize_model_output_quotes(parsed)
+
+
+def _repair_unescaped_json_string_quotes(text: str) -> str:
+    repaired: list[str] = []
+    in_string = False
+    escaped = False
+    changed = False
+    json_delimiters = {":", ",", "}", "]"}
+    length = len(text)
+    index = 0
+    while index < length:
+        char = text[index]
+        if not in_string:
+            repaired.append(char)
+            if char == '"':
+                in_string = True
+            index += 1
+            continue
+        if escaped:
+            repaired.append(char)
+            escaped = False
+            index += 1
+            continue
+        if char == "\\":
+            repaired.append(char)
+            escaped = True
+            index += 1
+            continue
+        if char == '"':
+            next_index = index + 1
+            while next_index < length and text[next_index].isspace():
+                next_index += 1
+            next_char = text[next_index] if next_index < length else ""
+            if not next_char or next_char in json_delimiters:
+                repaired.append(char)
+                in_string = False
+            else:
+                repaired.append("”")
+                changed = True
+            index += 1
+            continue
+        repaired.append(char)
+        index += 1
+    return "".join(repaired) if changed else text
+
+
+MODEL_DOUBLE_QUOTE_TRANSLATION = str.maketrans(
+    {
+        "“": '"',
+        "”": '"',
+        "„": '"',
+        "‟": '"',
+        "«": '"',
+        "»": '"',
+        "〝": '"',
+        "〞": '"',
+        "〟": '"',
+        "＂": '"',
+    }
+)
+
+
+def _normalize_model_output_quotes(value: object) -> object:
+    if isinstance(value, str):
+        return value.translate(MODEL_DOUBLE_QUOTE_TRANSLATION)
+    if isinstance(value, list):
+        return [_normalize_model_output_quotes(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            str(_normalize_model_output_quotes(key)): _normalize_model_output_quotes(item)
+            for key, item in value.items()
+        }
+    return value
 
 
 def _scope_warning(scope_kind: str, gm_instruction: str) -> list[dict[str, object]]:
@@ -2107,6 +2189,11 @@ def _assert_context_fresh(db: Session, package: LlmContextPackage) -> None:
         raise api_error(409, "context_preview_unreviewed", "Context preview must be reviewed before running")
 
 
+def _retain_llm_payloads() -> bool:
+    value = os.environ.get("MYROLL_LLM_PAYLOAD_RETENTION", "").strip().lower()
+    return value in {"1", "true", "yes", "debug", "full"}
+
+
 def _create_run(
     db: Session,
     *,
@@ -2122,8 +2209,9 @@ def _create_run(
 ) -> LlmRun:
     now = utc_now_z()
     metadata = dict(request_metadata or {})
+    retain_payloads = _retain_llm_payloads()
     if request_payload is not None:
-        metadata.setdefault("payloadRetention", "metadata_only")
+        metadata.setdefault("payloadRetention", "debug" if retain_payloads else "metadata_only")
         metadata.setdefault("requestShape", {
             "messageCount": len(request_payload.get("messages", [])) if isinstance(request_payload.get("messages"), list) else None,
             "responseFormat": request_payload.get("response_format"),
@@ -2138,7 +2226,7 @@ def _create_run(
         task_kind=task_kind,
         status="running",
         request_metadata_json=_json_dump(metadata),
-        request_json=None,
+        request_json=_json_dump(request_payload) if retain_payloads and request_payload is not None else None,
         prompt_tokens_estimate=prompt_tokens_estimate,
         created_at=now,
         updated_at=now,
@@ -2156,7 +2244,7 @@ def _finalize_run_success(db: Session, run: LlmRun, *, response_text: str, norma
         run.normalized_output_json = None
     else:
         run.status = "succeeded"
-        run.response_text = None
+        run.response_text = response_text if _retain_llm_payloads() else None
         run.normalized_output_json = _json_dump(normalized_output)
     request_metadata = _json_load(run.request_metadata_json, {})
     request_metadata.update(metadata)
@@ -2172,7 +2260,7 @@ def _finalize_run_failed(db: Session, run: LlmRun, *, code: str, message: str, d
     run.error_message = message
     run.parse_failure_reason = parse_failure_reason
     run.duration_ms = duration_ms
-    run.response_text = None
+    run.response_text = response_text if _retain_llm_payloads() else None
     run.updated_at = utc_now_z()
     db.flush()
 
