@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "description": "Language-specific public-safety warning phrase hints. These rules are advisory review signals, not proof that text is safe or unsafe.",
+  "publicSafetyWarnings": [
+    {
+      "code": "secret_language",
+      "severity": "high",
+      "languages": ["en", "bg"],
+      "message": "Uses secret-language phrasing.",
+      "phrases": ["secretly", "тайно"]
+    },
+    {
+      "code": "unknown_to_party",
+      "severity": "high",
+      "languages": ["en", "bg"],
+      "message": "May reveal something unknown to the players.",
+      "phrases": ["unknown to the party", "без да знаят", "не подозират"]
+    },
+    {
+      "code": "true_motive",
+      "severity": "high",
+      "languages": ["en", "bg"],
+      "message": "May reveal a hidden motive.",
+      "phrases": ["true motive", "истинската му цел", "истинските му намерения"]
+    },
+    {
+      "code": "future_plan",
+      "severity": "medium",
+      "languages": ["en", "bg"],
+      "message": "Uses future-plan language.",
+      "phrases": ["plans to", "will later", "по-късно ще", "ще разберат по-късно"]
+    },
+    {
+      "code": "hidden_or_unrevealed",
+      "severity": "low",
+      "languages": ["en", "bg"],
+      "message": "Uses hidden/unrevealed phrasing.",
+      "phrases": ["hidden", "unrevealed", "скрит", "зад кулисите"]
+    }
+  ]
+}

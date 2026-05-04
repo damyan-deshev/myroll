@@ -7,7 +7,6 @@ import re
 import time
 import unicodedata
 import uuid
-from pathlib import Path
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -47,6 +46,7 @@ from backend.app.public_safety import (
     scan_public_safety_text,
     warning_ack_required,
 )
+from backend.app.review_rule_packs import PhraseRule, load_phrase_rules
 from backend.app.time import utc_now_z
 
 
@@ -80,27 +80,11 @@ CANONISH_MARKER_PATTERNS = (
 )
 
 
-def _load_direct_evidence_review_phrases() -> tuple[dict[str, str], ...]:
-    rules_path = Path(__file__).resolve().parents[1] / "llm_review_rules" / "speculative_language.json"
-    try:
-        payload = json.loads(rules_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return ()
-    phrases: list[dict[str, str]] = []
-    for rule in payload.get("directEvidenceReviewWarnings", []):
-        if not isinstance(rule, dict):
-            continue
-        code = str(rule.get("code") or "").strip()
-        if code != "direct_evidence_quote_has_uncertainty_language":
-            continue
-        severity = str(rule.get("severity") or "medium").strip() or "medium"
-        for phrase in rule.get("phrases", []):
-            if isinstance(phrase, str) and phrase.strip():
-                phrases.append({"code": code, "severity": severity, "phrase": phrase.strip()})
-    return tuple(phrases)
-
-
-DIRECT_EVIDENCE_REVIEW_WARNING_PHRASES = _load_direct_evidence_review_phrases()
+DIRECT_EVIDENCE_REVIEW_WARNING_PHRASES = load_phrase_rules(
+    "speculative_language.json",
+    "directEvidenceReviewWarnings",
+    allowed_codes={"direct_evidence_quote_has_uncertainty_language"},
+)
 
 
 def get_db(request: Request):
@@ -2352,17 +2336,17 @@ def _direct_evidence_review_warning_matches(value: str) -> list[dict[str, str]]:
     normalized_value = f" {_normalized_quote_text(value)} "
     matches: list[dict[str, str]] = []
     for rule in DIRECT_EVIDENCE_REVIEW_WARNING_PHRASES:
-        phrase = str(rule.get("phrase") or "").strip()
+        phrase = rule.phrase if isinstance(rule, PhraseRule) else str(rule.get("phrase") or "").strip()
         normalized_phrase = _normalized_quote_text(phrase)
         if not normalized_phrase:
             continue
         if f" {normalized_phrase} " in normalized_value:
             matches.append(
                 {
-                    "code": str(rule.get("code") or "direct_evidence_quote_has_uncertainty_language"),
-                    "severity": str(rule.get("severity") or "medium"),
+                    "code": rule.code if isinstance(rule, PhraseRule) else str(rule.get("code") or "direct_evidence_quote_has_uncertainty_language"),
+                    "severity": rule.severity if isinstance(rule, PhraseRule) else str(rule.get("severity") or "medium"),
                     "matchedPhrase": phrase,
-                    "source": "speculative_language_rule_pack",
+                    "source": rule.rule_pack if isinstance(rule, PhraseRule) else "speculative_language_rule_pack",
                 }
             )
     return matches

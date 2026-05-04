@@ -3,33 +3,19 @@ from __future__ import annotations
 import hashlib
 import re
 import unicodedata
-from dataclasses import dataclass
 from typing import Iterable
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.db.models import CampaignMemoryEntry, Entity, SessionRecap
+from backend.app.review_rule_packs import find_phrase_rule_matches, load_phrase_rules
 
 
 SENSITIVITY_REASONS = {"spoiler", "gm_only_motive", "unrevealed_clue", "future_plan", "private_note", "other"}
 
 
-@dataclass(frozen=True)
-class WarningRule:
-    code: str
-    severity: str
-    pattern: str
-    message: str
-
-
-WARNING_RULES: tuple[WarningRule, ...] = (
-    WarningRule("secret_language", "high", r"\bsecretly\b|тайно", "Uses secret-language phrasing."),
-    WarningRule("unknown_to_party", "high", r"unknown to the party|без да знаят|не подозират", "May reveal something unknown to the players."),
-    WarningRule("true_motive", "high", r"true motive|истинската му цел|истинските му намерения", "May reveal a hidden motive."),
-    WarningRule("future_plan", "medium", r"\bplans to\b|\bwill later\b|по-късно ще|ще разберат по-късно", "Uses future-plan language."),
-    WarningRule("hidden_or_unrevealed", "low", r"\bhidden\b|\bunrevealed\b|скрит|зад кулисите", "Uses hidden/unrevealed phrasing."),
-)
+PUBLIC_SAFETY_WARNING_RULES = load_phrase_rules("public_safety.json", "publicSafetyWarnings")
 
 
 def canonical_public_content(title: str | None, body_markdown: str) -> str:
@@ -74,17 +60,21 @@ def scan_public_safety_text(
 ) -> tuple[list[dict[str, str]], str]:
     text = canonical_public_content(title, body_markdown)
     warnings: list[dict[str, str]] = []
-    for rule in WARNING_RULES:
-        for match in re.finditer(rule.pattern, text, flags=re.IGNORECASE):
-            warnings.append(
-                {
-                    "code": rule.code,
-                    "severity": rule.severity,
-                    "message": rule.message,
-                    "matched_text": _excerpt(text, match.start(), match.end()),
-                }
-            )
-            break
+    seen_phrase_codes: set[str] = set()
+    for rule, start, end in find_phrase_rule_matches(text, PUBLIC_SAFETY_WARNING_RULES):
+        if rule.code in seen_phrase_codes:
+            continue
+        seen_phrase_codes.add(rule.code)
+        warnings.append(
+            {
+                "code": rule.code,
+                "severity": rule.severity,
+                "message": rule.message,
+                "matched_text": _excerpt(text, start, end),
+                "rule_pack": rule.rule_pack,
+                "matched_phrase": rule.phrase,
+            }
+        )
     lowered = text.casefold()
     for term in private_terms:
         normalized = term.strip()

@@ -621,6 +621,29 @@ def test_rule_pack_language_phrases_are_advisory_warnings(monkeypatch):
     assert en_analysis["warnings"][0]["matchedPhrase"] == "may"
 
 
+def test_public_safety_rule_pack_language_phrases_are_advisory_warnings():
+    from backend.app.public_safety import scan_public_safety_text
+
+    warnings, content_hash = scan_public_safety_text(
+        title="Public warning",
+        body_markdown=(
+            "Mira secretly plans to leave. "
+            "Unknown to the party, the true motive is hidden. "
+            "Тайно Орен не подозират истинските му намерения."
+        ),
+        private_terms=[],
+    )
+
+    codes = {warning["code"] for warning in warnings}
+    assert content_hash
+    assert {"secret_language", "unknown_to_party", "true_motive", "hidden_or_unrevealed"}.issubset(codes)
+    assert all(warning.get("rule_pack") == "public_safety.json" for warning in warnings if warning["code"] != "private_reference")
+    assert any(warning.get("matched_phrase") == "secretly" for warning in warnings)
+
+    bg_warnings, _ = scan_public_safety_text(title=None, body_markdown="Тайно Орен не подозират истинските му намерения.", private_terms=[])
+    assert any(warning.get("matched_phrase") == "тайно" for warning in bg_warnings)
+
+
 def _proposal_fixture(option_count: int = 3) -> dict[str, object]:
     options = []
     for index in range(option_count):
@@ -1463,6 +1486,51 @@ def test_player_safe_context_excludes_private_sources_and_stales_on_curation_cha
     assert stale.json()["error"]["code"] == "context_preview_stale"
     assert client.get("/api/player-display").json() == player_before
     assert private_recap["public_safe"] is False
+
+
+def test_player_safe_context_exclusion_is_independent_from_phrase_rule_pack(migrated_settings, monkeypatch):
+    from backend.app import public_safety
+    from backend.app.review_rule_packs import PhraseRule
+
+    for rule_pack in (
+        (),
+        (
+            PhraseRule(
+                code="counterfactual_private_phrase",
+                severity="high",
+                phrase="PRIVATE_RECAP_PHRASE_DO_NOT_PROMPT",
+                message="Counterfactual phrase pack must not control source eligibility.",
+                languages=("test",),
+                rule_pack="test_counterfactual.json",
+                section="publicSafetyWarnings",
+            ),
+        ),
+    ):
+        monkeypatch.setattr(public_safety, "PUBLIC_SAFETY_WARNING_RULES", rule_pack)
+        client = _client(migrated_settings)
+        campaign_id, session_id = _campaign_session(client)
+        private_phrase = "PRIVATE_RECAP_PHRASE_DO_NOT_PROMPT"
+        safe_phrase = "The party publicly repaired the moon gate."
+        client.post(f"/api/campaigns/{campaign_id}/scribe/transcript-events", json={"session_id": session_id, "body": "PRIVATE_LIVE_NOTE_DO_NOT_PROMPT"})
+        private_recap = client.post(
+            f"/api/campaigns/{campaign_id}/scribe/session-recaps",
+            json={"session_id": session_id, "title": "Private recap", "body_markdown": private_phrase},
+        )
+        safe_recap = client.post(
+            f"/api/campaigns/{campaign_id}/scribe/session-recaps",
+            json={"session_id": session_id, "title": "Safe recap", "body_markdown": safe_phrase},
+        ).json()
+        assert private_recap.status_code == 201
+        assert client.patch(
+            f"/api/scribe/session-recaps/{safe_recap['id']}/public-safety",
+            json={"campaign_id": campaign_id, "public_safe": True, "sensitivity_reason": None},
+        ).status_code == 200
+
+        preview = _build_reviewed_player_safe_preview(client, campaign_id=campaign_id, session_id=session_id)
+        rendered = preview["rendered_prompt"]
+        assert safe_phrase in rendered
+        assert private_phrase not in rendered
+        assert "PRIVATE_LIVE_NOTE_DO_NOT_PROMPT" not in rendered
 
 
 def test_player_safe_run_warning_gate_snippet_creation_and_player_serializer(migrated_settings, monkeypatch):

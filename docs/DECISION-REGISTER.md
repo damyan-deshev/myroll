@@ -745,10 +745,15 @@ Rationale:
 Consequences:
 - Option-generating prompts should request structured output with stable option IDs and proposed canon deltas where the provider supports it.
 - Proposal sets and options are persisted with statuses such as proposed, selected, rejected, saved_for_later, superseded, and canonized.
-- Selecting an option creates a canonization draft/state patch for explicit GM review and apply.
+- Selecting/adopting an option creates a planning marker for explicit GM review; it does not apply proposal body text as canon.
 - Rejected options are retained for audit and explicit recall, but are excluded from normal creative generation context.
 - Saved-for-later options may enter an idea bank, but they are not active campaign truth.
 - Exact recall and context packaging must prefer canonized/approved state over raw proposal history.
+
+2026-05-04 implementation note:
+- Direct proposal-body canonization remains deferred.
+- A selected proposal option by itself is not eligible for normal future context.
+- The shipped bridge is planning marker -> later played evidence -> GM-accepted memory; accepted memory carries future canon context, while proposal/marker text stays provenance.
 
 ## DR-052: Campaign Objects Are GM-Owned Manual Primitives
 
@@ -793,3 +798,63 @@ Consequences:
 2026-05-02 implementation note:
 - Static catalog v1 exists at `bundled/quick_npc_seeds/quick_npc_seeds.json` as a JSON array of 300 compact seeds, with 25 seeds in each requested broad type and race/gender/name alignment baked into every seed.
 - This is content-only delivery; future integration should validate the static schema and preserve the copy-into-GM-owned-NPC boundary.
+
+## DR-054: Scribe Canon Writes Go Through GM-Accepted Memory
+
+Decision: Scribe turns played evidence into durable canon only when the GM accepts a memory candidate into campaign memory.
+
+Rationale:
+- LLM output is useful draft material, but it is not campaign truth.
+- Planning markers are GM intent/provenance, not evidence that something happened.
+- Proposal bodies can be attractive prose, but letting them become canon directly would contaminate future context with unplayed branches.
+- The GM needs a single review point where evidence, wording, and canon status are visible before future context changes.
+
+Consequences:
+- `session.build_recap` is the only LLM task that may produce linked canonization candidates in the shipped Scribe spine.
+- A planning marker can be canonized only through later played evidence plus `Accept into Memory`.
+- Accepted memory entries carry future canon context; canonized marker/proposal text remains GM-private provenance.
+- `/player` state stays unchanged unless an existing explicit publish action is used.
+
+## DR-055: Player-Safe Is Eligibility, Not Publication Safety
+
+Decision: `public_safe=true` means a source is eligible for public-safe context; it is not proof that the text is safe to publish.
+
+Rationale:
+- Text can leak through implication, timing, phrasing, or combinations of otherwise harmless facts.
+- Deterministic warning scans can catch obvious phrases and private references, but they cannot prove semantic safety.
+- Public snippets are GM-approved public artifacts by convention, not Scribe-verified safe text.
+
+Consequences:
+- Player-safe LLM drafts never auto-publish.
+- GM review and existing publish actions remain the only path to `/player`.
+- LLM-sourced snippets require warning scan/ack when applicable, but warning scans remain review aids.
+- Snippet provenance, warning metadata, run IDs, prompts, and Scribe state are stripped from player payloads and default exports.
+
+## DR-056: Real-Provider Journey Checks Separate Contracts From Review Signals
+
+Decision: real-provider and synthetic Scribe journey reports distinguish backend contract checks, model behavior, and human-review signals.
+
+Rationale:
+- Local model output is stochastic and prose quality is partly a GM judgment.
+- Treating every missing anchor, slot drift, or awkward wording as a backend failure would create noisy tests and weaken useful coverage over time.
+- Backend safety boundaries should be deterministic and structural: context exclusion, preview freshness, evidence refs, canonization transactions, and `/player` isolation.
+
+Consequences:
+- Synthetic matrix reports can flag prose/anchor/slot issues for human review without failing backend contract sections.
+- The recap verifier is opt-in/off by default unless future measured results justify changing that default.
+- Prompt examples and repair discipline are preferred before adding more verifier calls to the normal path.
+
+## DR-057: Advisory Language Rules Are Data, Not Safety Contracts
+
+Decision: language-specific phrase checks live in bounded bundled rule packs and produce advisory warnings only.
+
+Rationale:
+- Regex or phrase matching over GM-authored text is not semantic understanding.
+- The real Scribe invariant is structural: played events, planning intent, proposal drafts, public-safe sources, and player payloads have different lanes and policies.
+- Language coverage is unbounded across English, Bulgarian, code-switching, RTL scripts, and future GM styles.
+
+Consequences:
+- Hard validation must pass with empty and counterfactual phrase packs.
+- Recap evidence rejection depends on source lane, known source IDs, and quote validity, not on language-specific phrase content.
+- Public-safety phrase warnings are advisory; private-reference/source-policy checks stay separate.
+- V1 ships bundled JSON rule packs only. Campaign overrides, import/export, and GM editing UI are deferred.

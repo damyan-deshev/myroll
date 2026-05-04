@@ -2321,7 +2321,8 @@ Shipped v1 limitations:
 - no raw private recap filtering shortcut;
 - no raw live capture inclusion in public-safe recap;
 - full edit diff/provenance is deferred; v1 stores `source_llm_run_id`, `source_draft_hash`, and final snippet text only;
-- deterministic warning phrase lists are intentionally easy to extend and should not be treated as exhaustive.
+- public-safety phrase warnings are bounded advisory rules loaded from `backend/app/llm_review_rules/public_safety.json` and should not be treated as exhaustive;
+- private-reference checks are separate source-policy checks, not language phrase-pack rules.
 
 ### LLM-4: Proposal Canonization Bridge
 
@@ -2367,7 +2368,7 @@ Shipped v1 limitations:
 - one marker can be canonized by at most one memory entry;
 - manual relinking is deferred;
 - entity patching and proposal-body canonization remain deferred;
-- language-specific recap evidence phrase checks are bounded warning rules loaded from `backend/app/llm_review_rules/speculative_language.json`; hard evidence rejection depends on source lane and quote validity, not on English/Bulgarian phrase confidence;
+- language-specific recap evidence phrase checks are bounded advisory rules loaded from `backend/app/llm_review_rules/speculative_language.json`; hard evidence rejection depends on source lane and quote validity, not on English/Bulgarian phrase confidence;
 - `candidate_body_resembles_planning_marker` is a conservative exact/substring warning after normalization, not semantic paraphrase detection; GM review remains the authority for whether a candidate describes played events rather than planning intent;
 - hard delete may sever marker/option provenance because new provenance FKs use `ON DELETE SET NULL`.
 
