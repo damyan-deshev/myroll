@@ -541,6 +541,12 @@ class NoteSource(Base):
 
 class Note(Base):
     __tablename__ = "notes"
+    __table_args__ = (
+        CheckConstraint(
+            "recall_status in ('private_prep', 'scoped_recall_eligible', 'archived')",
+            name="ck_notes_recall_status",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(primary_key=True)
     campaign_id: Mapped[str] = mapped_column(
@@ -554,6 +560,7 @@ class Note(Base):
     private_body: Mapped[str] = mapped_column(Text, default="", nullable=False)
     tags_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     source_label: Mapped[str | None] = mapped_column()
+    recall_status: Mapped[str] = mapped_column(default="private_prep", nullable=False)
     created_at: Mapped[str] = mapped_column(nullable=False)
     updated_at: Mapped[str] = mapped_column(nullable=False)
 
@@ -853,6 +860,66 @@ class ScribeSearchIndex(Base):
     normalized_text: Mapped[str] = mapped_column(Text, nullable=False)
     lane: Mapped[str] = mapped_column(default="canon", nullable=False)
     visibility: Mapped[str] = mapped_column(default="gm_private", nullable=False)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[str] = mapped_column(nullable=False)
+
+
+class ScribeCorpusCard(Base):
+    __tablename__ = "scribe_corpus_cards"
+    __table_args__ = (
+        CheckConstraint(
+            "card_variant in ('default', 'public_projection', 'entity_shell', 'debug_metadata')",
+            name="ck_scribe_corpus_cards_card_variant",
+        ),
+        CheckConstraint(
+            "lane in ('canon', 'reviewed', 'played_evidence', 'gm_note', 'planning', 'public', 'debug_history')",
+            name="ck_scribe_corpus_cards_lane",
+        ),
+        CheckConstraint(
+            "visibility in ('gm_private', 'public_safe', 'player_display')",
+            name="ck_scribe_corpus_cards_visibility",
+        ),
+        CheckConstraint(
+            "review_status in ('raw', 'reviewed', 'accepted', 'planning_only', 'public_artifact', 'debug_only')",
+            name="ck_scribe_corpus_cards_review_status",
+        ),
+        CheckConstraint(
+            "claim_role in ('canon_claim', 'reviewed_summary', 'source_evidence', 'planning_intent', 'public_artifact', 'entity_shell', 'debug_metadata')",
+            name="ck_scribe_corpus_cards_claim_role",
+        ),
+        UniqueConstraint(
+            "campaign_id",
+            "source_kind",
+            "source_id",
+            "source_revision",
+            "card_variant",
+            name="uq_scribe_corpus_cards_source_projection",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    source_kind: Mapped[str] = mapped_column(nullable=False, index=True)
+    source_id: Mapped[str] = mapped_column(nullable=False, index=True)
+    source_revision: Mapped[str] = mapped_column(nullable=False)
+    card_variant: Mapped[str] = mapped_column(default="default", nullable=False)
+    source_hash: Mapped[str] = mapped_column(nullable=False, index=True)
+    lane: Mapped[str] = mapped_column(nullable=False, index=True)
+    visibility: Mapped[str] = mapped_column(nullable=False, index=True)
+    review_status: Mapped[str] = mapped_column(nullable=False)
+    source_status: Mapped[str] = mapped_column(nullable=False, default="active")
+    claim_role: Mapped[str] = mapped_column(nullable=False)
+    session_id: Mapped[str | None] = mapped_column(ForeignKey("sessions.id", ondelete="SET NULL"), index=True)
+    scene_id: Mapped[str | None] = mapped_column(ForeignKey("scenes.id", ondelete="SET NULL"), index=True)
+    happened_at: Mapped[str | None] = mapped_column(index=True)
+    title: Mapped[str] = mapped_column(nullable=False)
+    excerpt: Mapped[str] = mapped_column(Text, nullable=False)
+    searchable_text: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    alias_refs_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    provenance_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
     created_at: Mapped[str] = mapped_column(nullable=False)
     updated_at: Mapped[str] = mapped_column(nullable=False)
 

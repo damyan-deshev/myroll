@@ -947,6 +947,7 @@ function ScribeWidget(props: SharedWidgetProps) {
   const [recapTitle, setRecapTitle] = useState("");
   const [recapBody, setRecapBody] = useState("");
   const [recallQuery, setRecallQuery] = useState("");
+  const [recallMode, setRecallMode] = useState("canon");
   const [aliasText, setAliasText] = useState("");
   const [inspectionOpen, setInspectionOpen] = useState(false);
   const [branchScope, setBranchScope] = useState<"campaign" | "session" | "scene">("scene");
@@ -1018,7 +1019,7 @@ function ScribeWidget(props: SharedWidgetProps) {
     enabled: Boolean(props.selectedCampaignId && props.selectedSessionId)
   });
   const recallResult = useMutation({
-    mutationFn: () => api.recall(props.selectedCampaignId!, { query: recallQuery })
+    mutationFn: () => api.recall(props.selectedCampaignId!, { query: recallQuery, mode: recallMode, trace_visibility: recallMode === "debug_history" ? "gm_private" : "safe" })
   });
 
   const providers = providersQuery.data?.profiles ?? [];
@@ -1662,15 +1663,34 @@ function ScribeWidget(props: SharedWidgetProps) {
       <div className="scribe-recall">
         <div className="inline-form">
           <input value={recallQuery} onChange={(event) => setRecallQuery(event.target.value)} placeholder="Recall accepted memory" aria-label="Scribe recall query" />
+          <select value={recallMode} onChange={(event) => setRecallMode(event.target.value)} aria-label="Recall mode">
+            <option value="canon">Canon</option>
+            <option value="canon_plus_reviewed">Canon + reviewed</option>
+            <option value="played_evidence">Played evidence</option>
+            <option value="planning">Planning</option>
+            <option value="public_safe">Public-safe</option>
+            <option value="debug_history">Debug/history</option>
+          </select>
           <button onClick={() => recallResult.mutate()} disabled={!recallQuery.trim() || recallResult.isPending}>
             Recall
           </button>
         </div>
+        {recallResult.data ? (
+          <div className="muted-block">
+            Evidence coverage: <strong>{recallResult.data.evidenceCoverage ?? "none"}</strong>
+            {recallResult.data.summary?.matchStrategy ? ` · ${String(recallResult.data.summary.matchStrategy)}` : ""}
+            {recallResult.data.summary?.truncated ? " · truncated" : ""}
+          </div>
+        ) : null}
         {recallResult.data?.hits.map((hit) => (
-          <div key={`${hit.source_kind}-${hit.source_id}`} className="scribe-hit">
+          <div key={`${hit.card_id ?? hit.source_kind}-${hit.source_id}`} className="scribe-hit">
             <strong>{hit.title}</strong>
             <p>{hit.excerpt}</p>
-            <span className="muted">{hit.source_kind} · {hit.lane} · score {hit.score}</span>
+            <span className="muted">
+              {hit.source_kind} · {hit.lane} · {hit.claim_role ?? "source"} · {hit.review_status ?? "review"} · {hit.visibility}
+              {hit.match && "strategy" in hit.match ? ` · ${String(hit.match.strategy)}` : ""} · score {Math.round(hit.score * 10) / 10}
+            </span>
+            {hit.claim_role === "entity_shell" ? <span className="muted">entity shell · {hit.source_status ?? "navigational"} · navigational</span> : null}
           </div>
         ))}
         <div className="inline-form">

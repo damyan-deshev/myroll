@@ -3,11 +3,16 @@ from __future__ import annotations
 import json
 import sqlite3
 import tarfile
+import uuid
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import sessionmaker
 
+from backend.app.db.engine import get_engine
+from backend.app.db.models import CampaignMemoryEntry, Entity, Note, PlanningMarker, SessionRecap
 from backend.app.factory import create_app
 from backend.app.storage_export import DB_ARCHIVE_PATH, EXPORT_MANIFEST
+from backend.app.time import utc_now_z
 
 
 def _client(settings) -> TestClient:  # noqa: ANN001
@@ -18,6 +23,10 @@ def _campaign_session(client: TestClient) -> tuple[str, str]:
     campaign = client.post("/api/campaigns", json={"name": "Scribe Campaign"}).json()
     session = client.post(f"/api/campaigns/{campaign['id']}/sessions", json={"title": "Opening"}).json()
     return campaign["id"], session["id"]
+
+
+def _id() -> str:
+    return str(uuid.uuid4())
 
 
 def test_json_parser_repairs_unescaped_inner_quotes():
@@ -36,6 +45,43 @@ def test_json_parser_repairs_unescaped_inner_quotes():
     )
 
     assert parsed["privateRecap"]["bodyMarkdown"] == 'Лаврена закотвя "Сребърната чайка" до фара и вижда "Нарвал".'
+
+
+def test_json_parser_repairs_inner_quote_before_prose_comma():
+    from backend.app.api.routes_llm import _parse_json_object
+
+    parsed = _parse_json_object(
+        '{'
+        '"privateRecap": {'
+        '"title": "Огледален лазарет",'
+        '"bodyMarkdown": "Масата следва вариант 2, "Зеркалната паразитация", докато Раиса пази пакта."'
+        '},'
+        '"memoryCandidateDrafts": [],'
+        '"continuityWarnings": [],'
+        '"unresolvedThreads": []'
+        '}'
+    )
+
+    assert (
+        parsed["privateRecap"]["bodyMarkdown"]
+        == 'Масата следва вариант 2, "Зеркалната паразитация", докато Раиса пази пакта.'
+    )
+
+
+def test_json_parser_preserves_structural_quote_before_object_comma():
+    from backend.app.api.routes_llm import _parse_json_object
+
+    parsed = _parse_json_object(
+        '{'
+        '"privateRecap": {"title": "Огледален лазарет", "bodyMarkdown": "Борил диша."},'
+        '"memoryCandidateDrafts": [{"title": "Пакт", "body": "Раиса пази пакта."}],'
+        '"continuityWarnings": [],'
+        '"unresolvedThreads": []'
+        '}'
+    )
+
+    assert parsed["privateRecap"]["title"] == "Огледален лазарет"
+    assert parsed["memoryCandidateDrafts"][0]["title"] == "Пакт"
 
 
 def test_live_capture_orders_and_correction_projection(migrated_settings):
@@ -219,6 +265,192 @@ def test_recap_memory_recall_and_export_redaction(migrated_settings, monkeypatch
         )
     finally:
         connection.close()
+
+
+def test_scribe_corpus_recall_modes_and_policy_boundaries(migrated_settings):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    now = utc_now_z()
+    factory = sessionmaker(bind=get_engine(migrated_settings), autoflush=False, expire_on_commit=False)
+    with factory() as db, db.begin():
+        db.add(
+            CampaignMemoryEntry(
+                id=_id(),
+                campaign_id=campaign_id,
+                session_id=session_id,
+                title="Aureon canon memory",
+                body="Aureon keeps the amber ledger as accepted canon.",
+                evidence_refs_json="[]",
+                tags_json="[]",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        db.add(
+            SessionRecap(
+                id=_id(),
+                campaign_id=campaign_id,
+                session_id=session_id,
+                title="Reviewed pearl recap",
+                body_markdown="ReviewedPearlOnly belongs to the reviewed recap, not atomic canon.",
+                evidence_refs_json="[]",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        db.add(
+            Note(
+                id=_id(),
+                campaign_id=campaign_id,
+                source_id=None,
+                session_id=session_id,
+                scene_id=None,
+                asset_id=None,
+                title="Private prep",
+                private_body="PrivatePrepHydra should stay out of normal recall.",
+                tags_json="[]",
+                source_label=None,
+                recall_status="private_prep",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        db.add(
+            Note(
+                id=_id(),
+                campaign_id=campaign_id,
+                source_id=None,
+                session_id=session_id,
+                scene_id=None,
+                asset_id=None,
+                title="Scoped evidence",
+                private_body="ScopedCompassNote is deliberately eligible as played evidence.",
+                tags_json="[]",
+                source_label=None,
+                recall_status="scoped_recall_eligible",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        db.add(
+            PlanningMarker(
+                id=_id(),
+                campaign_id=campaign_id,
+                session_id=session_id,
+                scene_id=None,
+                source_proposal_option_id=None,
+                scope_kind="session",
+                status="active",
+                title="Future serpent direction",
+                marker_text="PlanningSerpentOnly is GM intent and not evidence.",
+                lint_warnings_json="[]",
+                provenance_json="{}",
+                edited_from_source=False,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        db.add(
+            Entity(
+                id=_id(),
+                campaign_id=campaign_id,
+                kind="npc",
+                name="Aureon Spoiler Internal",
+                display_name="Aureon",
+                visibility="public_known",
+                tags_json="[]",
+                notes="Do not compile entity notes.",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        db.add(
+            Entity(
+                id=_id(),
+                campaign_id=campaign_id,
+                kind="npc",
+                name="SecretPrepEntity",
+                visibility="private",
+                tags_json="[]",
+                notes="Private entity notes stay out.",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+    canon_recap_phrase = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "ReviewedPearlOnly", "mode": "canon"},
+    )
+    assert canon_recap_phrase.status_code == 200
+    assert canon_recap_phrase.json()["hits"] == []
+    assert canon_recap_phrase.json()["evidenceCoverage"] == "none"
+
+    reviewed = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "ReviewedPearlOnly", "mode": "canon_plus_reviewed"},
+    )
+    assert reviewed.status_code == 200
+    assert reviewed.json()["hits"][0]["source_kind"] == "session_recap"
+    assert reviewed.json()["hits"][0]["claim_role"] == "reviewed_summary"
+
+    prep = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "PrivatePrepHydra", "mode": "played_evidence"},
+    )
+    assert prep.status_code == 200
+    assert prep.json()["hits"] == []
+
+    scoped = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "ScopedCompassNote", "mode": "played_evidence"},
+    )
+    assert scoped.status_code == 200
+    assert scoped.json()["hits"][0]["source_kind"] == "note"
+    assert scoped.json()["hits"][0]["source_status"] == "scoped_recall_eligible"
+
+    planning_in_canon = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "PlanningSerpentOnly", "mode": "canon"},
+    )
+    assert planning_in_canon.status_code == 200
+    assert planning_in_canon.json()["hits"] == []
+
+    planning = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "PlanningSerpentOnly", "mode": "planning"},
+    )
+    assert planning.status_code == 200
+    assert planning.json()["hits"][0]["source_kind"] == "planning_marker"
+    assert planning.json()["hits"][0]["claim_role"] == "planning_intent"
+
+    public_shell = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "Aureon", "mode": "canon"},
+    )
+    assert public_shell.status_code == 200
+    assert any(hit["claim_role"] == "entity_shell" for hit in public_shell.json()["hits"])
+
+    private_shell = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "SecretPrepEntity", "mode": "canon"},
+    )
+    assert private_shell.status_code == 200
+    assert private_shell.json()["hits"] == []
+
+    debug_without_private_trace = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "SecretPrepEntity", "mode": "debug_history"},
+    )
+    assert debug_without_private_trace.status_code == 400
+    assert debug_without_private_trace.json()["error"]["code"] == "debug_history_requires_gm_private_trace"
+
+    debug = client.post(
+        f"/api/campaigns/{campaign_id}/scribe/recall",
+        json={"query": "SecretPrepEntity", "mode": "debug_history", "trace_visibility": "gm_private"},
+    )
+    assert debug.status_code == 200
+    assert debug.json()["hits"][0]["source_kind"] == "entity"
 
 
 def test_recap_rejects_memory_candidate_with_unknown_evidence_ref(migrated_settings, monkeypatch):

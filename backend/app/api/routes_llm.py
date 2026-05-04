@@ -47,6 +47,14 @@ from backend.app.public_safety import (
     warning_ack_required,
 )
 from backend.app.review_rule_packs import PhraseRule, load_phrase_rules
+from backend.app.scribe_corpus import (
+    DEFAULT_LIMIT as RECALL_DEFAULT_LIMIT,
+    MAX_LIMIT as RECALL_MAX_LIMIT,
+    CorpusUnavailableError,
+    RecallPolicyError,
+    recall_campaign_corpus,
+    rebuild_campaign_corpus,
+)
 from backend.app.time import utc_now_z
 
 
@@ -593,28 +601,44 @@ class EntityAliasOut(BaseModel):
 class RecallIn(BaseModel):
     query: str = Field(min_length=1, max_length=500)
     include_draft: bool = False
+    mode: str = Field(default="canon", max_length=40)
+    limit: int = Field(default=RECALL_DEFAULT_LIMIT, ge=1, le=RECALL_MAX_LIMIT)
+    trace_visibility: str = Field(default="safe", max_length=40)
 
-    @field_validator("query", mode="before")
+    @field_validator("query", "mode", "trace_visibility", mode="before")
     @classmethod
     def trim_query(cls, value: object) -> object:
         return _trim_required(value)
 
 
 class RecallHitOut(BaseModel):
+    card_id: str | None = None
     source_kind: str
     source_id: str
     source_revision: str
+    source_hash: str | None = None
+    card_variant: str | None = None
     title: str
     excerpt: str
     lane: str
     visibility: str
-    score: int
+    review_status: str | None = None
+    source_status: str | None = None
+    claim_role: str | None = None
+    score: float
+    match: dict[str, object] | None = None
+    admissibility: str | None = None
 
 
 class RecallOut(BaseModel):
     query: str
     expanded_terms: list[str]
     hits: list[RecallHitOut]
+    policy: dict[str, object] = Field(default_factory=dict)
+    summary: dict[str, object] = Field(default_factory=dict)
+    evidenceCoverage: str = "none"
+    trace: dict[str, object] | None = None
+    assembly: list[dict[str, object]] = Field(default_factory=list)
 
 
 class BuildBranchIn(BaseModel):
@@ -1290,6 +1314,15 @@ def _repair_unescaped_json_string_quotes(text: str) -> str:
             while next_index < length and text[next_index].isspace():
                 next_index += 1
             next_char = text[next_index] if next_index < length else ""
+            if next_char == ",":
+                after_comma_index = next_index + 1
+                while after_comma_index < length and text[after_comma_index].isspace():
+                    after_comma_index += 1
+                if after_comma_index < length and not _looks_like_json_value_start(text, after_comma_index):
+                    repaired.append("”")
+                    changed = True
+                    index += 1
+                    continue
             if not next_char or next_char in json_delimiters:
                 repaired.append(char)
                 in_string = False
@@ -1301,6 +1334,13 @@ def _repair_unescaped_json_string_quotes(text: str) -> str:
         repaired.append(char)
         index += 1
     return "".join(repaired) if changed else text
+
+
+def _looks_like_json_value_start(text: str, index: int) -> bool:
+    char = text[index]
+    if char in {'"', "{", "[", "-", *"0123456789"}:
+        return True
+    return text.startswith("true", index) or text.startswith("false", index) or text.startswith("null", index)
 
 
 MODEL_DOUBLE_QUOTE_TRANSLATION = str.maketrans(
@@ -1414,7 +1454,7 @@ def _source_refs_for_session(db: Session, campaign_id: str, session_id: str, vis
                 "sourceClass": "transcript_event",
                 "id": event.id,
                 "revision": event.updated_at,
-                "lane": "draft",
+                "lane": "played_evidence",
                 "visibility": "gm_private",
                 "title": f"Live capture #{event.order_index + 1}",
                 "body": event.body,
@@ -1425,7 +1465,11 @@ def _source_refs_for_session(db: Session, campaign_id: str, session_id: str, vis
     notes = list(
         db.scalars(
             select(Note)
-            .where(Note.campaign_id == campaign_id, Note.session_id == session_id)
+            .where(
+                Note.campaign_id == campaign_id,
+                Note.session_id == session_id,
+                Note.recall_status == "scoped_recall_eligible",
+            )
             .order_by(Note.updated_at, Note.title, Note.id)
         )
     )
@@ -1436,7 +1480,7 @@ def _source_refs_for_session(db: Session, campaign_id: str, session_id: str, vis
                 "sourceClass": "note",
                 "id": note.id,
                 "revision": note.updated_at,
-                "lane": "draft",
+                "lane": "played_evidence",
                 "visibility": "gm_private",
                 "title": note.title,
                 "body": note.private_body,
@@ -1553,14 +1597,18 @@ def _source_refs_for_branch(
     if scope_kind in {"session", "scene"} and session_id is not None:
         recap_statement = recap_statement.where(SessionRecap.session_id == session_id)
     recaps = list(db.scalars(recap_statement.order_by(SessionRecap.updated_at.desc(), SessionRecap.id).limit(3)))
-    refs.extend(_base_ref("session_recap", recap.id, recap.updated_at, "canon", recap.title, recap.body_markdown) for recap in recaps)
+    refs.extend(_base_ref("session_recap", recap.id, recap.updated_at, "reviewed", recap.title, recap.body_markdown) for recap in recaps)
 
     if scope_kind in {"session", "scene"} and session_id is not None:
-        note_statement = select(Note).where(Note.campaign_id == campaign_id, Note.session_id == session_id)
+        note_statement = select(Note).where(
+            Note.campaign_id == campaign_id,
+            Note.session_id == session_id,
+            Note.recall_status == "scoped_recall_eligible",
+        )
         if scope_kind == "scene" and scene_id is not None:
             note_statement = note_statement.where(Note.scene_id == scene_id)
         notes = list(db.scalars(note_statement.order_by(Note.updated_at.desc(), Note.id).limit(5)))
-        refs.extend(_base_ref("note", note.id, note.updated_at, "draft", note.title, note.private_body) for note in notes)
+        refs.extend(_base_ref("note", note.id, note.updated_at, "played_evidence", note.title, note.private_body) for note in notes)
 
         events_response = _transcript_events_response(db, campaign_id, session_id)
         events = events_response.projection
@@ -1572,7 +1620,7 @@ def _source_refs_for_branch(
                     "session_transcript_event",
                     event.id,
                     event.updated_at,
-                    "draft",
+                    "played_evidence",
                     f"Live capture #{event.order_index + 1}",
                     event.body,
                     **_transcript_ref_extra(event),
@@ -4210,46 +4258,23 @@ def create_alias(campaign_id: UUID, payload: EntityAliasIn, db: DbSession) -> En
 
 @router.post("/api/campaigns/{campaign_id}/scribe/recall", response_model=RecallOut)
 def recall(campaign_id: UUID, payload: RecallIn, db: DbSession) -> RecallOut:
-    _require_campaign(db, campaign_id)
-    normalized_query = _normalize_text(payload.query)
-    terms = {term for term in re.split(r"\s+", normalized_query) if len(term) >= 2}
-    aliases = list(db.scalars(select(EntityAlias).where(EntityAlias.campaign_id == str(campaign_id))))
-    for alias in aliases:
-        normalized_alias = alias.normalized_alias
-        if normalized_alias and (normalized_alias in normalized_query or normalized_query in normalized_alias):
-            terms.add(normalized_alias)
-            if alias.entity_id:
-                entity = db.get(Entity, alias.entity_id)
-                if entity is not None:
-                    terms.add(_normalize_text(entity.name))
-                    if entity.display_name:
-                        terms.add(_normalize_text(entity.display_name))
-    rows = list(db.scalars(select(ScribeSearchIndex).where(ScribeSearchIndex.campaign_id == str(campaign_id))))
-    hits: list[RecallHitOut] = []
-    for row in rows:
-        if row.visibility != "gm_private":
-            continue
-        if row.lane == "draft" and not payload.include_draft:
-            continue
-        score = 0
-        text = row.normalized_text
-        for term in terms:
-            if term and term in text:
-                score += 3 if term == normalized_query else 1
-        if score <= 0:
-            continue
-        excerpt = row.body[:320] + ("..." if len(row.body) > 320 else "")
-        hits.append(
-            RecallHitOut(
-                source_kind=row.source_kind,
-                source_id=row.source_id,
-                source_revision=row.source_revision,
-                title=row.title,
-                excerpt=excerpt,
-                lane=row.lane,
-                visibility=row.visibility,
-                score=score,
-            )
+    campaign_id_str = str(campaign_id)
+    if db.in_transaction():
+        db.rollback()
+    try:
+        with db.begin():
+            _require_campaign(db, campaign_id)
+            rebuild_campaign_corpus(db, campaign_id_str)
+        result = recall_campaign_corpus(
+            db,
+            campaign_id=campaign_id_str,
+            query=payload.query,
+            mode=payload.mode,
+            limit=payload.limit,
+            trace_visibility=payload.trace_visibility,
         )
-    hits.sort(key=lambda hit: (-hit.score, hit.title))
-    return RecallOut(query=payload.query, expanded_terms=sorted(terms), hits=hits[:12])
+    except RecallPolicyError as exc:
+        raise api_error(400, exc.code, exc.message) from exc
+    except CorpusUnavailableError as exc:
+        raise api_error(503, "scribe_corpus_fts_unavailable", str(exc)) from exc
+    return RecallOut(**result)

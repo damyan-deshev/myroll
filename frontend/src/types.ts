@@ -201,6 +201,7 @@ export type NoteSummary = {
   title: string;
   tags: string[];
   source_label: string | null;
+  recall_status: "private_prep" | "scoped_recall_eligible" | "archived";
   created_at: string;
   updated_at: string;
 };
@@ -931,13 +932,26 @@ export type RecallResult = {
   query: string;
   expanded_terms: string[];
   hits: Array<{
+    card_id?: string | null;
     source_kind: string;
     source_id: string;
     source_revision: string;
+    source_hash?: string | null;
+    card_variant?: string | null;
     title: string;
     excerpt: string;
     lane: string;
     visibility: string;
+    review_status?: string | null;
+    source_status?: string | null;
+    claim_role?: string | null;
     score: number;
+    match?: { strategy?: string; matched_terms?: string[] } | Record<string, unknown> | null;
+    admissibility?: string | null;
   }>;
+  policy?: Record<string, unknown>;
+  summary?: Record<string, unknown>;
+  evidenceCoverage?: "none" | "weak" | "partial" | "sufficient" | string;
+  trace?: Record<string, unknown> | null;
+  assembly?: Array<Record<string, unknown>>;
 };

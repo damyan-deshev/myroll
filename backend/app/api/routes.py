@@ -98,6 +98,7 @@ PARTY_LAYOUTS = {"compact", "standard", "wide"}
 COMBAT_STATUSES = {"active", "paused", "ended"}
 COMBAT_DISPOSITIONS = {"pc", "ally", "neutral", "enemy", "hazard", "other"}
 SCENE_STAGED_DISPLAY_MODES = {"none", "blackout", "intermission", "scene_title", "active_map", "initiative", "public_snippet"}
+NOTE_RECALL_STATUSES = {"private_prep", "scoped_recall_eligible", "archived"}
 SCENE_ENTITY_ROLES = {"featured", "supporting", "location", "clue", "threat", "other"}
 NOTE_SOURCE_KINDS = {"internal", "imported_markdown"}
 SNIPPET_FORMATS = {"markdown"}
@@ -932,6 +933,7 @@ class NoteSummaryOut(BaseModel):
     title: str
     tags: list[str]
     source_label: str | None
+    recall_status: str
     created_at: str
     updated_at: str
 
@@ -952,8 +954,9 @@ class NoteCreate(BaseModel):
     session_id: UUID | None = None
     scene_id: UUID | None = None
     asset_id: UUID | None = None
+    recall_status: str = "private_prep"
 
-    @field_validator("title", mode="before")
+    @field_validator("title", "recall_status", mode="before")
     @classmethod
     def trim_title(cls, value: object) -> object:
         return _trim_required(value)
@@ -966,8 +969,9 @@ class NotePatch(BaseModel):
     session_id: UUID | None = None
     scene_id: UUID | None = None
     asset_id: UUID | None = None
+    recall_status: str | None = None
 
-    @field_validator("title", mode="before")
+    @field_validator("title", "recall_status", mode="before")
     @classmethod
     def trim_title(cls, value: object) -> object:
         return _trim_optional(value)
@@ -1396,6 +1400,12 @@ def _require_snippet_format(value: str) -> str:
     return value
 
 
+def _require_note_recall_status(value: str) -> str:
+    if value not in NOTE_RECALL_STATUSES:
+        raise api_error(400, "invalid_note_recall_status", "Note recall status is invalid")
+    return value
+
+
 def _validate_public_snippet_provenance(
     db: Session,
     *,
@@ -1487,6 +1497,7 @@ def _note_summary_out(note: Note) -> NoteSummaryOut:
         title=note.title,
         tags=_parse_tags_json(note.tags_json),
         source_label=note.source_label,
+        recall_status=note.recall_status,
         created_at=note.created_at,
         updated_at=note.updated_at,
     )
@@ -1883,6 +1894,7 @@ def _create_note_record(
     source_kind: str,
     source_name: str,
     source_label: str | None,
+    recall_status: str = "private_prep",
 ) -> Note:
     now = utc_now_z()
     resolved_session_id, resolved_scene_id, resolved_asset_id = _validate_note_links(
@@ -1904,6 +1916,7 @@ def _create_note_record(
         private_body=private_body,
         tags_json=json.dumps(_normalize_tags(tags)),
         source_label=source_label,
+        recall_status=_require_note_recall_status(recall_status),
         created_at=now,
         updated_at=now,
     )
@@ -4183,6 +4196,7 @@ def create_note(campaign_id: UUID, payload: NoteCreate, db: DbSession) -> NoteOu
             source_kind="internal",
             source_name="Internal Notes",
             source_label="Internal Notes",
+            recall_status=payload.recall_status,
         )
     return _note_out(note)
 
@@ -4217,6 +4231,8 @@ def patch_note(note_id: UUID, payload: NotePatch, db: DbSession) -> NoteOut:
             note.private_body = str(data["private_body"])
         if "tags" in data and data["tags"] is not None:
             note.tags_json = json.dumps(_normalize_tags(data["tags"]))  # type: ignore[arg-type]
+        if "recall_status" in data and data["recall_status"] is not None:
+            note.recall_status = _require_note_recall_status(str(data["recall_status"]))
         note.updated_at = utc_now_z()
     return _note_out(note)
 

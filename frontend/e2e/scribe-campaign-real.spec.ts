@@ -94,7 +94,26 @@ type BuildRecapResult = {
   } | null;
 };
 type MemoryEntry = { id: string; title: string; body: string; source_planning_marker_id?: string | null; source_proposal_option_id?: string | null };
-type RecallResult = { expanded_terms: string[]; hits: Array<{ source_kind: string; title: string; excerpt: string; score: number }> };
+type RecallResult = {
+  expanded_terms: string[];
+  evidenceCoverage?: string;
+  summary?: JsonObject;
+  trace?: JsonObject | null;
+  assembly?: JsonObject[];
+  hits: Array<{
+    source_kind: string;
+    source_id?: string;
+    title: string;
+    excerpt: string;
+    score: number;
+    lane?: string;
+    visibility?: string;
+    claim_role?: string | null;
+    review_status?: string | null;
+    source_status?: string | null;
+    match?: JsonObject | null;
+  }>;
+};
 
 type JourneyCheck = {
   name: string;
@@ -855,8 +874,12 @@ function writeReport(report: JourneyReport): void {
     "### Recall",
     report.recap.recall
       ? [
+          `Evidence coverage: ${report.recap.recall.evidenceCoverage ?? "unknown"}`,
+          `Match strategy: ${String(report.recap.recall.summary?.matchStrategy ?? "unknown")}`,
           `Expanded terms: ${report.recap.recall.expanded_terms.join(", ")}`,
-          ...report.recap.recall.hits.map((hit) => `- ${hit.source_kind} · ${hit.title} · score ${hit.score}: ${hit.excerpt}`),
+          ...report.recap.recall.hits.map(
+            (hit) => `- ${hit.source_kind} · ${hit.claim_role ?? "role?"} · ${hit.title} · score ${hit.score}: ${hit.excerpt}`,
+          ),
         ].join("\n")
       : "not run",
     "",
@@ -1096,6 +1119,25 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       severity: "critical",
       details: "Checked all proposal option body excerpts against future rendered branch prompt.",
     });
+    const planningRecallBeforePlay = await apiPost<RecallResult>(
+      request,
+      `/api/campaigns/${campaign.id}/scribe/recall`,
+      { query: marker.title, mode: "planning", trace_visibility: "safe" },
+      "planning recall before played evidence",
+    );
+    addCheck(report, {
+      name: "LLM-5a planning recall admits active marker only as planning intent",
+      pass: planningRecallBeforePlay.hits.some(
+        (hit) => hit.source_kind === "planning_marker" && hit.source_id === marker.id && hit.claim_role === "planning_intent",
+      ),
+      severity: "critical",
+      details: `Planning recall returned ${planningRecallBeforePlay.hits.length} hit(s); source kinds: ${planningRecallBeforePlay.hits.map((hit) => `${hit.source_kind}:${hit.claim_role ?? "none"}`).join(", ")}.`,
+    });
+    addCheck(report, {
+      name: "LLM-5a planning recall exposes evidence coverage and match strategy",
+      pass: Boolean(planningRecallBeforePlay.evidenceCoverage) && Boolean(planningRecallBeforePlay.summary?.matchStrategy),
+      details: `coverage=${planningRecallBeforePlay.evidenceCoverage ?? "none"} match=${String(planningRecallBeforePlay.summary?.matchStrategy ?? "missing")}`,
+    });
 
     await createTimedCapture(
       request,
@@ -1333,10 +1375,27 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
           ? "Checked post-accept branch prompt for absence of canonized marker text."
           : "Marker was not canonized because the model did not produce a valid linked candidate.",
     });
+    const planningRecallAfterAccept = await apiPost<RecallResult>(
+      request,
+      `/api/campaigns/${campaign.id}/scribe/recall`,
+      { query: marker.title, mode: "planning", trace_visibility: "safe" },
+      "planning recall after memory accept",
+    );
+    addCheck(report, {
+      name: "LLM-5a planning recall drops canonized marker from active planning",
+      pass:
+        linkedCandidates.length === 0 ||
+        !planningRecallAfterAccept.hits.some((hit) => hit.source_kind === "planning_marker" && hit.source_id === marker.id),
+      severity: linkedCandidates.length > 0 ? "critical" : "info",
+      details:
+        linkedCandidates.length > 0
+          ? `After linked accept, planning recall hit kinds: ${planningRecallAfterAccept.hits.map((hit) => `${hit.source_kind}:${hit.source_id ?? ""}`).join(", ")}.`
+          : "Marker was not canonized because the model did not produce a valid linked candidate.",
+    });
     const recall = await apiPost<RecallResult>(
       request,
       `/api/campaigns/${campaign.id}/scribe/recall`,
-      { query: scenario.recallQuery, include_draft: false },
+      { query: scenario.recallQuery, include_draft: false, mode: "canon", trace_visibility: "safe" },
       "recall accepted memory",
     );
     report.recap.recall = recall;
@@ -1344,6 +1403,50 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
       name: "Recall cites accepted memory",
       pass: recall.hits.some((hit) => hit.source_kind === "campaign_memory_entry"),
       details: `${recall.hits.length} recall hit(s); source kinds: ${recall.hits.map((hit) => hit.source_kind).join(", ")}`,
+    });
+    const recallPayloadText = JSON.stringify(recall);
+    addCheck(report, {
+      name: "LLM-5a canon recall trace excludes planning marker text",
+      pass: !promptContains(recallPayloadText, marker.marker_text),
+      severity: "critical",
+      details: "Checked canon recall payload, including safe trace and assembly, against raw planning marker text.",
+    });
+    addCheck(report, {
+      name: "LLM-5a canon recall trace excludes raw proposal bodies",
+      pass: branchDetail.options.every((option) => !promptContains(recallPayloadText, option.body)),
+      severity: "critical",
+      details: "Checked canon recall payload, including safe trace and assembly, against raw proposal option bodies.",
+    });
+    addCheck(report, {
+      name: "LLM-5a canon recall reports evidence coverage and match strategy",
+      pass: Boolean(recall.evidenceCoverage) && recall.evidenceCoverage !== "none" && Boolean(recall.summary?.matchStrategy),
+      severity: "critical",
+      details: `coverage=${recall.evidenceCoverage ?? "none"} match=${String(recall.summary?.matchStrategy ?? "missing")}`,
+    });
+    const publicSafeRecall = await apiPost<RecallResult>(
+      request,
+      `/api/campaigns/${campaign.id}/scribe/recall`,
+      { query: scenario.recallQuery, mode: "public_safe", trace_visibility: "safe" },
+      "public-safe recall safe trace",
+    );
+    const publicSafePayloadText = JSON.stringify(publicSafeRecall);
+    addCheck(report, {
+      name: "LLM-5a public-safe recall safe trace does not expose private planning/proposal text",
+      pass:
+        !promptContains(publicSafePayloadText, marker.marker_text) &&
+        branchDetail.options.every((option) => !promptContains(publicSafePayloadText, option.body)) &&
+        publicSafeRecall.hits.every((hit) => hit.visibility !== "gm_private"),
+      severity: "critical",
+      details: `Public-safe recall returned ${publicSafeRecall.hits.length} hit(s); visibilities: ${publicSafeRecall.hits.map((hit) => hit.visibility ?? "missing").join(", ")}.`,
+    });
+    const debugSafeResponse = await request.post(`${apiBase}/api/campaigns/${campaign.id}/scribe/recall`, {
+      data: { query: scenario.recallQuery, mode: "debug_history", trace_visibility: "safe" },
+    });
+    addCheck(report, {
+      name: "LLM-5a debug history requires GM-private trace",
+      pass: debugSafeResponse.status() === 400,
+      severity: "critical",
+      details: `debug_history + safe trace returned HTTP ${debugSafeResponse.status()}.`,
     });
 
     const playerAfter = await apiGet<PlayerDisplay>(request, "/api/player-display", "player after");

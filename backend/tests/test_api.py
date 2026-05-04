@@ -218,7 +218,7 @@ def test_health_reports_db_ok_and_z_timestamp(seeded_settings):
     body = response.json()
     assert body["status"] == "ok"
     assert body["db"] == "ok"
-    assert body["schema_version"] == "20260504_0016"
+    assert body["schema_version"] == "20260504_0019"
     assert body["db_path"].endswith("myroll.test.sqlite3")
     assert not body["db_path"].startswith("/")
     assert body["time"].endswith("Z")
@@ -255,7 +255,7 @@ def test_meta_reports_seed_and_schema(seeded_settings):
     body = response.json()
     assert body["app"] == "myroll"
     assert body["version"] == "dev"
-    assert body["schema_version"] == "20260504_0016"
+    assert body["schema_version"] == "20260504_0019"
     assert body["seed_version"] == DEMO_SEED_VERSION
     assert body["db_path"].endswith("myroll.test.sqlite3")
     assert not body["db_path"].startswith("/")
@@ -283,7 +283,7 @@ def test_storage_status_reports_shortened_paths_and_artifacts(seeded_settings):
     assert body["latest_backup"]["created_at"].endswith("Z")
     assert body["latest_export"]["archive_name"].endswith(".export.tar.gz")
     assert body["latest_export"]["download_url"].startswith("/api/storage/exports/")
-    assert body["schema_version"] == "20260504_0016"
+    assert body["schema_version"] == "20260504_0019"
     assert body["seed_version"] == DEMO_SEED_VERSION
     assert body["private_demo_name_map_active"] is False
 

@@ -34,10 +34,11 @@ Current shipped status:
 - `[shipped]` LLM-0b context preview: persisted context packages, canonical source hash, explicit review action, rendered prompt/source inspection, and stale-preview blocking.
 - `[shipped]` LLM-0c session recap draft: reviewed context -> provider run -> structured `SessionRecapBundle`, one schema-repair attempt, backend validation of memory-candidate evidence refs against the reviewed context package, validation failures, editable reviewed recap save, and export redaction for prompt/response payloads.
 - `[shipped]` LLM-0d memory inbox: targetless memory candidates, `Accept into Memory` as one atomic apply transaction, idempotent repeated accept, and rejected/weak candidates excluded from accepted memory.
-- `[shipped]` LLM-1 first recall spine: campaign memory entries, reviewed session recaps, live capture search indexing, manual aliases, query expansion, and policy-filtered recall results. This first spine uses basic projection-table search, not the full FTS5 target described later in this document.
+- `[shipped]` LLM-1 first recall spine: campaign memory entries, reviewed session recaps, live capture search indexing, manual aliases, query expansion, and policy-filtered recall results.
 - `[shipped]` LLM-2 branch proposals and planning markers: campaign/session/scene branch context preview, structured branch runs, proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection.
 - `[shipped]` LLM-3 player-safe recap/snippet drafting and leak warning gate: public-safe source curation, reviewed public-safe context packages, deterministic warning scan, player-safe structured draft runs, LLM-sourced `PublicSnippet` creation with scan/ack gating, dedicated player-display snippet serialization, publication tracking, and default export redaction of LLM snippet provenance/warnings.
 - `[shipped]` LLM-4 proposal canonization bridge: `session.build_recap` may link a memory candidate to one active planning marker when later played evidence confirms it; `Accept into Memory` atomically creates accepted memory, canonizes the marker/source option, and keeps future canon context carried by the memory entry rather than marker/proposal text.
+- `[shipped]` LLM-5a campaign corpus cards + FTS5 recall: selected campaign source rows compile into derived, rebuildable Scribe corpus cards; SQLite FTS5 recall now runs inside mode-aware admissibility policy; responses expose evidence coverage, match strategy, safe/GM-private trace shape, and compact Evidence Board-ready card payloads.
 - `[shipped]` Real-provider Scribe journey verification: opt-in Playwright runners exercise a LAN/OpenAI-compatible model through live capture, branch proposals, planning-marker adoption, played-event capture, session recap, memory accept, recall, and `/player` payload boundary checks. Reports are written under ignored `artifacts/e2e/*` paths for human review and split checks into backend contract, product quality, and model behavior sections. A synthetic Bulgarian scenario matrix now broadens this from one scripted journey to multiple campaign shapes.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
 
@@ -50,8 +51,8 @@ Current implementation entry points are intentionally small:
 Known limitations in the shipped first spine:
 
 - cancellation is a durable soft cancel: Myroll marks the run canceled and discards late provider responses, but the blocking non-streaming upstream HTTP request may continue until the provider returns or times out;
-- recall currently scans a `scribe_search_index` projection table over live captures, reviewed recaps, and accepted memory entries; it is not yet SQLite FTS5 and does not yet index every notes/entities/public-snippet source promised by the full recall slice;
-- the search projection has upsert behavior for current Scribe writes, but no source-level garbage collection/rebuild command beyond campaign-level cascade cleanup;
+- `scribe_search_index` remains as legacy compatibility state, but Scribe recall now uses derived `scribe_corpus_cards` plus SQLite FTS5;
+- corpus cards are rebuilt atomically from source rows before recall in this local-first slice; future incremental updaters can optimize this, but cards remain disposable serving projections rather than campaign truth;
 - branch proposal canonization is narrow: one active marker can be created per source proposal option, proposed deltas are inspection-only, accepted memory may canonize a linked marker after played evidence exists, but there is still no direct proposal-body canonization/apply endpoint, entity patching, or manual relinking UI;
 - public-safe curation is conservative and manual: `public_safe=true` means eligible for public-safe context, not guaranteed safe to publish; deterministic warnings are not proof of safety; manual snippets are GM-approved public artifacts by convention, not Scribe-verified safe text; raw private recaps, private memory, private notes, planning markers, proposal bodies, live captures, and run history are excluded from player-safe context.
 - timestamps are now rendered as first-class transcript metadata in recap/branch context, but the human-visible capture surface still benefits from GM-authored campaign-clock wording when the table chronology differs from wall-clock capture time.
@@ -1402,7 +1403,48 @@ candidate search
 
 Route handlers must not do `FTS query -> feed to model` directly. The policy filter decides whether a found row is eligible for the selected task and visibility mode.
 
-The shipped first recall spine is intentionally narrower: it uses a durable `scribe_search_index` projection table plus normalized substring matching over live captures, reviewed session recaps, and accepted campaign memory. It is enough to prove `Capture -> Recap -> Memory -> Recall`, but it should be treated as a documented limitation until the full FTS5-backed recall slice lands. Creative LLM tasks must not assume this basic search has complete coverage over notes, entities, public snippets, or proposal metadata.
+The shipped LLM-5a recall substrate replaces the first spine for Scribe recall. It is still not semantic memory or GraphRAG: it is a policy-aware admissibility layer over derived cards and SQLite FTS5.
+
+Current recall direction:
+
+The next recall slice should be framed as evidence admissibility before semantic retrieval. Myroll is not merely trying to find something similar; it is trying to find source material that is allowed to participate in the requested lane, with inspectable provenance, without confusing canon, reviewed recap, played evidence, planning intent, drafts/proposals, and public-safe material.
+
+Target shape:
+
+```text
+campaign source rows
+  -> derived Scribe corpus cards
+  -> SQLite FTS5 / alias search over eligible cards
+  -> source-policy filter
+  -> ranked evidence results
+  -> shared recall/context-preview bundle
+```
+
+`canon` should mean accepted campaign memory by default. Reviewed session recaps, played transcript evidence, active planning markers, public-safe snippets, and debug/proposal history are useful source classes, but they must remain visibly distinct and mode-gated. A reviewed recap is a trusted summary; accepted memory is a canonized claim; played evidence is source evidence; planning markers are GM intent/provenance; proposal bodies are draft history.
+
+Suggested mode vocabulary:
+
+```text
+canon:
+  accepted campaign memory only
+
+canon_plus_reviewed:
+  accepted memory plus reviewed/saved session recaps
+
+played_evidence:
+  transcript/live capture/correction evidence, labeled as evidence rather than distilled canon
+
+planning:
+  canon plus active planning markers, with marker text rendered as GM intent only
+
+public_safe:
+  only compiled public-safe fields and shown public artifacts allowed by public-safe policy
+
+debug_history:
+  GM-private provenance/proposal/history inspection; never a normal canon or public-safe context mode
+```
+
+Retrieval cards are a derived serving layer, not source of truth. Domain tables such as `campaign_memory_entries`, `session_recaps`, `session_transcript_events`, `planning_markers`, `proposal_options`, `public_snippets`, entities, and aliases remain authoritative. Cards must be rebuildable from source rows, and any source update/delete/supersession must recompile or remove the derived card.
 
 Retrieval policy matrix:
 
@@ -1421,11 +1463,113 @@ normal creative task:
 ```
 
 FTS coherence rules:
-- all writes to FTS-indexed domain records must go through backend services that update the FTS index;
-- route handlers should not issue raw INSERT/UPDATE/DELETE statements against indexed tables;
-- migrations should add FTS5 triggers as a safety net where practical;
-- tests must cover create/update/delete drift for at least notes, entities, approved memory entries, and transcript events;
-- a repair/rebuild command can be added later, but it must not be the only coherence mechanism.
+- cards are derived and rebuildable; domain tables remain truth;
+- the v1 local-first implementation rebuilds the campaign corpus atomically before recall and also exposes `scripts/rebuild_scribe_corpus_cards.py`;
+- future incremental updaters may reduce rebuild cost, but must preserve the same compiler/policy output;
+- source hashes are hashes of normalized compiler input, not entire rows or `updated_at`;
+- tests should continue to use poisoned unique phrases to catch lane contamination across recall, trace, context preview, and rendered provider payloads.
+
+Recall and context preview must share the same backend retrieval function. A preview that says a proposal body or planning marker was excluded must be describing the exact bundle that the later LLM run will receive. Route-local context assembly is forbidden for Scribe LLM tasks once this substrate exists.
+
+The recall/context-preview response should also expose a GM-private trace projection suitable for a visual inspector. This trace is not a graph reasoning engine; it is an explanation of the retrieval result that already happened.
+
+```ts
+type RecallTrace = {
+  nodes: EvidenceNode[];
+  edges: EvidenceEdge[];
+  policy: RecallPolicyTrace;
+  ranking: RankingTrace[];
+  assembly: ContextAssemblyStep[];
+};
+
+type EvidenceNode = {
+  id: string;
+  cardId: string;
+  sourceKind: string;
+  sourceId: string;
+  title: string;
+  excerpt: string;
+  lane: "canon" | "reviewed" | "played_evidence" | "planning" | "draft" | "public";
+  visibility: "gm_private" | "public_safe" | "player_display";
+  reviewStatus: "raw" | "reviewed" | "accepted" | "deprecated" | "superseded";
+  admissibility: "included" | "excluded" | "available_in_other_mode";
+  exclusionReason?: string;
+  score?: {
+    authority?: number;
+    fts?: number;
+    finalRank?: number;
+  };
+};
+
+type EvidenceEdge = {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
+  kind:
+    | "same_entity"
+    | "same_alias"
+    | "same_session"
+    | "same_scene"
+    | "source_lineage"
+    | "correction_of"
+    | "supersedes"
+    | "memory_from_candidate"
+    | "marker_confirmed_by_memory"
+    | "query_term_overlap";
+  label?: string;
+  confidence: "deterministic" | "derived" | "semantic";
+};
+```
+
+V1 trace edges should be deterministic or derived only. Semantic/inferred edges can come later, but they must be visually distinct and must never influence admissibility.
+
+### 6.4.1 Scribe Evidence Board
+
+Product direction:
+
+The Scribe Evidence Board is an optional GM-only visual inspection surface for policy-aware recall and context-preview runs. It makes retrieval legible, dramatic, and inspectable, but it is not the retrieval engine.
+
+When the GM asks a campaign recall question or builds LLM context, Myroll may render the retrieved corpus cards as a two-dimensional evidence field. Cards materialize with explicit lane, visibility, source kind, review status, match reason, and admissibility state. Deterministic relationships between cards are shown as labeled edges such as shared entity, shared alias, same session, same scene, source lineage, correction, supersession, or accepted-memory derivation. The final context bundle is shown as an assembly strip beneath the card field.
+
+Hard rule:
+
+```text
+The Evidence Board renders the RecallTrace.
+It never performs retrieval, ranking, policy filtering, canonization, or player-display mutation.
+```
+
+This keeps the product promise clear:
+
+```text
+Myroll does not merely remember.
+Myroll shows why it is allowed to remember this.
+```
+
+Useful visual phases:
+
+1. Corpus materialization:
+   - source rows compile into derived recall cards;
+   - this is indexing/build observability, not evidence selection for a specific query.
+
+2. Policy gate:
+   - eligible cards move into the main field;
+   - excluded cards appear only in GM-private/debug preview, grouped by policy reason;
+   - public-safe workflows must not expose private excluded hit details outside explicit GM-private diagnostics.
+
+3. Relationship lines:
+   - solid lines represent deterministic provenance/entity/session/scene/correction relationships;
+   - dashed lines may represent query-term overlap;
+   - semantic or inferred relationships are deferred and must be labeled as such.
+
+4. Context assembly:
+   - the bottom strip shows exactly which cards entered the final recall/context bundle, which were excluded, and why.
+
+V1 constraints:
+- full Evidence Board UI is not required to ship with the FTS5 recall substrate;
+- LLM-5a should shape recall/context-preview responses so the board can be added without inventing a second backend path;
+- layouts should be stable for a given run/card set, with animation optional and reduced-motion supported;
+- live-session surfaces should default to compact recall results; the full board belongs in review/prep/inspection mode;
+- the board must never imply that planning markers, proposal bodies, or reviewed recaps are canon.
 
 Future retrieval:
 - vector embeddings over notes/memory/entity summaries;

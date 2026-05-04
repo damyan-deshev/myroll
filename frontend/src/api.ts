@@ -133,7 +133,7 @@ export const api = {
   notes: (campaignId: string) => request<NotesResponse>(`/api/campaigns/${campaignId}/notes`),
   createNote: (
     campaignId: string,
-    payload: { title: string; private_body?: string; tags?: string[]; session_id?: string | null; scene_id?: string | null; asset_id?: string | null }
+    payload: { title: string; private_body?: string; tags?: string[]; session_id?: string | null; scene_id?: string | null; asset_id?: string | null; recall_status?: "private_prep" | "scoped_recall_eligible" | "archived" }
   ) =>
     request<Note>(`/api/campaigns/${campaignId}/notes`, {
       method: "POST",
@@ -142,7 +142,7 @@ export const api = {
   note: (noteId: string) => request<Note>(`/api/notes/${noteId}`),
   patchNote: (
     noteId: string,
-    payload: Partial<Pick<Note, "title" | "private_body" | "tags" | "session_id" | "scene_id" | "asset_id">>
+    payload: Partial<Pick<Note, "title" | "private_body" | "tags" | "session_id" | "scene_id" | "asset_id" | "recall_status">>
   ) =>
     request<Note>(`/api/notes/${noteId}`, {
       method: "PATCH",
@@ -375,7 +375,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload)
     }),
-  recall: (campaignId: string, payload: { query: string; include_draft?: boolean }) =>
+  recall: (campaignId: string, payload: { query: string; include_draft?: boolean; mode?: string; limit?: number; trace_visibility?: string }) =>
     request<RecallResult>(`/api/campaigns/${campaignId}/scribe/recall`, {
       method: "POST",
       body: JSON.stringify(payload)

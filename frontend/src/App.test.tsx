@@ -212,6 +212,7 @@ const note: Note = {
   private_body: "Safe clue text.\n\nSECRET: do not show this.",
   tags: ["clue"],
   source_label: "Internal Notes",
+  recall_status: "private_prep",
   created_at: "2026-04-27T00:00:00Z",
   updated_at: "2026-04-27T00:00:00Z"
 };
