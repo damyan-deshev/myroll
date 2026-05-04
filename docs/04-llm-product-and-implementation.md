@@ -41,6 +41,8 @@ Current shipped status:
 - `[shipped]` LLM-5a campaign corpus cards + FTS5 recall: selected campaign source rows compile into derived, rebuildable Scribe corpus cards; SQLite FTS5 recall now runs inside mode-aware admissibility policy; responses expose evidence coverage, match strategy, safe/GM-private trace shape, and compact Evidence Board-ready card payloads.
 - `[shipped]` LLM-5b corpus-backed context packages: Scribe context preview, reviewed context packages, and actual rendered provider prompts now use the same corpus-backed admissibility bundle. Dynamic evidence/history/planning refs come from corpus cards, synthetic scope refs are framing only, prompt sections preserve claim-role boundaries, and public-safe bundle metadata is safe by construction.
 - `[shipped]` Real-provider Scribe journey verification: opt-in Playwright runners exercise a LAN/OpenAI-compatible model through live capture, branch proposals, planning-marker adoption, played-event capture, session recap, memory accept, recall, and `/player` payload boundary checks. Reports are written under ignored `artifacts/e2e/*` paths for human review and split checks into backend contract, product quality, and model behavior sections. A synthetic Bulgarian scenario matrix now broadens this from one scripted journey to multiple campaign shapes.
+- `[planned]` LLM-6a adventure import and progress cursor: establish GM-private adventure-as-written material as a separate corpus lane before next-session prep. Markdown import comes first; Docling/PDF/OCR import is a later pipeline over the same serving shape. Adventure text is module/source guidance, not campaign canon.
+- `[planned]` LLM-6b next-session prep packets: use campaign truth plus adventure-as-written context to draft rich GM-private prep blocks. The model may be creative, but the GM selects what to add to prep; prep output does not become canon, public text, or planning state without an explicit later GM action.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
 
 Current implementation entry points are intentionally small:
@@ -417,8 +419,10 @@ Flow:
 GM selects campaign/session
   -> task session.prep_next
   -> context includes canon memory, unresolved threads, current party state, recent sessions, active planning markers
+  -> if an adventure is established, context also includes relevant adventure-as-written cards near the progress cursor
   -> output is a prep packet draft
-  -> GM can save selected sections as private note or planning markers
+  -> GM selects useful draft blocks and adds them to private prep
+  -> later explicit actions may turn selected prep into notes, planning markers, or public-safe drafts
 ```
 
 Output sections:
@@ -429,6 +433,46 @@ Output sections:
 - complications;
 - player-facing recap candidate;
 - prep questions for the GM.
+
+Important boundary:
+- next-session prep is allowed to be more creative than recap/canon extraction, because it is GM-private preparation;
+- the input remains strictly curated through corpus policy;
+- the output is not campaign truth, not public-safe text, and not planning state until the GM applies a specific follow-up action.
+
+### 4.2.1 Adventure As Written
+
+Many campaigns are not pure freestyle. The GM may be running a published adventure, a purchased PDF, a homebrew module, or a long-form prep document that behaves like an adventure source.
+
+Myroll needs to model that source explicitly:
+
+```text
+campaign truth = what happened at this table
+adventure source = what the module/prep document says
+planning intent = what the GM is considering
+prep draft = what the model suggests for next session
+```
+
+Adventure source material is not canon. It is GM-private module guidance. If the table diverges from the written adventure, campaign canon wins and the prep task should help the GM adapt the module.
+
+Example:
+
+```text
+Adventure as written:
+  Captain Varos gives the harbor writ.
+
+Campaign canon:
+  Varos was arrested and disgraced last session.
+
+Prep adaptation:
+  Move the writ clue to Varos's quartermaster, or make Varos's arrest the reason the writ is missing.
+```
+
+V1 direction:
+- import and establish adventure sources before building next-session prep;
+- markdown import is first because it preserves headings and reviewable structure without a heavy pipeline dependency;
+- Docling/PDF import is a natural follow-up pipeline and should produce the same adventure serving shape;
+- OCR/vision from photographed pages is deferred until the import/review model is stable;
+- committed test fixtures must use original synthetic adventure text, not renamed or paraphrased copyrighted module content.
 
 ### 4.3 Session Scribe And Canonization
 
@@ -2536,6 +2580,86 @@ Shipped v1 limitations:
 - language-specific recap evidence phrase checks are bounded advisory rules loaded from `backend/app/llm_review_rules/speculative_language.json`; hard evidence rejection depends on source lane and quote validity, not on English/Bulgarian phrase confidence;
 - `candidate_body_resembles_planning_marker` is a conservative exact/substring warning after normalization, not semantic paraphrase detection; GM review remains the authority for whether a candidate describes played events rather than planning intent;
 - hard delete may sever marker/option provenance because new provenance FKs use `ON DELETE SET NULL`.
+
+### LLM-6a: Adventure Import And Progress Cursor
+
+Status:
+- planned.
+
+Goal:
+- establish adventure-as-written material as a GM-private corpus lane so prep can adapt written modules to actual table canon.
+
+Core model:
+
+```text
+Adventure document
+  -> reviewed adventure sections/cards
+  -> progress cursor
+  -> prep context
+```
+
+Build:
+- add an `adventure_source` lane and `adventure_as_written` claim role for GM-private module/source material;
+- support markdown import first, storing source document metadata, sections, headings, stable section IDs, source hashes, and raw retrieval text;
+- compile adventure section cards into the Scribe/adventure serving layer without treating them as canon, played evidence, public-safe material, or player-display payload;
+- let the GM review/establish an imported adventure and pin a progress cursor such as current chapter/section plus likely next sections;
+- track section state at least as `unreached`, `reached`, `cleared`, `skipped`, or `modified`;
+- include only established/pinned/relevant adventure cards in prep contexts, under an explicit `ADVENTURE AS WRITTEN - NOT CAMPAIGN CANON` section;
+- keep Docling/PDF import as an implementation path over the same document/card model, not a separate evidence model;
+- keep failed/quarantined imports inspectable and excluded from prep context until reviewed.
+
+Non-goals:
+- no automatic copyright-derived fixtures in the repository;
+- no OCR/vision camera flow in v1;
+- no player-safe/public exposure of raw adventure text;
+- no automatic conversion of adventure text into canon, entities, notes, planning markers, or player snippets.
+
+Tests:
+- imported markdown headings produce stable adventure cards and source hashes;
+- private adventure text is absent from canon recall, player-safe recall, player display, recap evidence, and public-safe context;
+- adventure cards appear only in prep/adventure modes and are labeled `adventure_as_written`;
+- progress cursor controls which adventure sections are eligible for prep context;
+- campaign canon and adventure text can conflict without the adventure text overriding canon;
+- repo fixtures use original synthetic adventure text.
+
+Acceptance:
+
+```text
+GM imports an adventure document
+  -> reviews/establishes it as GM-private adventure source
+  -> pins current/next section
+  -> prep context can cite adventure-as-written separately from campaign canon
+  -> no player/canon/public state changes
+```
+
+### LLM-6b: Next-Session Prep Packets
+
+Status:
+- planned after LLM-6a.
+
+Goal:
+- draft rich GM-private next-session prep from admissible campaign truth, active planning intent, and adventure-as-written context.
+
+Output model:
+- the model returns editable prep blocks rather than a single administrative form;
+- block roles include `canon_based`, `adventure_as_written`, `divergence_resolution`, `planning_based`, `speculative_prep`, and `gm_question`;
+- each block carries title, markdown body, optional evidence/source refs, and a clear role label;
+- the GM can edit, dismiss, or `Add to Prep`;
+- saved prep remains private prep by default and does not become canon, public-safe text, or planning state.
+
+Prompt policy:
+- campaign canon wins over adventure-as-written when they conflict;
+- adventure text is module guidance, not table history;
+- planning markers are GM intent, not played evidence;
+- the model may propose creative adaptations, but must label speculation and questions as prep suggestions.
+
+Future apply actions:
+- create planning marker from selected prep block;
+- save selected block as a private note;
+- draft player-safe recap candidate;
+- create/update first-class campaign objects once those object primitives exist.
+
+Those actions are explicit GM operations and are not required for the first prep packet slice.
 
 ### LLM-5: Vector Retrieval And Embeddings
 

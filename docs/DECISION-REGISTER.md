@@ -904,3 +904,21 @@ Consequences:
 - Ordinary typed or dictated captures that merely mention a marker title do not create linked candidates.
 - The supplement creates only a memory candidate draft with visible `deterministic_planning_marker_candidate` normalization warning. It does not canonize anything; GM `Accept into Memory` remains the only canon write.
 - Synthetic matrix product-quality warnings are allowed to remain review signals once backend contracts, model linkage checks, JSON normalization, and `/player` boundaries pass.
+
+## DR-061: Adventure-As-Written Is A Separate GM-Private Source Lane
+
+Decision: written adventures, imported modules, and long-form GM prep documents are modeled as adventure-as-written source material, not as campaign canon or played evidence.
+
+Rationale:
+- Many DMs run from published or homebrew modules rather than pure freestyle notes.
+- Next-session prep needs to compare what the module says with what actually happened at the table.
+- A module can be useful guidance while still being wrong for this campaign after the players diverge from it.
+- Copyrighted adventure PDFs can be used locally for structure research and private GM import, but committed fixtures should be original synthetic adventure text.
+
+Consequences:
+- Adventure import/progress cursor is a separate slice before next-session prep packets.
+- Adventure cards use a distinct lane/claim role such as `adventure_source` / `adventure_as_written` and remain GM-private.
+- Campaign canon wins over adventure-as-written when the two conflict.
+- Prep output may propose divergence resolutions, but those proposals are private drafts until the GM explicitly applies them.
+- Markdown import is the first implementation target; Docling/PDF/OCR are pipeline options over the same serving shape, not separate evidence models.
+- Raw adventure text is never eligible for `/player`, player-safe context, canon recall, or memory-candidate evidence by default.

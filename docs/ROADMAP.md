@@ -1148,7 +1148,7 @@ Status as of 2026-05-04:
 - shipped proposal canonization bridge: `session.build_recap` can link a memory candidate to one active planning marker when later played evidence confirms it, and `Accept into Memory` atomically creates canon memory while marking the marker/source option `canonized`;
 - shipped corpus-backed recall/context packages: selected campaign sources compile into derived Scribe corpus cards, SQLite FTS5 recall runs under admissibility policy, and Scribe LLM context previews/provider prompts use the same corpus-backed evidence bundle;
 - shipped real-provider Scribe journey hardening: opt-in Playwright runners now exercise the local/LAN model through live capture, branch proposals, planning-marker adoption, played-event recap, memory accept, recall, and `/player` boundary checks. The recap prompt now renders transcript chronology and canonical evidence-ref IDs explicitly, and direct-evidence memory candidates reject speculative proposal wording as proof;
-- planned next: broader Scribe hardening, deferred entity/object patch workflows, and a separate Evidence Board/UX spike for the visual card-based inspection surface;
+- planned next: adventure import/progress cursor before next-session prep, then GM-private prep packets; broader Scribe hardening, deferred entity/object patch workflows, and a separate Evidence Board/UX spike remain follow-up work;
 - deferred: vectors, streaming, tool calls, audio capture/transcription, and autonomous entity mutation.
 
 Detailed build specification:
@@ -1161,6 +1161,9 @@ Product decision:
 - Live play is capture-only in v1; after the session, the GM clicks Build Session Recap to assemble live notes, linked notes, NPC/entity changes, combat/session events, planning markers, and approved memory into a reviewed recap/canonization workflow.
 - First value loop is Scribe-first, not branch-proposal-first: capture what happened, build a reviewed recap, accept memory, recall it later.
 - Branch proposals are primarily prep/review tools after the recap/memory loop works.
+- Next-session prep must support written adventures as well as freestyle campaigns. Imported adventure/module text is a GM-private source lane, not campaign canon; prep adapts adventure-as-written to what actually happened at the table.
+- Adventure import should start with markdown and reviewed structure. Docling/PDF import is the right later pipeline over the same serving shape; OCR/vision from photographed pages is deferred.
+- Repository fixtures for adventure import must be original synthetic module text. Purchased/published adventure PDFs may be used locally for structure research, but renamed/paraphrased derived excerpts should not be committed.
 - V1 does not record audio, transcribe audio, summarize live during play, require vectors, require streaming, require tool calls, or auto-update entities from transcripts.
 - AI output is not campaign truth until the GM commits it.
 - Campaign objects such as NPCs, settlements, factions, quests, and character hooks are manual GM-owned Myroll primitives first; the model may prefill fields, suggest updates, or produce drafts, but it does not own or silently create those objects.
