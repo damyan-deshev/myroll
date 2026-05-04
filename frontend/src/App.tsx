@@ -917,6 +917,17 @@ function proposalOptionLabel(status: ProposalOption["status"]): string {
   return "Proposed";
 }
 
+function proposalWarningLabel(warning: Record<string, unknown>): string {
+  const code = String(warning.code ?? "");
+  if (code === "requested_slot_may_not_match") {
+    const slot = typeof warning.slot === "number" ? warning.slot : String(warning.slot ?? "?");
+    return `Requested option ${slot} may not match the GM instruction. Review before adopting.`;
+  }
+  if (code === "degraded_option_count") return "Degraded output: fewer than three valid options.";
+  if (code === "malformed_option_discarded") return "Malformed option discarded during normalization.";
+  return code || "Proposal normalization warning";
+}
+
 function ScribeWidget(props: SharedWidgetProps) {
   const queryClient = useQueryClient();
   const [captureBody, setCaptureBody] = useState("");
@@ -1959,7 +1970,14 @@ function ScribeWidget(props: SharedWidgetProps) {
               </span>
             </div>
             {currentProposalDetail.normalization_warnings.length ? (
-              <p className="muted-block">{currentProposalDetail.normalization_warnings.length} normalization warning(s). See Diagnostics.</p>
+              <div className="muted-block">
+                <strong>{currentProposalDetail.normalization_warnings.length} proposal review warning(s)</strong>
+                <ul>
+                  {currentProposalDetail.normalization_warnings.slice(0, 3).map((warning, index) => (
+                    <li key={`${String(warning.code ?? "warning")}-${index}`}>{proposalWarningLabel(warning)}</li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
             <div className="scribe-proposal-grid">
               {currentProposalDetail.options.map((option: ProposalOption) => (

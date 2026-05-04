@@ -38,7 +38,7 @@ Current shipped status:
 - `[shipped]` LLM-2 branch proposals and planning markers: campaign/session/scene branch context preview, structured branch runs, proposal sets/options, degraded normalization warnings, proposal card actions, one-marker-per-source-option adoption, active planning marker context eligibility, and `/gm` proposal cockpit inspection.
 - `[shipped]` LLM-3 player-safe recap/snippet drafting and leak warning gate: public-safe source curation, reviewed public-safe context packages, deterministic warning scan, player-safe structured draft runs, LLM-sourced `PublicSnippet` creation with scan/ack gating, dedicated player-display snippet serialization, publication tracking, and default export redaction of LLM snippet provenance/warnings.
 - `[shipped]` LLM-4 proposal canonization bridge: `session.build_recap` may link a memory candidate to one active planning marker when later played evidence confirms it; `Accept into Memory` atomically creates accepted memory, canonizes the marker/source option, and keeps future canon context carried by the memory entry rather than marker/proposal text.
-- `[shipped]` Real-provider Scribe journey verification: opt-in Playwright runners exercise a LAN/OpenAI-compatible model through live capture, branch proposals, planning-marker adoption, played-event capture, session recap, memory accept, recall, and `/player` payload boundary checks. Reports are written under ignored `artifacts/e2e/*` paths for human review.
+- `[shipped]` Real-provider Scribe journey verification: opt-in Playwright runners exercise a LAN/OpenAI-compatible model through live capture, branch proposals, planning-marker adoption, played-event capture, session recap, memory accept, recall, and `/player` payload boundary checks. Reports are written under ignored `artifacts/e2e/*` paths for human review and split checks into backend contract, product quality, and model behavior sections.
 - `[deferred]` vectors, streaming, tool calls, audio recording/transcription, autonomous entity mutation, and player-facing LLM flows.
 
 Current implementation entry points are intentionally small:
@@ -2125,6 +2125,8 @@ The real-provider journey is intentionally not only a pass/fail smoke test. It w
 
 After those changes, the measured real-provider run consistently preserves proposal-body exclusion, planning-only marker rendering, correction projection, speculative-phrase avoidance, and `/player` boundary checks. The LLM-4 journey now also records model linkage quality separately from backend contract checks: when the model emits a valid `relatedPlanningMarkerId`, accepting the linked memory candidate canonizes the marker/source option and future context carries the accepted memory entry instead of the raw proposal or active marker text.
 
+LLM-4.1 tightened the journey harness after a Bulgarian run exposed an instrumentation bug: proposal options were persisted in model order but detail APIs sorted same-second rows by UUID, so "option 2" checks could inspect the wrong card. `proposal_options.option_index` is now the stable source of truth for option order. The real-provider report now separates checks into backend contract, product quality, and model behavior sections, and `scripts/run_scribe_campaign_real_llm_journey_repeat.sh` can run repeated journeys to distinguish deterministic app regressions from stochastic model behavior. Explicit slot requirements such as "Option 2 should..." remain advisory product-quality checks: the backend can emit `requested_slot_may_not_match`, but it never rejects a structurally valid proposal set solely because heuristic text overlap is low.
+
 ### LLM-0d: Memory Inbox And Canon Entries
 
 Goal:
@@ -2216,6 +2218,7 @@ Tests:
 - schema-repair retry creates a child run with `parentRunId`;
 - malformed JSON after retry fails with `parse_failed` and no proposal records;
 - one/two valid options persist as degraded success with visible warnings;
+- explicit slot requirements, such as `Option 2 should...`, may emit `requested_slot_may_not_match` as a visible advisory warning when the requested slot appears not to match the GM instruction;
 - selecting option does not canonize;
 - selecting option supersedes sibling options;
 - selecting a superseded sibling later allows multiple selected options and does not demote the first selected option;
@@ -2241,6 +2244,8 @@ run branch directions for a scene during prep
 
 Shipped v1 limitations:
 - one planning marker per source proposal option;
+- proposal option order is persisted as `option_index`; never infer option number from UUID or timestamp order;
+- requested-slot matching is a heuristic product-quality warning, not a semantic guarantee or hard backend contract;
 - proposed deltas are inspection-only and labeled as possible consequences if played;
 - no direct proposal-body canonization/apply endpoint;
 - full FTS5 proposal-history recall remains future work;

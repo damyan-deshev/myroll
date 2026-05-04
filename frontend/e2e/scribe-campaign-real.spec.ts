@@ -93,6 +93,7 @@ type JourneyCheck = {
   name: string;
   pass: boolean;
   severity: "critical" | "warning" | "info";
+  category: "backend_contract" | "product_quality" | "model_behavior";
   details: string;
 };
 
@@ -333,8 +334,13 @@ function promptContains(prompt: string, value: string): boolean {
   return normalizeText(prompt).includes(excerpt);
 }
 
-function addCheck(report: JourneyReport, check: Omit<JourneyCheck, "severity"> & { severity?: JourneyCheck["severity"] }): void {
-  report.checks.push({ severity: check.severity ?? "warning", ...check });
+function addCheck(
+  report: JourneyReport,
+  check: Omit<JourneyCheck, "severity" | "category"> & { severity?: JourneyCheck["severity"]; category?: JourneyCheck["category"] },
+): void {
+  const severity = check.severity ?? "warning";
+  const category = check.category ?? (severity === "critical" ? "backend_contract" : severity === "info" ? "model_behavior" : "product_quality");
+  report.checks.push({ severity, category, ...check });
 }
 
 async function discoverLlmModel(request: APIRequestContext): Promise<string> {
@@ -537,8 +543,23 @@ function writeReport(report: JourneyReport): void {
     `Canonized marker status: ${report.bridge.canonizedMarkerStatus ?? "not observed"}`,
     `Canonized option status: ${report.bridge.canonizedOptionStatus ?? "not observed"}`,
     "",
+    "## Check Summary",
+    ...(["backend_contract", "product_quality", "model_behavior"] as const).map((category) => {
+      const checks = report.checks.filter((check) => check.category === category);
+      const passed = checks.filter((check) => check.pass).length;
+      return `- ${category.replace("_", " ")}: ${passed}/${checks.length} passed`;
+    }),
+    "",
     "## Checks",
-    ...report.checks.map((check) => `- ${check.pass ? "PASS" : "FAIL"} [${check.severity}] ${check.name}: ${check.details}`),
+    ...(["backend_contract", "product_quality", "model_behavior"] as const).flatMap((category) => {
+      const checks = report.checks.filter((check) => check.category === category);
+      if (!checks.length) return [];
+      return [
+        `### ${category.replace("_", " ")}`,
+        ...checks.map((check) => `- ${check.pass ? "PASS" : "FAIL"} [${check.severity}] ${check.name}: ${check.details}`),
+        "",
+      ];
+    }),
     "",
     "## Observations",
     ...report.observations.map((item) => `- ${item}`),
@@ -656,7 +677,11 @@ test("real campaign Scribe journey records branch choice, planning marker, recap
     addCheck(report, {
       name: "Branch returned exactly three valid options",
       pass: branchDetail.options.length === 3,
-      details: `Model returned ${branchDetail.options.length} valid option(s); rejected rows: ${branchBuild.rejected_options.length}; normalization warnings: ${branchDetail.normalization_warnings.length}.`,
+      details:
+        `Model returned ${branchDetail.options.length} valid option(s); rejected rows: ${branchBuild.rejected_options.length}; normalization warnings: ${branchDetail.normalization_warnings.length}` +
+        (branchDetail.normalization_warnings.length
+          ? ` (${branchDetail.normalization_warnings.map((warning) => String(warning.code ?? "warning")).join(", ")}).`
+          : "."),
     });
     addCheck(report, {
       name: "Option 2 matches requested political Varos direction",

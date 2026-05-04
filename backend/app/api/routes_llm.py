@@ -2370,6 +2370,98 @@ def _slug_key(value: str, fallback: str, body: str) -> str:
     return f"{slug}_{digest}"
 
 
+SLOT_REQUIREMENT_STOPWORDS = {
+    "option",
+    "should",
+    "must",
+    "needs",
+    "about",
+    "around",
+    "with",
+    "from",
+    "that",
+    "this",
+    "give",
+    "exactly",
+    "distinct",
+    "вариант",
+    "трябва",
+    "бъде",
+    "бъдат",
+    "около",
+    "като",
+    "точно",
+    "различни",
+    "посоки",
+}
+
+
+def _significant_requirement_tokens(value: str) -> set[str]:
+    return {
+        token
+        for token in _normalized_quote_text(value).split()
+        if len(token) >= 4 and token not in SLOT_REQUIREMENT_STOPWORDS
+    }
+
+
+def _extract_requested_slot_checks(gm_instruction: str) -> list[dict[str, object]]:
+    checks: list[dict[str, object]] = []
+    patterns = (
+        re.compile(r"\boption\s+([1-5])\b\s+(?:should|must|needs\s+to|has\s+to)\s+(?:be|include|focus\s+on)?\s*(.+)", re.IGNORECASE),
+        re.compile(r"\bвариант\s+([1-5])\b\s+трябва\s+да\s+(?:бъде|е|включва)?\s*(.+)", re.IGNORECASE),
+    )
+    for line in gm_instruction.splitlines():
+        candidate = line.strip().strip("-•* ")
+        if not candidate:
+            continue
+        for pattern in patterns:
+            match = pattern.search(candidate)
+            if not match:
+                continue
+            requirement = match.group(2).strip(" .:;")
+            tokens = _significant_requirement_tokens(requirement)
+            if tokens:
+                checks.append({"slot": int(match.group(1)), "requirement": requirement[:300], "tokens": sorted(tokens)})
+            break
+    return checks
+
+
+def _slot_requirement_warnings(gm_instruction: str, options: list[dict[str, object]]) -> list[dict[str, object]]:
+    warnings: list[dict[str, object]] = []
+    for check in _extract_requested_slot_checks(gm_instruction):
+        slot = int(check["slot"])
+        tokens = set(str(token) for token in check["tokens"])
+        target = options[slot - 1] if 0 < slot <= len(options) else None
+        if target is None:
+            warnings.append(
+                {
+                    "code": "requested_slot_may_not_match",
+                    "slot": slot,
+                    "requirement": check["requirement"],
+                    "reason": "slot_missing",
+                    "severity": "medium",
+                }
+            )
+            continue
+        option_text = "\n".join(str(target.get(field) or "") for field in ("title", "summary", "body", "consequences", "reveals", "planningMarkerText"))
+        option_tokens = _significant_requirement_tokens(option_text)
+        matched = sorted(tokens & option_tokens)
+        minimum_matches = max(2, int(len(tokens) * 0.4 + 0.999))
+        if len(matched) < minimum_matches:
+            warnings.append(
+                {
+                    "code": "requested_slot_may_not_match",
+                    "slot": slot,
+                    "requirement": check["requirement"],
+                    "matchedTerms": matched,
+                    "missingTerms": sorted(tokens - option_tokens)[:12],
+                    "reason": "low_requirement_overlap",
+                    "severity": "medium",
+                }
+            )
+    return warnings
+
+
 def _field_text(raw: dict[str, object], *names: str) -> str:
     for name in names:
         value = raw.get(name)
@@ -2378,7 +2470,11 @@ def _field_text(raw: dict[str, object], *names: str) -> str:
     return ""
 
 
-def _normalize_proposal_output(bundle: dict[str, object]) -> tuple[dict[str, object], list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
+def _normalize_proposal_output(
+    bundle: dict[str, object],
+    *,
+    gm_instruction: str = "",
+) -> tuple[dict[str, object], list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
     options_raw = bundle.get("proposalOptions")
     if not isinstance(options_raw, list):
         options_raw = bundle.get("options")
@@ -2431,6 +2527,7 @@ def _normalize_proposal_output(bundle: dict[str, object]) -> tuple[dict[str, obj
         normalized_options = normalized_options[:5]
     if len(normalized_options) < 3:
         warnings.append({"code": "degraded_option_count", "expected": "3-5", "accepted": len(normalized_options)})
+    warnings.extend(_slot_requirement_warnings(gm_instruction, normalized_options))
     warnings.extend({"code": "malformed_option_discarded", **item} for item in rejected)
     title = str(bundle.get("title") or "Branch directions").strip()[:200] or "Branch directions"
     normalized = {"title": title, "proposalOptions": normalized_options}
@@ -3202,7 +3299,7 @@ def build_branch_directions(campaign_id: UUID, payload: BuildBranchIn, db: DbSes
         response_text, provider_metadata = _send_chat(profile, request_payload, timeout=90.0)
         try:
             parsed = _parse_json_object(response_text)
-            normalized, options, rejected_options, warnings = _normalize_proposal_output(parsed)
+            normalized, options, rejected_options, warnings = _normalize_proposal_output(parsed, gm_instruction=package.gm_instruction)
             with db.begin():
                 run = _require_run(db, run.id)
                 _finalize_run_success(
@@ -3275,7 +3372,7 @@ def build_branch_directions(campaign_id: UUID, payload: BuildBranchIn, db: DbSes
                 raise
             try:
                 repaired = _parse_json_object(repair_text)
-                normalized, options, rejected_options, warnings = _normalize_proposal_output(repaired)
+                normalized, options, rejected_options, warnings = _normalize_proposal_output(repaired, gm_instruction=package.gm_instruction)
             except Exception as repair_error:  # noqa: BLE001
                 with db.begin():
                     child = _require_run(db, child.id)

@@ -860,6 +860,48 @@ def test_branch_repair_degraded_warnings_and_single_child_proposal_set(migrated_
     assert rows[1][3] is not None
 
 
+def test_branch_requested_slot_mismatch_is_visible_warning(migrated_settings, monkeypatch):
+    client = _client(migrated_settings)
+    campaign_id, session_id = _campaign_session(client)
+    client.post(
+        f"/api/campaigns/{campaign_id}/scribe/transcript-events",
+        json={"session_id": session_id, "body": "Captain Varos is negotiating at the Moon Gate."},
+    )
+
+    def fake_send_chat(profile, payload, *, timeout=60.0):  # noqa: ANN001, ARG001
+        bundle = _proposal_fixture(3)
+        bundle["proposalOptions"][1] = {
+            "title": "Moon anomaly",
+            "summary": "The gate becomes unstable and shows an alternate courtyard.",
+            "body": "A magical echo appears in the Moon Gate and tempts the party to step through.",
+            "consequences": "The ritual becomes stranger if played.",
+            "whatThisReveals": "The gate has older magic.",
+            "whatStaysHidden": "The origin of the echo remains unknown.",
+            "planningMarkerText": "GM is considering a magical anomaly at the gate.",
+        }
+        return json.dumps(bundle), {"usage": {"prompt_tokens": 120, "completion_tokens": 90}}
+
+    provider_id = _fixture_provider(client, monkeypatch, fake_send_chat)
+    preview_body = _build_reviewed_branch_preview(
+        client,
+        campaign_id=campaign_id,
+        session_id=session_id,
+        instruction="Option 2 should be a political negotiation complication around Captain Varos and the dawn ritual.",
+    )
+
+    branch = client.post(
+        f"/api/campaigns/{campaign_id}/llm/branch-directions/build",
+        json={"provider_profile_id": provider_id, "context_package_id": preview_body["id"]},
+    )
+    assert branch.status_code == 200
+    body = branch.json()
+    assert body["proposal_set"]["proposal_set"]["option_count"] == 3
+    warning = next(item for item in body["warnings"] if item["code"] == "requested_slot_may_not_match")
+    assert warning["slot"] == 2
+    assert warning["reason"] == "low_requirement_overlap"
+    assert "Captain Varos" in warning["requirement"]
+
+
 def test_branch_repair_persistence_error_finalizes_child_run(migrated_settings, monkeypatch):
     from backend.app.api import routes_llm
 
